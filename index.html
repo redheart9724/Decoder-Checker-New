@@ -3,1153 +3,1124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherSense — Ultimate Forensics Tool</title>
+<title>CipherSense — Bidirectional Cipher Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap');
-:root{
-  --bg:#07090d;--s1:#0f1117;--s2:#151922;--s3:#1c2130;
-  --b1:#1a2236;--b2:#243047;--b3:#2e3f5c;
-  --cyan:#00e5ff;--violet:#a78bfa;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--pink:#f472b6;
-  --text:#dde4f0;--muted:#5a6a85;--dim:#2a3550;
-  --cyan-glow:rgba(0,229,255,.12);--violet-glow:rgba(167,139,250,.12);
-}
+/* ═══════════════════════════════════════ RESET & BASE */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0b0e14;
+  --ink2:#131720;
+  --ink3:#1a2030;
+  --ink4:#222b3d;
+  --ink5:#2d3a52;
+  --wire:#334060;
+  --wire2:#3f5070;
+  --text:#e8edf8;
+  --text2:#94a3c0;
+  --text3:#4f627e;
+  --enc:#00ffb3;   /* encode = mint green */
+  --dec:#ff6b9d;   /* decode = hot pink */
+  --gold:#ffd166;
+  --sky:#4fc3f7;
+  --enc-glow:rgba(0,255,179,.1);
+  --dec-glow:rgba(255,107,157,.1);
+  --r:10px;
+}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:'Outfit',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
 
-/* ── SCROLLBAR ─────────────────────────────── */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--b3);border-radius:3px}
+/* animated dot-grid bg */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(circle,rgba(79,195,247,.08) 1px,transparent 1px);
+  background-size:32px 32px;
+  pointer-events:none;z-index:0;
+  animation:bgdrift 30s linear infinite;
+}
+@keyframes bgdrift{from{background-position:0 0}to{background-position:32px 32px}}
 
-/* ── LAYOUT ────────────────────────────────── */
-.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:1.5rem 1.5rem 5rem}
+/* ═══════════════════════════════════════ SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--wire);border-radius:2px}
 
-/* ── HEADER ────────────────────────────────── */
-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:1.25rem;margin-bottom:2rem;border-bottom:1px solid var(--b1);flex-wrap:wrap;gap:.75rem}
-.brand{display:flex;align-items:center;gap:12px}
-.brand-icon{width:38px;height:38px}
-.brand h1{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
-.brand h1 em{font-style:normal;color:var(--cyan)}
-.hbadges{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.badge{font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:3px 10px;border-radius:20px;border:1px solid;letter-spacing:.08em;white-space:nowrap}
-.badge-cyan{background:rgba(0,229,255,.08);color:var(--cyan);border-color:rgba(0,229,255,.2)}
-.badge-violet{background:rgba(167,139,250,.08);color:var(--violet);border-color:rgba(167,139,250,.2)}
-.badge-green{background:rgba(16,185,129,.08);color:var(--green);border-color:rgba(16,185,129,.2)}
+/* ═══════════════════════════════════════ LAYOUT */
+.root{position:relative;z-index:1;display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
 
-/* ── TABS ──────────────────────────────────── */
-.tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:4px}
-.tab{flex:1;font-family:'Syne',sans-serif;font-size:.82rem;font-weight:600;padding:9px 16px;border-radius:7px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.02em;white-space:nowrap}
-.tab:hover{color:var(--text)}
-.tab.active{background:var(--s3);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.4)}
-.tab.active.t-decode{color:var(--cyan)}
-.tab.active.t-encode{color:var(--violet)}
-.tab.active.t-crack{color:var(--amber)}
-.tab.active.t-chain{color:var(--pink)}
-.tab.active.t-forensics{color:var(--green)}
+/* ═══════════════════════════════════════ HEADER */
+header{
+  padding:1.1rem 2rem;
+  border-bottom:1px solid var(--ink4);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;
+  background:rgba(11,14,20,.85);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo svg{width:34px;height:34px;flex-shrink:0}
+.logo-text{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+.logo-text b{color:var(--enc)}
+.logo-sub{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+.hpills{display:flex;gap:6px;flex-wrap:wrap}
+.hpill{
+  font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.06em;
+  padding:3px 10px;border-radius:20px;border:1px solid;white-space:nowrap;
+}
+.hpill-e{background:var(--enc-glow);color:var(--enc);border-color:rgba(0,255,179,.25)}
+.hpill-d{background:var(--dec-glow);color:var(--dec);border-color:rgba(255,107,157,.25)}
+.hpill-g{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
 
-.pane{display:none}
-.pane.active{display:block}
+/* ═══════════════════════════════════════ METHOD STRIP */
+.method-strip{
+  background:var(--ink2);
+  border-bottom:1px solid var(--ink4);
+  padding:.6rem 1.5rem;
+  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+}
+.ms-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-right:.4rem;white-space:nowrap}
+.mcat{display:contents}
+.mcat-sep{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--ink5);margin:0 .2rem;user-select:none}
 
-/* ── SHARED COMPONENTS ─────────────────────── */
-.card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
-.card-header{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.1rem;cursor:pointer;user-select:none;transition:background .15s}
-.card-header:hover{background:var(--s2)}
-.card-title{display:flex;align-items:center;gap:10px}
-.card-icon{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--cyan);width:28px;text-align:center;flex-shrink:0}
-.card-name{font-size:.88rem;font-weight:600}
-.card-sub{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);margin-top:1px}
-.card-right{display:flex;align-items:center;gap:10px}
-.pill{font-family:'JetBrains Mono',monospace;font-size:.66rem;padding:3px 10px;border-radius:20px;border:1px solid;flex-shrink:0}
-.pill-ok{background:rgba(16,185,129,.1);color:var(--green);border-color:rgba(16,185,129,.3)}
-.pill-part{background:rgba(245,158,11,.1);color:var(--amber);border-color:rgba(245,158,11,.3)}
-.pill-det{background:rgba(0,229,255,.08);color:var(--cyan);border-color:rgba(0,229,255,.2)}
-.pill-no{background:transparent;color:var(--dim);border-color:var(--b2)}
-.chevron{color:var(--muted);font-size:.7rem;transition:transform .2s}
-.chevron.open{transform:rotate(180deg)}
-.card-body{display:none;padding:1rem 1.1rem;border-top:1px solid var(--b1)}
-.card-body.open{display:block}
+.mbtn{
+  font-family:'Space Mono',monospace;font-size:.65rem;
+  padding:5px 12px;border-radius:6px;border:1px solid var(--ink5);
+  background:transparent;color:var(--text3);cursor:pointer;
+  transition:all .12s;white-space:nowrap;letter-spacing:.02em;
+}
+.mbtn:hover{background:var(--ink3);color:var(--text);border-color:var(--wire)}
+.mbtn.active{background:var(--ink3);color:var(--text);border-color:var(--sky);
+  box-shadow:0 0 8px rgba(79,195,247,.15)}
 
-.mono{font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.7;background:var(--bg);border:1px solid var(--b1);border-radius:8px;padding:.75rem 1rem;word-break:break-all;white-space:pre-wrap;max-height:280px;overflow-y:auto;color:var(--text)}
-.row-meta{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:.6rem}
-.meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted)}
+/* ═══════════════════════════════════════ MAIN GRID */
+.main{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto 1fr;
+  gap:0;
+  padding:1.5rem;
+  gap:1.2rem;
+}
+@media(max-width:780px){.main{grid-template-columns:1fr;grid-template-rows:auto auto auto}}
 
-label-row{display:block}
-.lbl{font-size:.7rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:.5rem;display:flex;align-items:center;gap:8px}
-.lbl::after{content:'';flex:1;height:1px;background:var(--b1)}
+/* ═══════════════════════════════════════ OPTIONS BAR */
+.options-bar{
+  grid-column:1/-1;
+  display:none;
+  background:var(--ink2);
+  border:1px solid var(--ink4);
+  border-radius:var(--r);
+  padding:.75rem 1.1rem;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+.options-bar.show{display:flex}
+.opt-group{display:flex;align-items:center;gap:.5rem}
+.opt-label{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--text3);white-space:nowrap}
+.opt-group input[type=text],
+.opt-group input[type=number],
+.opt-group select{
+  font-family:'Space Mono',monospace;font-size:.75rem;
+  background:var(--ink3);border:1px solid var(--wire);
+  border-radius:6px;color:var(--text);
+  padding:5px 10px;outline:none;
+  transition:border-color .15s;
+  min-width:80px;
+}
+.opt-group input:focus,.opt-group select:focus{border-color:var(--sky)}
+.opt-group input[type=range]{accent-color:var(--sky);min-width:100px;cursor:pointer}
+.opt-val{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--sky);min-width:20px}
 
-textarea,input[type=text],input[type=number],select{
-  font-family:'JetBrains Mono',monospace;background:var(--s1);border:1px solid var(--b2);
-  border-radius:9px;color:var(--text);font-size:.85rem;padding:.85rem 1rem;
-  outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
-textarea{resize:vertical;min-height:108px;line-height:1.6}
-textarea:focus,input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow)}
-textarea::placeholder{color:var(--dim)}
+/* ═══════════════════════════════════════ INPUT PANEL */
+.panel{
+  background:var(--ink2);
+  border:1px solid var(--ink4);
+  border-radius:var(--r);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  min-height:300px;
+}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.65rem 1rem;
+  border-bottom:1px solid var(--ink4);
+  background:var(--ink3);
+  flex-shrink:0;
+}
+.panel-title{font-size:.78rem;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:7px}
+.panel-title .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-enc{background:var(--enc);box-shadow:0 0 6px var(--enc)}
+.dot-dec{background:var(--dec);box-shadow:0 0 6px var(--dec)}
+.dot-in{background:var(--sky);box-shadow:0 0 6px var(--sky)}
+.panel-actions{display:flex;gap:6px;align-items:center}
 
-.btns{display:flex;gap:8px;flex-wrap:wrap;margin:.85rem 0}
-button{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:600;padding:9px 20px;border-radius:8px;border:1px solid var(--b2);cursor:pointer;transition:all .15s;letter-spacing:.02em}
-button:active{transform:scale(.97)}
-.btn-c{background:var(--cyan);color:#000;border-color:var(--cyan)}
-.btn-c:hover{background:#33eeff}
-.btn-v{background:var(--violet);color:#000;border-color:var(--violet)}
-.btn-v:hover{background:#c4b5fd}
-.btn-a{background:var(--amber);color:#000;border-color:var(--amber)}
-.btn-a:hover{background:#fbbf24}
-.btn-g{background:var(--green);color:#000;border-color:var(--green)}
-.btn-g:hover{background:#34d399}
-.btn-ghost{background:transparent;color:var(--muted);border-color:var(--b2)}
-.btn-ghost:hover{background:var(--s2);color:var(--text)}
-.btn-xs{font-size:.7rem;padding:5px 12px;border-radius:6px}
+textarea{
+  flex:1;width:100%;
+  background:transparent;border:none;outline:none;
+  font-family:'Space Mono',monospace;font-size:.8rem;
+  color:var(--text);line-height:1.7;
+  padding:1rem 1.1rem;resize:none;
+  caret-color:var(--sky);
+}
+textarea::placeholder{color:var(--text3)}
 
-/* detect bar */
-.detect-bar{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:1rem}
-.detect-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:.6rem}
-.dtag{font-family:'JetBrains Mono',monospace;font-size:.68rem;padding:3px 10px;border-radius:20px;border:1px solid;display:flex;align-items:center;gap:5px}
-.dtag-h{background:rgba(0,229,255,.08);color:var(--cyan);border-color:rgba(0,229,255,.2)}
-.dtag-m{background:rgba(245,158,11,.1);color:var(--amber);border-color:rgba(245,158,11,.25)}
-.dtag-l{background:rgba(90,106,133,.1);color:var(--muted);border-color:rgba(90,106,133,.2)}
-.dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+/* Output panels stacked on right */
+.right-col{display:flex;flex-direction:column;gap:1.2rem}
+.out-panel{
+  background:var(--ink2);
+  border:1px solid var(--ink4);
+  border-radius:var(--r);
+  display:flex;flex-direction:column;
+  flex:1;
+  overflow:hidden;
+}
+.out-panel.enc-panel{border-color:rgba(0,255,179,.2)}
+.out-panel.dec-panel{border-color:rgba(255,107,157,.2)}
+.out-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem 1rem;
+  border-bottom:1px solid var(--ink4);
+  flex-shrink:0;
+}
+.enc-panel .out-header{background:rgba(0,255,179,.06)}
+.dec-panel .out-header{background:rgba(255,107,157,.06)}
+.out-title{font-size:.75rem;font-weight:700;letter-spacing:.06em;display:flex;align-items:center;gap:7px}
+.out-title span.enc-label{color:var(--enc)}
+.out-title span.dec-label{color:var(--dec)}
+.out-meta{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3)}
 
-/* section heading */
-.sec-lbl{font-size:.68rem;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin:1.25rem 0 .6rem;display:flex;align-items:center;gap:8px}
-.sec-lbl::after{content:'';flex:1;height:1px;background:var(--b1)}
+.out-content{
+  font-family:'Space Mono',monospace;font-size:.78rem;
+  color:var(--text);line-height:1.75;
+  padding:1rem 1.1rem;
+  flex:1;overflow-y:auto;word-break:break-all;white-space:pre-wrap;
+  min-height:110px;
+}
+.enc-panel .out-content{color:#a8ffd8}
+.dec-panel .out-content{color:#ffc0d9}
 
-/* caesar table */
-.ctable{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.73rem}
-.ctable th{color:var(--muted);font-weight:500;text-align:left;padding:5px 8px;border-bottom:1px solid var(--b1)}
-.ctable td{padding:4px 8px;border-bottom:1px solid var(--b1);vertical-align:top}
-.ctable tr:last-child td{border-bottom:none}
-.ctable tr:hover td{background:var(--s2)}
-.cn{color:var(--cyan);min-width:36px}
+.placeholder-text{color:var(--text3)!important;font-style:italic}
 
-/* entropy bar */
-.ebar-wrap{margin:.5rem 0}
-.ebar-track{height:6px;background:var(--b1);border-radius:3px;overflow:hidden}
-.ebar-fill{height:100%;border-radius:3px;transition:width .4s}
-.ebar-labels{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);margin-top:3px}
+/* status chips */
+.chip{
+  font-family:'Space Mono',monospace;font-size:.58rem;
+  padding:2px 8px;border-radius:12px;border:1px solid;
+}
+.chip-ok{background:rgba(0,255,179,.08);color:var(--enc);border-color:rgba(0,255,179,.2)}
+.chip-err{background:rgba(255,107,157,.08);color:var(--dec);border-color:rgba(255,107,157,.2)}
+.chip-oneway{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
+.chip-info{background:rgba(79,195,247,.08);color:var(--sky);border-color:rgba(79,195,247,.2)}
 
-/* forensics grid */
-.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-top:.75rem}
-.fcard{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:.8rem 1rem}
-.fcard-title{font-size:.68rem;font-weight:600;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem}
-.fcard-val{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700}
-.fcard-sub{font-size:.7rem;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
+/* buttons */
+.btn{
+  font-family:'Space Mono',monospace;font-size:.62rem;
+  padding:5px 12px;border-radius:6px;border:1px solid var(--wire);
+  background:transparent;color:var(--text2);cursor:pointer;
+  transition:all .12s;letter-spacing:.02em;white-space:nowrap;
+}
+.btn:hover{background:var(--ink4);color:var(--text);border-color:var(--wire2)}
+.btn-enc{border-color:rgba(0,255,179,.3);color:var(--enc)}
+.btn-enc:hover{background:rgba(0,255,179,.08)}
+.btn-dec{border-color:rgba(255,107,157,.3);color:var(--dec)}
+.btn-dec:hover{background:rgba(255,107,157,.08)}
+.btn:active{transform:scale(.96)}
 
-/* hash table */
-.htable{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.72rem}
-.htable th{color:var(--muted);font-weight:500;text-align:left;padding:5px 8px;border-bottom:1px solid var(--b1)}
-.htable td{padding:5px 8px;border-bottom:1px solid var(--b1);vertical-align:top;line-height:1.5}
-.htable tr:last-child td{border-bottom:none}
-.htable tr:hover td{background:var(--s2)}
-.conf-h{color:var(--green)}.conf-m{color:var(--amber)}.conf-l{color:var(--muted)}
+/* swap fab */
+.swap-btn{
+  position:fixed;bottom:1.5rem;right:1.5rem;
+  width:46px;height:46px;border-radius:50%;
+  background:var(--ink3);border:1px solid var(--wire2);
+  color:var(--text);font-size:1.2rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  transition:all .15s;z-index:200;
+}
+.swap-btn:hover{background:var(--ink4);transform:rotate(180deg)}
 
-/* chain vis */
-.chain-steps{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:.6rem}
-.chain-step{background:var(--s2);border:1px solid var(--b2);border-radius:6px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--cyan)}
-.chain-arrow{color:var(--muted);font-size:.8rem}
+/* method info bar */
+.method-info{
+  grid-column:1/-1;
+  display:flex;align-items:center;gap:10px;
+  padding:.55rem 1rem;
+  background:var(--ink2);border:1px solid var(--ink4);
+  border-radius:8px;font-size:.75rem;color:var(--text2);line-height:1.5;
+  flex-wrap:wrap;
+}
+.mi-name{font-weight:700;color:var(--text);font-size:.82rem}
+.mi-cat{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);background:var(--ink3);padding:2px 8px;border-radius:4px}
+.mi-enc{color:var(--enc);font-size:.7rem}
+.mi-dec{color:var(--dec);font-size:.7rem}
 
-/* vigenere cracker */
-.crack-result{background:var(--bg);border:1px solid var(--b1);border-radius:8px;padding:.8rem 1rem;margin-top:.6rem}
-.crack-key{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--amber);margin-bottom:.4rem}
-.crack-plain{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--text);word-break:break-all;line-height:1.6}
+/* copy feedback */
+.copied-flash{color:var(--enc)!important;border-color:rgba(0,255,179,.4)!important}
 
-/* encode sidebar layout */
-.enc-layout{display:grid;grid-template-columns:210px 1fr;gap:1.25rem}
-@media(max-width:680px){.enc-layout{grid-template-columns:1fr}.enc-sidebar{display:flex;flex-wrap:wrap;gap:5px}}
-.enc-scheme-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;margin-bottom:3px;background:transparent;border:1px solid transparent;border-radius:7px;cursor:pointer;text-align:left;transition:all .15s;color:var(--muted);font-family:'Syne',sans-serif;font-size:.8rem}
-.enc-scheme-btn:hover{background:var(--s1);color:var(--text);border-color:var(--b1)}
-.enc-scheme-btn.active{background:var(--s1);color:var(--text);border-color:rgba(167,139,250,.3)}
-.enc-scheme-btn.active .ei{color:var(--violet)}
-.ei{font-family:'JetBrains Mono',monospace;font-size:.82rem;width:22px;text-align:center;flex-shrink:0}
-.enc-cat{font-size:.6rem;color:var(--dim);margin-top:1px;font-family:'JetBrains Mono',monospace}
-.enc-cat-sep{font-size:.6rem;font-weight:600;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin:8px 0 3px 4px;font-family:'JetBrains Mono',monospace}
+/* table output */
+.result-table{width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:.7rem}
+.result-table th{color:var(--text3);font-weight:400;text-align:left;padding:4px 6px;border-bottom:1px solid var(--ink4)}
+.result-table td{padding:4px 6px;border-bottom:1px solid var(--ink4);vertical-align:top;line-height:1.6}
+.result-table tr:last-child td{border-bottom:none}
+.result-table tr:hover td{background:var(--ink3)}
+.tc{color:var(--sky)}
 
-.opt-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:.5rem}
-.opt-row label{font-size:.75rem;color:var(--muted);flex-shrink:0}
-.opt-row input,.opt-row select{width:auto;flex:1;min-width:110px;padding:6px 9px;border-radius:6px;font-size:.8rem}
+/* live count */
+.live-count{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
 
-.multi-row{display:flex;align-items:flex-start;gap:10px;padding:.65rem 1rem;border-bottom:1px solid var(--b1)}
-.multi-row:last-child{border-bottom:none}
-.m-lbl{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--violet);min-width:120px;flex-shrink:0;padding-top:2px}
-.m-val{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text);word-break:break-all;line-height:1.5;flex:1}
-
-/* empty states */
-.empty{text-align:center;padding:3.5rem 2rem;color:var(--dim)}
-.empty .big{font-size:2.5rem;opacity:.2;margin-bottom:.75rem}
-.empty p{font-size:.82rem;line-height:1.7;max-width:300px;margin:0 auto}
-
-.copied{color:var(--green)!important;border-color:rgba(16,185,129,.4)!important}
-
-/* signature detect */
-.sig-row{display:flex;gap:10px;padding:.5rem .8rem;border-bottom:1px solid var(--b1);font-family:'JetBrains Mono',monospace;font-size:.73rem;align-items:flex-start}
-.sig-row:last-child{border-bottom:none}
-.sig-type{color:var(--pink);min-width:80px;flex-shrink:0}
-.sig-desc{color:var(--text)}
-.sig-pos{color:var(--muted);font-size:.65rem;margin-top:1px}
+/* section label */
+.slbl{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="root">
 
-<!-- HEADER -->
+<!-- ══════════════ HEADER -->
 <header>
-  <div class="brand">
-    <svg class="brand-icon" viewBox="0 0 38 38" fill="none">
-      <rect width="38" height="38" rx="9" fill="#07090d" stroke="#1a2236"/>
-      <path d="M7 19h5l3-8 4 16 3-11 3 6 3-3" stroke="#00e5ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="30" cy="11" r="3" stroke="#a78bfa" stroke-width="1.4"/>
-      <path d="M29 11h2M30 10v2" stroke="#a78bfa" stroke-width="1.2" stroke-linecap="round"/>
+  <div class="logo">
+    <svg viewBox="0 0 34 34" fill="none">
+      <rect width="34" height="34" rx="8" fill="#0b0e14" stroke="#2d3a52"/>
+      <circle cx="17" cy="17" r="7" stroke="#00ffb3" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <circle cx="17" cy="17" r="3" fill="#ff6b9d"/>
+      <path d="M10 17h4M20 17h4M17 10v4M17 20v4" stroke="#4fc3f7" stroke-width="1.2" stroke-linecap="round"/>
     </svg>
-    <h1>Cipher<em>Sense</em></h1>
+    <div>
+      <div class="logo-text">Cipher<b>Sense</b></div>
+      <div class="logo-sub">Bidirectional Crypto Tool</div>
+    </div>
   </div>
-  <div class="hbadges">
-    <span class="badge badge-cyan">DECODER</span>
-    <span class="badge badge-violet">ENCODER</span>
-    <span class="badge badge-green">FORENSICS</span>
-    <span class="badge badge-cyan" style="border-color:rgba(245,158,11,.2);color:var(--amber);background:rgba(245,158,11,.08)">VIGENÈRE CRACKER</span>
-    <span class="badge badge-green" style="border-color:rgba(244,114,182,.2);color:var(--pink);background:rgba(244,114,182,.08)">CHAIN ANALYSIS</span>
+  <div class="hpills">
+    <span class="hpill hpill-e">↑ ENCODE ANY TEXT</span>
+    <span class="hpill hpill-d">↓ DECODE ANY TEXT</span>
+    <span class="hpill hpill-g">20+ METHODS · LIVE</span>
   </div>
 </header>
 
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab active t-decode" onclick="switchTab('decode',this)">⟳ Decode / Detect</button>
-  <button class="tab t-encode" onclick="switchTab('encode',this)">🔐 Encode / Encrypt</button>
-  <button class="tab t-crack" onclick="switchTab('crack',this)">⚡ Vigenère Cracker</button>
-  <button class="tab t-chain" onclick="switchTab('chain',this)">⛓ Chain Analysis</button>
-  <button class="tab t-forensics" onclick="switchTab('forensics',this)">🔬 Forensics</button>
+<!-- ══════════════ METHOD STRIP -->
+<div class="method-strip">
+  <span class="ms-label">Method →</span>
+  <div id="method-strip-inner"></div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════ DECODE PANE -->
-<div class="pane active" id="pane-decode">
-  <div class="lbl" style="margin-bottom:.5rem">Input</div>
-  <textarea id="dec-input" placeholder="Paste any encoded / encrypted string…&#10;&#10;Base64 · Hex · Binary · Morse · ROT13 · Caesar · Vigenère · JWT · 90+ hash types · XOR · URL · HTML · Unicode · Octal · Decimal · Atbash · Rail Fence · Bacon · ROT47 · and more…" spellcheck="false"></textarea>
-  <div class="btns">
-    <button class="btn-c" onclick="runDecode()">⟳ Decode &amp; Detect</button>
-    <button class="btn-ghost" onclick="clearDecode()">✕ Clear</button>
-    <button class="btn-ghost btn-xs" onclick="decSample()">▷ Sample</button>
-  </div>
-  <div id="dec-detect-bar" style="display:none" class="detect-bar">
-    <div class="lbl" style="margin-bottom:.3rem">Detected formats</div>
-    <div class="detect-tags" id="dec-tags"></div>
-  </div>
-  <div id="dec-results"></div>
-</div>
+<!-- ══════════════ MAIN -->
+<div class="main" id="main-grid">
 
-<!-- ══════════════════════════════════════════════════════════════ ENCODE PANE -->
-<div class="pane" id="pane-encode">
-  <div class="enc-layout">
-    <div class="enc-sidebar" id="enc-sidebar"></div>
-    <div id="enc-main">
-      <div class="empty"><div class="big">🔐</div><p>Pick a scheme from the left panel to begin encoding.</p></div>
+  <!-- method info row -->
+  <div class="method-info" id="mi-row">
+    <span class="mi-name" id="mi-name">Base64</span>
+    <span class="mi-cat" id="mi-cat">Encoding</span>
+    <span id="mi-desc" style="flex:1">Standard Base64 encoding (RFC 4648). Safe for text, binary data, and data URIs.</span>
+    <span class="mi-enc">↑ Encode: text → Base64</span>
+    <span class="mi-dec">↓ Decode: Base64 → plain text</span>
+  </div>
+
+  <!-- options bar (shown when method needs params) -->
+  <div class="options-bar" id="opts-bar"></div>
+
+  <!-- LEFT: INPUT -->
+  <div class="panel" id="input-panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="dot dot-in"></span>Your Input</div>
+      <div class="panel-actions">
+        <span class="live-count" id="in-count">0 chars</span>
+        <button class="btn" onclick="loadSample()">▷ Sample</button>
+        <button class="btn" onclick="clearAll()">✕ Clear</button>
+      </div>
     </div>
+    <textarea id="main-input"
+      placeholder="Type or paste anything here…&#10;&#10;• Plain text  →  instantly encoded below&#10;• Encoded text  →  instantly decoded below&#10;&#10;Both happen at the same time, live."
+      oninput="onInput()"
+      spellcheck="false"></textarea>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════════ CRACK PANE -->
-<div class="pane" id="pane-crack">
-  <div class="lbl" style="margin-bottom:.5rem">Vigenère Ciphertext</div>
-  <textarea id="crack-input" placeholder="Paste Vigenère ciphertext here (letters only, min ~40 chars for best results)…" spellcheck="false"></textarea>
-  <div class="btns">
-    <button class="btn-a" onclick="runCrack()">⚡ Auto-crack Key (Kasiski + IC)</button>
-    <button class="btn-ghost" onclick="document.getElementById('crack-input').value='';document.getElementById('crack-out').innerHTML=''">✕ Clear</button>
-    <button class="btn-ghost btn-xs" onclick="crackSample()">▷ Sample</button>
+  <!-- RIGHT: ENCODE + DECODE -->
+  <div class="right-col">
+
+    <!-- ENCODE OUTPUT -->
+    <div class="out-panel enc-panel">
+      <div class="out-header">
+        <div class="out-title">
+          <span class="dot dot-enc"></span>
+          <span class="enc-label">↑ ENCODED OUTPUT</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="chip" id="enc-chip">—</span>
+          <button class="btn btn-enc" onclick="copyOut('enc')">Copy</button>
+        </div>
+      </div>
+      <div class="out-content" id="enc-out"><span class="placeholder-text">Encoded result will appear here…</span></div>
+    </div>
+
+    <!-- DECODE OUTPUT -->
+    <div class="out-panel dec-panel">
+      <div class="out-header">
+        <div class="out-title">
+          <span class="dot dot-dec"></span>
+          <span class="dec-label">↓ DECODED OUTPUT</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="chip" id="dec-chip">—</span>
+          <button class="btn btn-dec" onclick="copyOut('dec')">Copy</button>
+        </div>
+      </div>
+      <div class="out-content" id="dec-out"><span class="placeholder-text">Decoded (plain text) result will appear here…</span></div>
+    </div>
+
   </div>
-  <div id="crack-out"></div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════════════ CHAIN PANE -->
-<div class="pane" id="pane-chain">
-  <div class="lbl" style="margin-bottom:.5rem">Input (potentially multi-encoded)</div>
-  <textarea id="chain-input" placeholder="Paste a string that may have been encoded multiple times…&#10;e.g. Base64 → Hex → URL-encoded" spellcheck="false"></textarea>
-  <div class="btns">
-    <button class="btn-ghost btn-xs" style="color:var(--pink);border-color:rgba(244,114,182,.3)" onclick="runChain()">⛓ Recursive Chain Decode</button>
-    <button class="btn-ghost" onclick="document.getElementById('chain-input').value='';document.getElementById('chain-out').innerHTML=''">✕ Clear</button>
-    <button class="btn-ghost btn-xs" onclick="chainSample()">▷ Sample</button>
-  </div>
-  <div id="chain-out"></div>
-</div>
+</div><!-- /main -->
+</div><!-- /root -->
 
-<!-- ══════════════════════════════════════════════════════════════ FORENSICS PANE -->
-<div class="pane" id="pane-forensics">
-  <div class="lbl" style="margin-bottom:.5rem">Input for forensic analysis</div>
-  <textarea id="for-input" placeholder="Paste any string — get entropy classification, byte distribution, file signature detection, charset analysis, statistical fingerprint…" spellcheck="false"></textarea>
-  <div class="btns">
-    <button class="btn-g" onclick="runForensics()">🔬 Full Forensic Analysis</button>
-    <button class="btn-ghost" onclick="document.getElementById('for-input').value='';document.getElementById('for-out').innerHTML=''">✕ Clear</button>
-    <button class="btn-ghost btn-xs" onclick="forSample()">▷ Sample</button>
-  </div>
-  <div id="for-out"></div>
-</div>
-
-</div><!-- /wrap -->
+<button class="swap-btn" title="Swap: use encoded output as new input" onclick="swapEncToInput()">⇅</button>
 
 <script>
 'use strict';
-// ═══════════════════════════════════════════════════════════════════════════════
-// UTILITIES
-// ═══════════════════════════════════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-function copyText(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
-    const o = btn.textContent; btn.textContent='✓ Copied'; btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied')},1500);
-  }).catch(()=>{});
-}
+// ═══════════════════════════════════════════════════════ UTILITIES
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function safeAtob(s){try{return atob(s)}catch{return null}}
+function isPrintable(s){return typeof s==='string'&&/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s)}
 
-function entropy(str) {
-  if (!str.length) return 0;
-  const f={};
-  for (const c of str) f[c]=(f[c]||0)+1;
-  let h=0;
-  for (const k in f){const p=f[k]/str.length;h-=p*Math.log2(p);}
-  return parseFloat(h.toFixed(3));
-}
-
-function isPrintable(s){return s&&/^[\x09\x0a\x0d\x20-\x7e]+$/.test(s)}
-function safeAtob(s){try{return atob(s.trim())}catch{return null}}
-
-function toggleCard(id){
-  const b=$('cb-'+id),c=$('ch-'+id);
-  if(!b||!c)return;
-  b.classList.toggle('open');
-  c.classList.toggle('open');
-}
-
-function switchTab(name,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  $('pane-'+name).classList.add('active');
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 90+ HASH SIGNATURES
-// ═══════════════════════════════════════════════════════════════════════════════
-const HASH_SIGS = [
-  // length-based
-  {len:8,  name:'CRC-32',        cat:'Checksum', pattern:/^[0-9a-f]{8}$/i},
-  {len:16, name:'MySQL 3.x',     cat:'Hash',     pattern:/^[0-9a-f]{16}$/i},
-  {len:16, name:'Half-MD5',      cat:'Hash',     pattern:/^[0-9a-f]{16}$/i},
-  {len:32, name:'MD5',           cat:'Hash',     pattern:/^[0-9a-f]{32}$/i},
-  {len:32, name:'MD4',           cat:'Hash',     pattern:/^[0-9a-f]{32}$/i},
-  {len:32, name:'NTLM',          cat:'Windows',  pattern:/^[0-9a-f]{32}$/i},
-  {len:32, name:'LM Hash',       cat:'Windows',  pattern:/^[0-9a-f]{32}$/i},
-  {len:32, name:'RipeMD-128',    cat:'Hash',     pattern:/^[0-9a-f]{32}$/i},
-  {len:40, name:'SHA-1',         cat:'Hash',     pattern:/^[0-9a-f]{40}$/i},
-  {len:40, name:'RipeMD-160',    cat:'Hash',     pattern:/^[0-9a-f]{40}$/i},
-  {len:40, name:'Haval-160',     cat:'Hash',     pattern:/^[0-9a-f]{40}$/i},
-  {len:40, name:'Tiger-160',     cat:'Hash',     pattern:/^[0-9a-f]{40}$/i},
-  {len:48, name:'Tiger-192',     cat:'Hash',     pattern:/^[0-9a-f]{48}$/i},
-  {len:48, name:'Haval-192',     cat:'Hash',     pattern:/^[0-9a-f]{48}$/i},
-  {len:56, name:'SHA-224',       cat:'Hash',     pattern:/^[0-9a-f]{56}$/i},
-  {len:56, name:'Haval-224',     cat:'Hash',     pattern:/^[0-9a-f]{56}$/i},
-  {len:64, name:'SHA-256',       cat:'Hash',     pattern:/^[0-9a-f]{64}$/i},
-  {len:64, name:'RipeMD-256',    cat:'Hash',     pattern:/^[0-9a-f]{64}$/i},
-  {len:64, name:'Haval-256',     cat:'Hash',     pattern:/^[0-9a-f]{64}$/i},
-  {len:64, name:'BLAKE2s-256',   cat:'Hash',     pattern:/^[0-9a-f]{64}$/i},
-  {len:80, name:'SHA-320',       cat:'Hash',     pattern:/^[0-9a-f]{80}$/i},
-  {len:96, name:'SHA-384',       cat:'Hash',     pattern:/^[0-9a-f]{96}$/i},
-  {len:96, name:'RipeMD-384',    cat:'Hash',     pattern:/^[0-9a-f]{96}$/i},
-  {len:128,name:'SHA-512',       cat:'Hash',     pattern:/^[0-9a-f]{128}$/i},
-  {len:128,name:'SHA3-512',      cat:'Hash',     pattern:/^[0-9a-f]{128}$/i},
-  {len:128,name:'BLAKE2b-512',   cat:'Hash',     pattern:/^[0-9a-f]{128}$/i},
-  {len:128,name:'Whirlpool',     cat:'Hash',     pattern:/^[0-9a-f]{128}$/i},
-  {len:128,name:'RipeMD-512',    cat:'Hash',     pattern:/^[0-9a-f]{128}$/i},
-  // prefix-based
-  {prefix:/^\$2[ayb]\$/,  name:'bcrypt',        cat:'Password', len:null},
-  {prefix:/^\$6\$/,       name:'SHA-512-crypt',  cat:'Password', len:null},
-  {prefix:/^\$5\$/,       name:'SHA-256-crypt',  cat:'Password', len:null},
-  {prefix:/^\$1\$/,       name:'MD5-crypt',      cat:'Password', len:null},
-  {prefix:/^\$apr1\$/,    name:'Apache MD5',     cat:'Password', len:null},
-  {prefix:/^\$argon2/,    name:'Argon2',         cat:'Password', len:null},
-  {prefix:/^\$scrypt\$/,  name:'scrypt',         cat:'Password', len:null},
-  {prefix:/^\$pbkdf2/i,   name:'PBKDF2',         cat:'Password', len:null},
-  {prefix:/^[0-9a-f]{32}:[0-9a-f]{32}$/i, name:'MD5:Salt',cat:'Password',len:null},
-  {prefix:/^sha1\$/i,     name:'SHA-1 (tagged)', cat:'Hash', len:null},
-  {prefix:/^\{SHA\}/i,    name:'SHA-1 base64 (LDAP)',cat:'LDAP',len:null},
-  {prefix:/^\{SSHA\}/i,   name:'SSHA (LDAP)',    cat:'LDAP', len:null},
-  {prefix:/^\{MD5\}/i,    name:'MD5 base64 (LDAP)',cat:'LDAP',len:null},
-  // JWT
-  {prefix:/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/, name:'JWT (JSON Web Token)', cat:'Token', len:null},
-];
-
-function identifyHashes(s) {
-  const clean = s.trim();
-  const matches = [];
-  for (const h of HASH_SIGS) {
-    let hit = false;
-    if (h.len && clean.length === h.len && h.pattern && h.pattern.test(clean)) hit = true;
-    if (!h.len && h.prefix && h.prefix.test(clean)) hit = true;
-    if (hit) matches.push(h);
+function hexToText(hex){
+  const c=hex.replace(/[\s:0x]/g,'').replace(/^0x/gi,'');
+  if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0)return null;
+  let o='';
+  for(let i=0;i<c.length;i+=2){
+    const code=parseInt(c.slice(i,i+2),16);
+    o+=String.fromCharCode(code);
   }
-  return matches;
+  return o;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// FILE MAGIC SIGNATURES
-// ═══════════════════════════════════════════════════════════════════════════════
-const FILE_SIGS = [
-  {hex:/^ffd8ff/,        type:'JPEG image',         ext:'.jpg'},
-  {hex:/^89504e47/,      type:'PNG image',           ext:'.png'},
-  {hex:/^47494638/,      type:'GIF image',           ext:'.gif'},
-  {hex:/^25504446/,      type:'PDF document',        ext:'.pdf'},
-  {hex:/^504b0304/,      type:'ZIP archive / DOCX / APK',ext:'.zip'},
-  {hex:/^504b0506/,      type:'ZIP (empty)',          ext:'.zip'},
-  {hex:/^1f8b08/,        type:'GZIP compressed',     ext:'.gz'},
-  {hex:/^425a68/,        type:'BZip2 compressed',    ext:'.bz2'},
-  {hex:/^fd377a585a00/,  type:'XZ compressed',       ext:'.xz'},
-  {hex:/^377abcaf/,      type:'7-Zip archive',       ext:'.7z'},
-  {hex:/^52617221/,      type:'RAR archive',         ext:'.rar'},
-  {hex:/^7f454c46/,      type:'ELF executable',      ext:'(linux bin)'},
-  {hex:/^4d5a/,          type:'PE / Windows EXE',    ext:'.exe'},
-  {hex:/^cafebabe/,      type:'Java Class / Mach-O Fat',ext:'.class'},
-  {hex:/^feedface/,      type:'Mach-O binary (32-bit)',ext:'(macho)'},
-  {hex:/^feadfeed/,      type:'Mach-O dylib',        ext:'(macho)'},
-  {hex:/^d0cf11e0/,      type:'MS Office legacy (OLE)',ext:'.doc/.xls'},
-  {hex:/^4f676753/,      type:'Ogg audio/video',     ext:'.ogg'},
-  {hex:/^494433/,        type:'MP3 (ID3 tag)',        ext:'.mp3'},
-  {hex:/^52494646/,      type:'RIFF (WAV/AVI)',       ext:'.wav/.avi'},
-  {hex:/^38425053/,      type:'Photoshop PSD',        ext:'.psd'},
-  {hex:/^3c3f786d6c/,    type:'XML document',         ext:'.xml'},
-  {hex:/^3c68746d6c/i,   type:'HTML document',        ext:'.html'},
-  {hex:/^7b0a|^7b22/,    type:'JSON data',            ext:'.json'},
-  {hex:/^53514c69/,      type:'SQLite database',      ext:'.db'},
-  {hex:/^00000100/,      type:'Windows ICO icon',     ext:'.ico'},
-  {hex:/^664c6143/,      type:'FLAC audio',           ext:'.flac'},
-  {hex:/^1a45dfa3/,      type:'Matroska MKV/WEBM',   ext:'.mkv'},
-];
-
-function detectFileSig(hexStr) {
-  const lower = hexStr.replace(/\s/g,'').toLowerCase();
-  return FILE_SIGS.filter(s => s.hex.test(lower));
+function copyBtn(btn){
+  const o=btn.textContent;
+  btn.textContent='✓';btn.classList.add('copied-flash');
+  setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied-flash')},1400);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DECODERS
-// ═══════════════════════════════════════════════════════════════════════════════
-const DECODERS = [
-  {id:'b64',name:'Base64',icon:'⬡',cat:'Encoding',
-   detect:s=>/^[A-Za-z0-9+/]{4,}={0,2}$/.test(s.trim())&&s.trim().length%4===0,
-   decode(s){
-     const r=safeAtob(s.trim());
-     if(!r)return{st:'fail',out:'Invalid Base64'};
-     if(isPrintable(r))return{st:'ok',out:r,note:'UTF-8 text'};
-     const h=Array.from(r).map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' ');
-     return{st:'ok',out:h,note:'Binary → shown as hex'};
-   }},
-  {id:'b64url',name:'Base64 URL-safe',icon:'⬡',cat:'Encoding',
-   detect:s=>/^[A-Za-z0-9_-]{4,}$/.test(s.trim())&&s.trim().length%4!==1,
-   decode(s){
-     let t=s.trim().replace(/-/g,'+').replace(/_/g,'/');
-     while(t.length%4)t+='=';
-     const r=safeAtob(t);
-     if(!r)return{st:'fail',out:'Invalid Base64URL'};
-     if(isPrintable(r))return{st:'ok',out:r};
-     return{st:'ok',out:Array.from(r).map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '),note:'Binary→hex'};
-   }},
-  {id:'b32',name:'Base32',icon:'⬡',cat:'Encoding',
-   detect:s=>/^[A-Z2-7]+=*$/i.test(s.trim())&&s.trim().length>=8,
-   decode(s){
-     const alpha='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-     const inp=s.trim().toUpperCase().replace(/=/g,'');
-     let bits='',out='';
-     for(const c of inp){const i=alpha.indexOf(c);if(i<0)return{st:'fail',out:'Bad char: '+c};bits+=i.toString(2).padStart(5,'0');}
-     for(let i=0;i+8<=bits.length;i+=8)out+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));
-     return isPrintable(out)?{st:'ok',out}:{st:'ok',out:Array.from(out).map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '),note:'Binary→hex'};
-   }},
-  {id:'hex',name:'Hexadecimal',icon:'0x',cat:'Encoding',
-   detect:s=>{const c=s.trim().replace(/[\s:]/g,'');return/^[0-9a-fA-F]+$/.test(c)&&c.length%2===0&&c.length>=4},
-   decode(s){
-     const c=s.trim().replace(/[\s:]/g,'');
-     let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));
-     return isPrintable(o)?{st:'ok',out:o}:{st:'part',out:o,note:'Contains non-printable bytes'};
-   }},
-  {id:'bin',name:'Binary (8-bit)',icon:'01',cat:'Encoding',
-   detect:s=>{const c=s.trim().replace(/\s/g,'');return/^[01]+$/.test(c)&&c.length%8===0&&c.length>=8},
-   decode(s){
-     const c=s.trim().replace(/\s/g,'');let o='';
-     for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));
-     return isPrintable(o)?{st:'ok',out:o}:{st:'part',out:o};
-   }},
-  {id:'oct',name:'Octal',icon:'8x',cat:'Encoding',
-   detect:s=>/^(\s*[0-3][0-7]{2}\s*)+$/.test(s.trim()),
-   decode(s){
-     const o=s.trim().split(/\s+/).map(t=>String.fromCharCode(parseInt(t,8))).join('');
-     return isPrintable(o)?{st:'ok',out:o}:{st:'part',out:o};
-   }},
-  {id:'dec',name:'Decimal ASCII',icon:'0d',cat:'Encoding',
-   detect:s=>{const t=s.trim().split(/[\s,]+/);return t.length>=2&&t.every(x=>/^\d+$/.test(x)&&+x>=32&&+x<=126)},
-   decode(s){const o=s.trim().split(/[\s,]+/).map(t=>String.fromCharCode(+t)).join('');return{st:'ok',out:o}}},
-  {id:'url',name:'URL Encoding',icon:'%',cat:'Encoding',
-   detect:s=>/%[0-9a-fA-F]{2}/.test(s),
-   decode(s){try{return{st:'ok',out:decodeURIComponent(s.trim())}}catch{return{st:'fail',out:'Invalid URL encoding'}}}},
-  {id:'html',name:'HTML Entities',icon:'&',cat:'Encoding',
-   detect:s=>/&[a-zA-Z]{2,};|&#\d+;|&#x[0-9a-fA-F]+;/.test(s),
-   decode(s){const el=document.createElement('textarea');el.innerHTML=s;return{st:'ok',out:el.value}}},
-  {id:'uni',name:'Unicode Escape',icon:'\\u',cat:'Encoding',
-   detect:s=>/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}/.test(s),
-   decode(s){
-     let o=s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
-     o=o.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
-     return{st:'ok',out:o};
-   }},
-  {id:'morse',name:'Morse Code',icon:'•–',cat:'Cipher',
-   detect:s=>/^[.\-/ ]+$/.test(s.trim())&&/[.\-]/.test(s),
-   decode(s){
-     const M={  '.-':'A','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-.....':'6','--....':'7','---..':'8','----.':'9','-----':'0','.-.-.-':'.','--..--':',','..--..':'?','-....-':'-'};
-     const words=s.trim().split(/\s{2,}|\s*\/\s*/);
-     const o=words.map(w=>w.trim().split(/\s+/).map(sym=>M[sym]||'?').join('')).join(' ');
-     return{st:o.includes('?')?'part':'ok',out:o};
-   }},
-  {id:'rot13',name:'ROT13',icon:'↻',cat:'Cipher',
-   detect:s=>/^[a-zA-Z\s\W]+$/.test(s.trim()),
-   decode(s){const o=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65));return{st:'ok',out:o,note:'ROT13 is its own inverse'}}},
-  {id:'rot47',name:'ROT47',icon:'↻₄₇',cat:'Cipher',
-   detect:s=>/^[\x21-\x7E\s]+$/.test(s.trim()),
-   decode(s){const o=s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)));return{st:'ok',out:o,note:'ROT47 is its own inverse'}}},
-  {id:'atbash',name:'Atbash',icon:'A↔Z',cat:'Cipher',
-   detect:s=>/^[a-zA-Z\s\W]+$/.test(s.trim()),
-   decode(s){const o=s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)));return{st:'ok',out:o}}},
-  {id:'caesar',name:'Caesar (all 25)',icon:'⟳',cat:'Cipher',
-   detect:s=>/^[a-zA-Z\s\W]+$/.test(s.trim()),
-   decode(s){
-     const shift=n=>s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65));
-     return{st:'part',type:'caesar',rows:Array.from({length:25},(_,i)=>({n:i+1,t:shift(i+1)}))};
-   }},
-  {id:'bacon',name:"Bacon's Cipher",icon:'🥓',cat:'Cipher',
-   detect:s=>/^[abAB\s]+$/.test(s.trim())&&s.trim().replace(/\s/g,'').length%5===0,
-   decode(s){
-     const M={AAAAA:'A',AAAAB:'B',AAABA:'C',AAABB:'D',AABAA:'E',AABAB:'F',AABBA:'G',AABBB:'H',ABAAA:'I',ABAAB:'J',ABABA:'K',ABABB:'L',ABBAA:'M',ABBAB:'N',ABBBA:'O',ABBBB:'P',BAAAA:'Q',BAAAB:'R',BAABA:'S',BAABB:'T',BABAA:'U',BABAB:'V',BABBA:'W',BABBB:'X',BBAAA:'Y',BBAAB:'Z'};
-     const c=s.trim().toUpperCase().replace(/\s/g,'');let o='';
-     for(let i=0;i+5<=c.length;i+=5)o+=M[c.slice(i,i+5)]||'?';
-     return{st:o.includes('?')?'part':'ok',out:o};
-   }},
-  {id:'rail',name:'Rail Fence (2–4)',icon:'≡',cat:'Cipher',
-   detect:s=>/^[a-zA-Z]+$/.test(s.trim())&&s.trim().length>=6,
-   decode(s){
-     const text=s.trim();
-     const results=[];
-     for(let rails=2;rails<=4;rails++){
-       const fence=Array.from({length:rails},()=>[]);
-       let r=0,d=1;
-       for(let i=0;i<text.length;i++){fence[r].push(i);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
-       const flat=fence.flat(),res=new Array(text.length);
-       flat.forEach((p,i)=>res[p]=text[i]);
-       results.push({rails,text:res.join('')});
-     }
-     return{st:'part',out:results.map(r=>`Rails ${r.rails}: ${r.text}`).join('\n')};
-   }},
-  {id:'jwt',name:'JWT',icon:'🪙',cat:'Token',
-   detect:s=>/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s.trim()),
-   decode(s){
-     const p=s.trim().split('.');
-     const dec=x=>{let t=x.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';try{return JSON.stringify(JSON.parse(atob(t)),null,2)}catch{try{return atob(t)}catch{return x;}}};
-     return{st:'ok',out:`=== HEADER ===\n${dec(p[0])}\n\n=== PAYLOAD ===\n${dec(p[1])}\n\n=== SIGNATURE (not verified) ===\n${p[2]}`};
-   }},
-  {id:'hash',name:'Hash Identification (90+)',icon:'#',cat:'Hash',
-   detect:s=>identifyHashes(s).length>0,
-   decode(s){
-     const m=identifyHashes(s);
-     if(!m.length)return{st:'fail',out:'No hash pattern matched'};
-     return{st:'det',type:'hash-table',rows:m,note:`${m.length} possible type(s) identified`};
-   }},
-  {id:'xor',name:'XOR brute-force',icon:'⊕',cat:'Cipher',
-   detect:s=>{const c=s.trim().replace(/[\s:]/g,'');return/^[0-9a-fA-F]+$/.test(c)&&c.length%2===0&&c.length>=4},
-   decode(s){
-     const c=s.trim().replace(/[\s:]/g,'');
-     const bytes=[];for(let i=0;i<c.length;i+=2)bytes.push(parseInt(c.slice(i,i+2),16));
-     const res=[];
-     for(let k=1;k<=255;k++){const o=bytes.map(b=>String.fromCharCode(b^k)).join('');if(isPrintable(o)&&/[a-zA-Z]{3,}/.test(o))res.push({k,o});}
-     if(!res.length)return{st:'fail',out:'No printable results for any single-byte key'};
-     return{st:'part',out:res.slice(0,12).map(r=>`Key 0x${r.k.toString(16).padStart(2,'0')} (${r.k}): ${r.o}`).join('\n'),note:'Top 12 printable XOR results'};
-   }},
-];
+// ═══════════════════════════════════════════════════════ METHOD DEFINITIONS
+// Each method has:
+//   encode(text, opts) → string  — converts plain text → encoded
+//   decode(text, opts) → string  — converts encoded → plain text
+//   options[]  — param definitions
+//   note: string  — shown in info bar
+const METHODS = [
 
-function getConf(id, s) {
-  const hi=['jwt','hash','bin','morse'];
-  if(hi.includes(id)) return 0.9;
-  if(id==='b64'&&/^[A-Za-z0-9+/]+=*$/.test(s.trim())&&s.trim().length%4===0) return 0.88;
-  if(id==='hex'&&/^[0-9a-fA-F\s:]+$/.test(s.trim())) return 0.82;
-  if(id==='url'&&/%[0-9a-fA-F]{2}/.test(s)) return 0.85;
-  return 0.45;
-}
-
-// ─── DECODE RUNNER ──────────────────────────────────────────────────────────
-function runDecode() {
-  const s = $('dec-input').value.trim();
-  if (!s) return;
-  const detected = DECODERS.filter(d=>d.detect(s)).map(d=>({...d,conf:getConf(d.id,s)})).sort((a,b)=>b.conf-a.conf);
-
-  // detect bar
-  const bar=$('dec-detect-bar'), tags=$('dec-tags');
-  bar.style.display='block'; tags.innerHTML='';
-  if (!detected.length) {
-    tags.innerHTML='<span class="dtag dtag-l"><span class="dot"></span>No common format detected</span>';
-  } else {
-    detected.forEach(d=>{
-      const cl=d.conf>.7?'dtag-h':d.conf>.5?'dtag-m':'dtag-l';
-      tags.innerHTML+=`<span class="dtag ${cl}"><span class="dot"></span>${d.name}</span>`;
-    });
-  }
-
-  // result cards
-  const area=$('dec-results');
-  area.innerHTML='';
-  const highKeys=detected.filter(d=>d.conf>.4).map(d=>d.id);
-  const otherKeys=DECODERS.filter(d=>!highKeys.includes(d.id)).map(d=>d.id);
-
-  if (highKeys.length) {
-    area.innerHTML+=`<div class="sec-lbl">High-confidence matches</div>`;
-    highKeys.forEach(k=>area.appendChild(buildDecCard(k,s,true)));
-  }
-  if (otherKeys.length) {
-    area.innerHTML+=`<div class="sec-lbl">All other checks</div>`;
-    otherKeys.forEach(k=>area.appendChild(buildDecCard(k,s,false)));
-  }
-}
-
-function buildDecCard(id, s, autoOpen) {
-  const d=DECODERS.find(x=>x.id===id);
-  const res=d.decode(s);
-  const card=document.createElement('div');
-  card.className='card';
-  const stClass=res.st==='ok'?'pill-ok':res.st==='det'?'pill-det':res.st==='part'?'pill-part':'pill-no';
-  const stLabel=res.st==='ok'?'✓ Decoded':res.st==='det'?'◉ Detected':res.st==='part'?'~ Partial':'— No match';
-  card.innerHTML=`
-    <div class="card-header" onclick="toggleCard('${id}')">
-      <div class="card-title">
-        <span class="card-icon">${d.icon}</span>
-        <div><div class="card-name">${d.name}</div><div class="card-sub">${d.cat}</div></div>
-      </div>
-      <div class="card-right">
-        <span class="pill ${stClass}">${stLabel}</span>
-        <span class="chevron${autoOpen?' open':''}" id="ch-${id}">▼</span>
-      </div>
-    </div>
-    <div class="card-body${autoOpen?' open':''}" id="cb-${id}">${buildDecBody(res,s,id)}</div>`;
-  return card;
-}
-
-function buildDecBody(res, s, id) {
-  if (res.type==='caesar') {
-    const rows=res.rows.map(r=>`<tr><td class="cn">+${r.n}</td><td class="ctable-text">${esc(r.t)}</td></tr>`).join('');
-    return `<div class="mono" style="padding:0"><table class="ctable"><thead><tr><th>Shift</th><th>Output</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="meta" style="margin-top:.4rem">Scan for readable output above</div>`;
-  }
-  if (res.type==='hash-table') {
-    const rows=res.rows.map(r=>`<tr><td style="color:var(--cyan)">${esc(r.name)}</td><td style="color:var(--muted)">${esc(r.cat)}</td><td style="color:var(--muted)">${r.len||'variable'}</td></tr>`).join('');
-    return `<div class="mono" style="padding:0"><table class="htable"><thead><tr><th>Hash Type</th><th>Category</th><th>Length</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="meta" style="margin-top:.5rem">⚠️ Hashes are one-way — cannot be reversed. Use hashcat / john / rainbow tables to crack.</div>`;
-  }
-  if (!res.out) return `<div class="meta">No output — format not matched.</div>`;
-  const txt=res.out;
-  const ent=entropy(txt);
-  return `<div class="mono">${esc(txt)}</div>
-  <div class="row-meta">
-    <span class="meta">${res.note||''} · Entropy: ${ent} · Length: ${txt.length}</span>
-    <button class="btn-ghost btn-xs" onclick="copyText(${JSON.stringify(txt)},this)">Copy</button>
-  </div>`;
-}
-
-function clearDecode(){$('dec-input').value='';$('dec-detect-bar').style.display='none';$('dec-results').innerHTML='';}
-const DEC_SAMPLES=['SGVsbG8sIFNlY3VyaXR5IFJlc2VhcmNoZXIh','48 65 6c 6c 6f 20 57 6f 72 6c 64','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c','.... . .-.. .-.. ---  .-- --- .-. .-.. -..','01001000 01100101 01101100 01101100 01101111','kolhrswelfernatuzdhzmwmrmgkzgkezbnkkwln'];
-let _dsi=0;
-function decSample(){$('dec-input').value=DEC_SAMPLES[_dsi++%DEC_SAMPLES.length];}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ENCODER
-// ═══════════════════════════════════════════════════════════════════════════════
-const ENC_SCHEMES = [
-  {id:'e-b64',name:'Base64',icon:'⬡',cat:'Encoding',desc:'Standard Base64 (RFC 4648).',opts:[],
-   enc(t){return[{l:'Base64',v:btoa(unescape(encodeURIComponent(t)))}]}},
-  {id:'e-b64u',name:'Base64 URL-safe',icon:'⬡',cat:'Encoding',desc:'URL-safe Base64 (no padding).',opts:[],
-   enc(t){return[{l:'Base64URL',v:btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}]}},
-  {id:'e-b32',name:'Base32',icon:'⬡',cat:'Encoding',desc:'Base32 (RFC 4648).',opts:[],
-   enc(t){
-     const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-     let bits='',o='';
-     for(let i=0;i<t.length;i++)bits+=t.charCodeAt(i).toString(2).padStart(8,'0');
-     while(bits.length%5)bits+='0';
-     for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];
-     while(o.length%8)o+='=';
-     return[{l:'Base32',v:o}];
-   }},
-  {id:'e-hex',name:'Hexadecimal',icon:'0x',cat:'Encoding',desc:'Hex encode each byte.',
-   opts:[{id:'sep',l:'Sep',type:'sel',choices:['space','none','colon','comma'],def:'space'}],
-   enc(t,o){
-     const sep={space:' ',none:'',colon:':',comma:','}[o.sep||'space'];
-     const plain=Array.from(t).map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep);
-     return[{l:'Hex',v:plain},{l:'Uppercase',v:plain.toUpperCase()},{l:'0x-prefixed',v:Array.from(t).map(c=>'0x'+c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep||' ')}];
-   }},
-  {id:'e-bin',name:'Binary',icon:'01',cat:'Encoding',desc:'8-bit binary per character.',opts:[],
-   enc(t){return[{l:'Binary',v:Array.from(t).map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ')}]}},
-  {id:'e-oct',name:'Octal',icon:'8x',cat:'Encoding',desc:'Octal per character.',opts:[],
-   enc(t){return[{l:'Octal',v:Array.from(t).map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' ')}]}},
-  {id:'e-dec',name:'Decimal ASCII',icon:'0d',cat:'Encoding',desc:'Decimal code per character.',opts:[],
-   enc(t){return[{l:'Decimal',v:Array.from(t).map(c=>c.charCodeAt(0)).join(' ')}]}},
-  {id:'e-url',name:'URL Encoding',icon:'%',cat:'Encoding',desc:'Percent-encode for URLs.',opts:[],
-   enc(t){return[{l:'encodeURIComponent',v:encodeURIComponent(t)},{l:'Full %XX',v:Array.from(t).map(c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0').toUpperCase()).join('')}]}},
-  {id:'e-html',name:'HTML Entities',icon:'&',cat:'Encoding',desc:'Escape HTML special chars.',
-   opts:[{id:'hm',l:'Mode',type:'sel',choices:['named','decimal','hex'],def:'named'}],
-   enc(t,o){
-     const nm={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
-     const m=o.hm||'named';
-     let v;
-     if(m==='named')v=t.replace(/[&<>"']/g,c=>nm[c]||c);
-     else if(m==='decimal')v=Array.from(t).map(c=>`&#${c.charCodeAt(0)};`).join('');
-     else v=Array.from(t).map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('');
-     return[{l:'HTML',v}];
-   }},
-  {id:'e-uni',name:'Unicode Escape',icon:'\\u',cat:'Encoding',desc:'\\uXXXX / \\xXX escapes.',
-   opts:[{id:'um',l:'Format',type:'sel',choices:['\\uXXXX','\\xXX','U+XXXX'],def:'\\uXXXX'}],
-   enc(t,o){
-     const m=o.um||'\\uXXXX';let v;
-     if(m==='\\uXXXX')v=Array.from(t).map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join('');
-     else if(m==='\\xXX')v=Array.from(t).map(c=>'\\x'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
-     else v=Array.from(t).map(c=>'U+'+c.charCodeAt(0).toString(16).toUpperCase().padStart(4,'0')).join(' ');
-     return[{l:'Unicode',v}];
-   }},
-  {id:'e-r13',name:'ROT13',icon:'↻',cat:'Cipher',desc:'Shift letters by 13.',opts:[],
-   enc(t){const v=t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65));return[{l:'ROT13',v}]}},
-  {id:'e-r47',name:'ROT47',icon:'↻₄₇',cat:'Cipher',desc:'Rotate all 94 printable ASCII chars by 47.',opts:[],
-   enc(t){const v=t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)));return[{l:'ROT47',v}]}},
-  {id:'e-atb',name:'Atbash',icon:'A↔Z',cat:'Cipher',desc:'A↔Z substitution.',opts:[],
-   enc(t){const v=t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)));return[{l:'Atbash',v}]}},
-  {id:'e-cae',name:'Caesar Cipher',icon:'⟳',cat:'Cipher',desc:'Shift letters by N positions.',
-   opts:[{id:'sh',l:'Shift (1-25)',type:'num',min:1,max:25,def:'3'}],
-   enc(t,o){
-     const n=parseInt(o.sh)||3;
-     const v=t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65));
-     return[{l:`Caesar +${n}`,v}];
-   }},
-  {id:'e-vig',name:'Vigenère',icon:'🔑',cat:'Cipher',desc:'Polyalphabetic cipher with keyword.',
-   opts:[{id:'vk',l:'Keyword',type:'txt',placeholder:'e.g. SECRET',def:''}],
-   enc(t,o){
-     const k=(o.vk||'').toLowerCase().replace(/[^a-z]/g,'');
-     if(!k)return[{l:'Error',v:'Please enter a keyword.'}];
-     let ki=0;
-     const v=t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65;const sh=k[ki++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b+sh)%26)+b);});
-     return[{l:`Vigenère (key: "${o.vk}")`,v}];
-   }},
-  {id:'e-xor',name:'XOR Cipher',icon:'⊕',cat:'Cipher',desc:'XOR each byte with a key byte.',
-   opts:[{id:'xk',l:'Key byte (0-255)',type:'num',min:1,max:255,def:'42'},{id:'xf',l:'Output format',type:'sel',choices:['hex','decimal','binary'],def:'hex'}],
-   enc(t,o){
-     const k=parseInt(o.xk)||42,f=o.xf||'hex';
-     const bytes=Array.from(t).map(c=>c.charCodeAt(0)^k);
-     let v;
-     if(f==='hex')v=bytes.map(b=>b.toString(16).padStart(2,'0')).join(' ');
-     else if(f==='decimal')v=bytes.join(' ');
-     else v=bytes.map(b=>b.toString(2).padStart(8,'0')).join(' ');
-     return[{l:`XOR 0x${k.toString(16).padStart(2,'0')} (${f})`,v}];
-   }},
-  {id:'e-mor',name:'Morse Code',icon:'•–',cat:'Cipher',desc:'Dots and dashes.',opts:[],
-   enc(t){
-     const M={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.','.':'.-.-.-',',':'--..--','?':'..--..','-':'-....-'};
-     const v=t.toUpperCase().split(' ').map(w=>w.split('').map(c=>M[c]||'').filter(Boolean).join(' ')).join(' / ');
-     return[{l:'Morse',v}];
-   }},
-  {id:'e-bac',name:"Bacon's Cipher",icon:'🥓',cat:'Cipher',desc:'5-char A/B groups per letter.',opts:[],
-   enc(t){
-     const M={A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'};
-     const v=t.toUpperCase().split('').map(c=>M[c]||c).join(' ');
-     return[{l:"Bacon's",v}];
-   }},
-  {id:'e-rai',name:'Rail Fence',icon:'≡',cat:'Cipher',desc:'Zigzag transposition cipher.',
-   opts:[{id:'rf',l:'Rails (2-8)',type:'num',min:2,max:8,def:'3'}],
-   enc(t,o){
-     const rails=Math.max(2,Math.min(8,parseInt(o.rf)||3));
-     const fence=Array.from({length:rails},()=>[]);
-     let r=0,d=1;
-     for(const c of t){fence[r].push(c);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
-     return[{l:`Rail Fence (${rails} rails)`,v:fence.map(row=>row.join('')).join('')}];
-   }},
-  {id:'e-sha',name:'SHA-256 Hash',icon:'#',cat:'Hash',desc:'One-way SHA-256 via WebCrypto.',opts:[],
-   async enc(t){
-     const enc2=new TextEncoder();
-     const buf=await crypto.subtle.digest('SHA-256',enc2.encode(t));
-     const h=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-     return[{l:'SHA-256',v:h},{l:'Note',v:'Hashes are one-way — cannot be reversed.'}];
-   }},
-];
-
-let curScheme=null, encOpts={};
-
-function buildEncSidebar(){
-  const sb=$('enc-sidebar');sb.innerHTML='';
-  let lastCat='';
-  ENC_SCHEMES.forEach(s=>{
-    if(s.cat!==lastCat){
-      lastCat=s.cat;
-      const sep=document.createElement('div');sep.className='enc-cat-sep';sep.textContent=s.cat;sb.appendChild(sep);
+  // ── ENCODINGS ──────────────────────────────────────────────────────────────
+  { id:'base64', name:'Base64', cat:'Encoding',
+    desc:'Standard Base64 (RFC 4648). Converts any text or binary to printable ASCII.',
+    encLabel:'text → Base64', decLabel:'Base64 → plain text', opts:[],
+    encode(t){ try{return btoa(unescape(encodeURIComponent(t)))}catch{return'[encode error]'} },
+    decode(t){
+      try{
+        let s=t.trim().replace(/\s/g,'');
+        while(s.length%4)s+='=';
+        const r=safeAtob(s);
+        if(r===null)return'[not valid Base64]';
+        // try UTF-8 decode
+        try{return decodeURIComponent(escape(r))}catch{return r}
+      }catch{return'[not valid Base64]'}
     }
-    const btn=document.createElement('button');
-    btn.className='enc-scheme-btn';btn.id='esb-'+s.id;
-    btn.innerHTML=`<span class="ei">${s.icon}</span><div><div>${s.name}</div><div class="enc-cat">${s.cat}</div></div>`;
-    btn.onclick=()=>selectEnc(s.id);
-    sb.appendChild(btn);
-  });
-}
+  },
 
-function selectEnc(id){
-  curScheme=id;encOpts={};
-  document.querySelectorAll('.enc-scheme-btn').forEach(b=>b.classList.remove('active'));
-  const btn=$('esb-'+id);if(btn)btn.classList.add('active');
-  const s=ENC_SCHEMES.find(x=>x.id===id);
-  const main=$('enc-main');
-  let optsHtml='';
-  if(s.opts&&s.opts.length){
-    optsHtml='<div style="background:var(--s1);border:1px solid var(--b1);border-radius:9px;padding:.8rem 1rem;margin:.75rem 0"><div class="lbl" style="margin-bottom:.4rem">Options</div><div class="opt-row">';
-    s.opts.forEach(o=>{
-      encOpts[o.id]=o.def||'';
-      if(o.type==='sel')optsHtml+=`<label>${o.l}</label><select id="eo-${o.id}" onchange="setEncOpt('${o.id}',this.value)">${o.choices.map(c=>`<option value="${c}"${c===o.def?' selected':''}>${c}</option>`).join('')}</select>`;
-      else if(o.type==='num')optsHtml+=`<label>${o.l}</label><input type="number" id="eo-${o.id}" value="${o.def}" min="${o.min||0}" max="${o.max||999}" oninput="setEncOpt('${o.id}',this.value)">`;
-      else optsHtml+=`<label>${o.l}</label><input type="text" id="eo-${o.id}" value="${o.def||''}" placeholder="${o.placeholder||''}" oninput="setEncOpt('${o.id}',this.value)">`;
-    });
-    optsHtml+='</div></div>';
-  }
-  main.innerHTML=`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid var(--b1)">
-      <span style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;color:var(--violet)">${s.icon}</span>
-      <div><div style="font-size:1rem;font-weight:700">${s.name}</div><div style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${s.cat}</div></div>
-    </div>
-    <p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem;line-height:1.6">${s.desc}</p>
-    <div class="lbl" style="margin-bottom:.4rem">Plaintext input</div>
-    <textarea id="enc-input" placeholder="Type or paste text to encode…" spellcheck="false" oninput="liveEnc()"></textarea>
-    ${optsHtml}
-    <div class="btns">
-      <button class="btn-v" onclick="doEnc()">🔐 Encode / Encrypt</button>
-      <button class="btn-ghost" onclick="$('enc-input').value='';$('enc-out-block').style.display='none'">✕ Clear</button>
-      <button class="btn-ghost btn-xs" onclick="loadEncSample()">▷ Sample</button>
-    </div>
-    <div id="enc-out-block" style="display:none;background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-top:.5rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:var(--s2);border-bottom:1px solid var(--b1)">
-        <span style="font-size:.8rem;font-weight:600;color:var(--green)">✓ Encoded output</span>
-        <button class="btn-ghost btn-xs" onclick="copyAllEnc()">Copy all</button>
-      </div>
-      <div id="enc-rows"></div>
-      <div style="padding:.6rem 1rem;border-top:1px solid var(--b1)"><span class="meta" id="enc-meta"></span></div>
-    </div>`;
-}
-
-function setEncOpt(id,v){encOpts[id]=v;const inp=$('enc-input');if(inp&&inp.value.trim())doEnc();}
-function liveEnc(){const inp=$('enc-input');if(inp&&inp.value.trim().length>0)doEnc();}
-
-async function doEnc(){
-  const inp=$('enc-input');if(!inp)return;
-  const t=inp.value;if(!t)return;
-  const s=ENC_SCHEMES.find(x=>x.id===curScheme);if(!s)return;
-  let results;
-  try{results=await Promise.resolve(s.enc(t,encOpts));}catch(e){results=[{l:'Error',v:String(e)}];}
-  const block=$('enc-out-block'),rows=$('enc-rows'),meta=$('enc-meta');
-  block.style.display='block';
-  rows.innerHTML=results.map(r=>`
-    <div class="multi-row">
-      <div class="m-lbl">${esc(r.l)}</div>
-      <div class="m-val">${esc(r.v)}</div>
-      <button class="btn-ghost btn-xs" style="flex-shrink:0;margin-left:8px" onclick="copyText(${JSON.stringify(r.v)},this)">Copy</button>
-    </div>`).join('');
-  meta.textContent=`Input: ${t.length} chars · Variants: ${results.length}`;
-}
-
-function copyAllEnc(){
-  const rows=document.querySelectorAll('.m-val');
-  navigator.clipboard.writeText(Array.from(rows).map(r=>r.textContent).join('\n')).catch(()=>{});
-}
-function loadEncSample(){const inp=$('enc-input');if(inp)inp.value='The quick brown fox jumps over the lazy dog';}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// VIGENÈRE AUTO-CRACKER (Kasiski + Index of Coincidence)
-// ═══════════════════════════════════════════════════════════════════════════════
-function runCrack(){
-  const text=$('crack-input').value.trim().toUpperCase().replace(/[^A-Z]/g,'');
-  if(text.length<20){$('crack-out').innerHTML='<div class="meta" style="padding:1rem">⚠️ Need at least 20 letters for reliable analysis.</div>';return;}
-  $('crack-out').innerHTML='<div class="meta" style="padding:1rem;color:var(--amber)">⚡ Analysing…</div>';
-  setTimeout(()=>{
-    const keyLen=guessKeyLength(text);
-    const key=guessKey(text,keyLen);
-    const plain=vigDecrypt(text,key);
-    const html=`
-      <div class="crack-result">
-        <div class="crack-key">🔑 Probable key: ${key}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-bottom:.6rem;font-family:'JetBrains Mono',monospace">Key length: ${keyLen} · IC method + frequency analysis</div>
-        <div class="crack-plain">${esc(plain)}</div>
-      </div>
-      <div style="margin-top:.6rem">
-        <div class="sec-lbl">Top 5 key length candidates</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted)">
-          ${topKeyLengths(text,5).map((r,i)=>`<span style="margin-right:14px">${i===0?'<span style="color:var(--amber)">':''}Len ${r.len} (IC=${r.ic.toFixed(4)})${i===0?'</span>':''}</span>`).join('')}
-        </div>
-      </div>
-      <div class="row-meta" style="margin-top:.75rem">
-        <span class="meta">Input: ${text.length} letters</span>
-        <button class="btn-ghost btn-xs" onclick="copyText(${JSON.stringify(plain)},this)">Copy plaintext</button>
-      </div>`;
-    $('crack-out').innerHTML=html;
-  },50);
-}
-
-function ic(text){
-  if(text.length<2)return 0;
-  const f={};for(const c of text)f[c]=(f[c]||0)+1;
-  let s=0;for(const k in f)s+=f[k]*(f[k]-1);
-  return s/(text.length*(text.length-1));
-}
-
-function topKeyLengths(text,n){
-  const res=[];
-  for(let len=1;len<=20;len++){
-    const streams=Array.from({length:len},(_,i)=>text.split('').filter((_,j)=>j%len===i).join(''));
-    const avgIC=streams.reduce((s,st)=>s+ic(st),0)/len;
-    res.push({len,ic:avgIC});
-  }
-  return res.sort((a,b)=>b.ic-a.ic).slice(0,n);
-}
-
-function guessKeyLength(text){return topKeyLengths(text,1)[0].len;}
-
-function guessKey(text,len){
-  const FREQ=[.082,.015,.028,.043,.127,.022,.020,.061,.070,.002,.008,.040,.024,.067,.075,.019,.001,.060,.063,.091,.028,.010,.023,.001,.020,.001];
-  let key='';
-  for(let i=0;i<len;i++){
-    const stream=text.split('').filter((_,j)=>j%len===i).join('');
-    const f=Array(26).fill(0);
-    for(const c of stream)f[c.charCodeAt(0)-65]++;
-    const total=stream.length;
-    let bestShift=0,bestScore=-Infinity;
-    for(let s=0;s<26;s++){
-      let score=0;
-      for(let j=0;j<26;j++)score+=FREQ[j]*(f[(j+s)%26]/total);
-      if(score>bestScore){bestScore=score;bestShift=s;}
+  { id:'base64url', name:'Base64 URL', cat:'Encoding',
+    desc:'URL-safe Base64 using - and _ instead of + and /. No padding. Used in JWTs and URLs.',
+    encLabel:'text → Base64URL', decLabel:'Base64URL → plain text', opts:[],
+    encode(t){
+      try{return btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}
+      catch{return'[encode error]'}
+    },
+    decode(t){
+      try{
+        let s=t.trim().replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');
+        while(s.length%4)s+='=';
+        const r=safeAtob(s);
+        if(r===null)return'[not valid Base64URL]';
+        try{return decodeURIComponent(escape(r))}catch{return r}
+      }catch{return'[not valid Base64URL]'}
     }
-    key+=String.fromCharCode(65+bestShift);
-  }
-  return key;
-}
+  },
 
-function vigDecrypt(text,key){
-  const k=key.toUpperCase();let ki=0;
-  return text.replace(/[A-Z]/g,c=>{
-    const sh=k[ki++%k.length].charCodeAt(0)-65;
-    return String.fromCharCode(((c.charCodeAt(0)-65-sh+26)%26)+65);
-  });
-}
+  { id:'base32', name:'Base32', cat:'Encoding',
+    desc:'Base32 uses uppercase A–Z and digits 2–7. Common in TOTP/2FA secrets.',
+    encLabel:'text → Base32', decLabel:'Base32 → plain text', opts:[],
+    encode(t){
+      const alpha='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      let bits='',o='';
+      for(let i=0;i<t.length;i++)bits+=t.charCodeAt(i).toString(2).padStart(8,'0');
+      while(bits.length%5)bits+='0';
+      for(let i=0;i<bits.length;i+=5)o+=alpha[parseInt(bits.slice(i,i+5),2)];
+      while(o.length%8)o+='=';
+      return o;
+    },
+    decode(t){
+      try{
+        const alpha='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        const inp=t.trim().toUpperCase().replace(/=/g,'').replace(/\s/g,'');
+        let bits='',o='';
+        for(const c of inp){const i=alpha.indexOf(c);if(i<0)return'[invalid Base32 character: '+c+']';bits+=i.toString(2).padStart(5,'0');}
+        for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));
+        return o||'[empty result]';
+      }catch{return'[not valid Base32]'}
+    }
+  },
 
-function crackSample(){$('crack-input').value='LXFOPVEFRNHR XKIBDMVFXMN OXBDVF XDNCOMKERZGA LMZNFGC XHN GAQZV FVHMVL XGC BHZF XHN GFVGB VFXZH FVN XHOGR NHRJF KMDVF';}
+  { id:'hex', name:'Hex', cat:'Encoding',
+    desc:'Hexadecimal encoding. Each byte = 2 hex digits. Decodes any hex string back to plain text.',
+    encLabel:'text → hex bytes', decLabel:'hex → plain text', opts:[
+      {id:'sep',label:'Separator',type:'select',choices:['space','none','colon','0x-prefix'],def:'space'}
+    ],
+    encode(t,o){
+      const sep={'space':' ','none':'','colon':':','0x-prefix':' '}[o.sep||'space'];
+      const prefix=o.sep==='0x-prefix'?'0x':'';
+      return Array.from(t).map(c=>prefix+c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep);
+    },
+    decode(t,o){
+      const r=hexToText(t);
+      if(r===null)return'[not valid hex]';
+      if(isPrintable(r))return r;
+      // show bytes as text anyway, replacing non-printable with •
+      return Array.from(r).map(c=>{const code=c.charCodeAt(0);return code>=32&&code<=126?c:(code===10?'\n':code===9?'\t':'•')}).join('');
+    }
+  },
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CHAIN ANALYSIS (recursive multi-layer decode)
-// ═══════════════════════════════════════════════════════════════════════════════
-const CHAIN_DECODERS = [
-  {id:'b64',name:'Base64',try(s){
-    if(!/^[A-Za-z0-9+/]+=*$/.test(s.trim())||s.trim().length%4!==0)return null;
-    const r=safeAtob(s.trim());return(r&&isPrintable(r))?r:null;
-  }},
-  {id:'b64url',name:'Base64URL',try(s){
-    if(!/^[A-Za-z0-9_-]{4,}$/.test(s.trim()))return null;
-    let t=s.trim().replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';
-    const r=safeAtob(t);return(r&&isPrintable(r))?r:null;
-  }},
-  {id:'hex',name:'Hex',try(s){
-    const c=s.trim().replace(/[\s:]/g,'');
-    if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0||c.length<4)return null;
-    let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));
-    return isPrintable(o)?o:null;
-  }},
-  {id:'url',name:'URL',try(s){
-    if(!/%[0-9a-fA-F]{2}/.test(s))return null;
-    try{const d=decodeURIComponent(s.trim());return d!==s.trim()?d:null;}catch{return null;}
-  }},
-  {id:'html',name:'HTML',try(s){
-    if(!/&[a-zA-Z]{2,};|&#\d+;/.test(s))return null;
-    const el=document.createElement('textarea');el.innerHTML=s;
-    const d=el.value;return d!==s?d:null;
-  }},
-  {id:'uni',name:'Unicode',try(s){
-    if(!/\\u[0-9a-fA-F]{4}/.test(s))return null;
-    return s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
-  }},
-  {id:'bin',name:'Binary',try(s){
-    const c=s.trim().replace(/\s/g,'');
-    if(!/^[01]+$/.test(c)||c.length%8!==0||c.length<8)return null;
-    let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));
-    return isPrintable(o)?o:null;
-  }},
-  {id:'rot13',name:'ROT13',try(s){
-    if(!/^[a-zA-Z\s\W]+$/.test(s.trim()))return null;
-    const o=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65));
-    return o!==s?o:null;
-  }},
-];
+  { id:'binary', name:'Binary', cat:'Encoding',
+    desc:'8-bit binary representation of each character. Decode groups of 8 bits back to text.',
+    encLabel:'text → 8-bit binary', decLabel:'binary → plain text', opts:[
+      {id:'sep',label:'Separator',type:'select',choices:['space','none'],def:'space'}
+    ],
+    encode(t,o){
+      const sep=o.sep==='none'?'':' ';
+      return Array.from(t).map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(sep);
+    },
+    decode(t,o){
+      try{
+        const clean=t.trim().replace(/\s/g,'');
+        if(!/^[01]+$/.test(clean))return'[not valid binary — only 0s and 1s allowed]';
+        if(clean.length%8!==0)return`[binary length must be multiple of 8 — got ${clean.length} bits]`;
+        let o2='';
+        for(let i=0;i<clean.length;i+=8)o2+=String.fromCharCode(parseInt(clean.slice(i,i+8),2));
+        return o2;
+      }catch{return'[not valid binary]'}
+    }
+  },
 
-function runChain(){
-  const raw=$('chain-input').value.trim();
-  if(!raw)return;
-  const MAX_DEPTH=12;
-  const chain=[{step:0,name:'Input',value:raw}];
-  let current=raw;
-  for(let depth=0;depth<MAX_DEPTH;depth++){
-    let found=false;
-    for(const d of CHAIN_DECODERS){
-      const result=d.try(current);
-      if(result&&result!==current&&result.length>0){
-        chain.push({step:depth+1,name:d.name,value:result});
-        current=result;found=true;break;
+  { id:'octal', name:'Octal', cat:'Encoding',
+    desc:'Octal (base-8) encoding. Each character represented as 3-digit octal number.',
+    encLabel:'text → octal', decLabel:'octal → plain text', opts:[],
+    encode(t){return Array.from(t).map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' ')},
+    decode(t){
+      try{
+        const tokens=t.trim().split(/\s+/);
+        return tokens.map(tok=>{const n=parseInt(tok,8);if(isNaN(n))return'?';return String.fromCharCode(n)}).join('');
+      }catch{return'[not valid octal]'}
+    }
+  },
+
+  { id:'decimal', name:'Decimal', cat:'Encoding',
+    desc:'Decimal ASCII codes. Each character represented as its decimal code point (0-127).',
+    encLabel:'text → decimal codes', decLabel:'decimal codes → plain text', opts:[
+      {id:'sep',label:'Separator',type:'select',choices:['space','comma','pipe'],def:'space'}
+    ],
+    encode(t,o){
+      const sep={'space':' ','comma':',','pipe':'|'}[o.sep||'space'];
+      return Array.from(t).map(c=>c.charCodeAt(0)).join(sep);
+    },
+    decode(t,o){
+      try{
+        const tokens=t.trim().split(/[\s,|]+/);
+        return tokens.map(tok=>{
+          const n=parseInt(tok,10);
+          if(isNaN(n))return'?';
+          return String.fromCharCode(n);
+        }).join('');
+      }catch{return'[not valid decimal ASCII]'}
+    }
+  },
+
+  { id:'url', name:'URL %enc', cat:'Encoding',
+    desc:'Percent-encoding for URLs. Special characters become %XX sequences.',
+    encLabel:'text → %XX URL-encoded', decLabel:'%XX → plain text', opts:[],
+    encode(t){return encodeURIComponent(t)},
+    decode(t){try{return decodeURIComponent(t.trim())}catch{try{return unescape(t.trim())}catch{return'[not valid URL encoding]'}}}
+  },
+
+  { id:'html', name:'HTML Ents', cat:'Encoding',
+    desc:'HTML entity encoding. Special chars become &amp;, &lt;, &#123; etc.',
+    encLabel:'text → HTML entities', decLabel:'HTML entities → plain text', opts:[
+      {id:'mode',label:'Mode',type:'select',choices:['named','decimal','hex'],def:'named'}
+    ],
+    encode(t,o){
+      const named={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+      if((o.mode||'named')==='named')return t.replace(/[&<>"']/g,c=>named[c]||c);
+      if(o.mode==='decimal')return Array.from(t).map(c=>`&#${c.charCodeAt(0)};`).join('');
+      return Array.from(t).map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('');
+    },
+    decode(t){
+      const el=document.createElement('textarea');el.innerHTML=t;return el.value;
+    }
+  },
+
+  { id:'unicode', name:'Unicode', cat:'Encoding',
+    desc:'Unicode escape sequences: \\uXXXX, \\xXX, or U+XXXX notation.',
+    encLabel:'text → \\uXXXX escapes', decLabel:'\\uXXXX → plain text', opts:[
+      {id:'fmt',label:'Format',type:'select',choices:['\\uXXXX','\\xXX','U+XXXX'],def:'\\uXXXX'}
+    ],
+    encode(t,o){
+      const f=o.fmt||'\\uXXXX';
+      if(f==='\\uXXXX')return Array.from(t).map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join('');
+      if(f==='\\xXX')return Array.from(t).map(c=>'\\x'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
+      return Array.from(t).map(c=>'U+'+c.charCodeAt(0).toString(16).toUpperCase().padStart(4,'0')).join(' ');
+    },
+    decode(t){
+      let s=t;
+      s=s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+      s=s.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+      s=s.replace(/U\+([0-9a-fA-F]{4,6})/gi,(_,h)=>String.fromCodePoint(parseInt(h,16)));
+      return s;
+    }
+  },
+
+  // ── CIPHERS ────────────────────────────────────────────────────────────────
+  { id:'rot13', name:'ROT13', cat:'Cipher',
+    desc:'Rotates each letter by 13 positions. Symmetric — applying twice restores original.',
+    encLabel:'text → ROT13', decLabel:'ROT13 → plain text', opts:[],
+    encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))},
+    decode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))}
+  },
+
+  { id:'rot47', name:'ROT47', cat:'Cipher',
+    desc:'Like ROT13 but rotates all 94 printable ASCII chars (! to ~) by 47.',
+    encLabel:'text → ROT47', decLabel:'ROT47 → plain text', opts:[],
+    encode(t){return t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))},
+    decode(t){return t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))}
+  },
+
+  { id:'atbash', name:'Atbash', cat:'Cipher',
+    desc:'Hebrew substitution cipher: A↔Z, B↔Y, C↔X. Symmetric — decode = encode.',
+    encLabel:'text → Atbash', decLabel:'Atbash → plain text', opts:[],
+    encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))},
+    decode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))}
+  },
+
+  { id:'caesar', name:'Caesar', cat:'Cipher',
+    desc:'Shifts each letter by N positions in the alphabet. Classic Roman cipher.',
+    encLabel:'text → Caesar cipher', decLabel:'Caesar cipher → plain text', opts:[
+      {id:'shift',label:'Shift',type:'range',min:1,max:25,def:'3'}
+    ],
+    encode(t,o){
+      const n=parseInt(o.shift)||3;
+      return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97))
+              .replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65));
+    },
+    decode(t,o){
+      const n=parseInt(o.shift)||3;
+      return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97))
+              .replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));
+    }
+  },
+
+  { id:'vigenere', name:'Vigenère', cat:'Cipher',
+    desc:'Polyalphabetic cipher using a repeating keyword. Enter a key to encrypt or decrypt.',
+    encLabel:'text → Vigenère cipher', decLabel:'Vigenère cipher → plain text', opts:[
+      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. SECRET',def:'KEY'}
+    ],
+    _prep(key){return(key||'KEY').toLowerCase().replace(/[^a-z]/g,'')},
+    encode(t,o){
+      const k=this._prep(o.key);if(!k.length)return'[keyword required]';
+      let ki=0;
+      return t.replace(/[a-zA-Z]/g,c=>{
+        const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;
+        return String.fromCharCode(((c.charCodeAt(0)-b+sh)%26)+b);
+      });
+    },
+    decode(t,o){
+      const k=this._prep(o.key);if(!k.length)return'[keyword required]';
+      let ki=0;
+      return t.replace(/[a-zA-Z]/g,c=>{
+        const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;
+        return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b);
+      });
+    }
+  },
+
+  { id:'xor', name:'XOR', cat:'Cipher',
+    desc:'XOR each byte with a key byte. Reversible — encrypt and decrypt use the same operation.',
+    encLabel:'text → XOR bytes (hex)', decLabel:'XOR hex → plain text', opts:[
+      {id:'key',label:'Key byte (0–255)',type:'number',min:0,max:255,def:'42'},
+      {id:'fmt',label:'Output',type:'select',choices:['hex','decimal','binary'],def:'hex'}
+    ],
+    encode(t,o){
+      const k=parseInt(o.key)||42,fmt=o.fmt||'hex';
+      const bytes=Array.from(t).map(c=>c.charCodeAt(0)^k);
+      if(fmt==='hex')return bytes.map(b=>b.toString(16).padStart(2,'0')).join(' ');
+      if(fmt==='decimal')return bytes.join(' ');
+      return bytes.map(b=>b.toString(2).padStart(8,'0')).join(' ');
+    },
+    decode(t,o){
+      const k=parseInt(o.key)||42,fmt=o.fmt||'hex';
+      try{
+        let bytes=[];
+        if(fmt==='hex'){
+          const c=t.trim().replace(/[\s:]/g,'');
+          if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0)return'[invalid hex for XOR decode]';
+          for(let i=0;i<c.length;i+=2)bytes.push(parseInt(c.slice(i,i+2),16));
+        } else if(fmt==='decimal'){
+          bytes=t.trim().split(/[\s,]+/).map(Number);
+        } else {
+          const c=t.trim().replace(/\s/g,'');
+          if(c.length%8!==0)return'[binary length must be multiple of 8]';
+          for(let i=0;i<c.length;i+=8)bytes.push(parseInt(c.slice(i,i+8),2));
+        }
+        return bytes.map(b=>String.fromCharCode(b^k)).join('');
+      }catch{return'[XOR decode error]'}
+    }
+  },
+
+  { id:'morse', name:'Morse', cat:'Cipher',
+    desc:'International Morse code. Dots and dashes. Words separated by /.',
+    encLabel:'text → morse code', decLabel:'morse code → plain text', opts:[],
+    _enc:{A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.','.':'.-.-.-',',':'--..--','?':'..--..','-':'-....-','!':'-.-.--',' ':'/'
+    },
+    encode(t){
+      return t.toUpperCase().split('').map(c=>this._enc[c]||'').filter(Boolean).join(' ');
+    },
+    decode(t){
+      const rev={};for(const[k,v]of Object.entries(this._enc))rev[v]=k;
+      return t.trim().split(/\s+/).map(sym=>{
+        if(sym==='/')return ' ';
+        return rev[sym]||'?';
+      }).join('');
+    }
+  },
+
+  { id:'bacon', name:"Bacon's", cat:'Cipher',
+    desc:"Francis Bacon's bilateral cipher: each letter encoded as 5-char A/B sequence.",
+    encLabel:"text → A/B sequences", decLabel:"A/B sequences → plain text", opts:[],
+    _map:{A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'},
+    encode(t){return t.toUpperCase().split('').map(c=>this._map[c]||c).join(' ')},
+    decode(t){
+      const rev={};for(const[k,v]of Object.entries(this._map))rev[v]=k;
+      const clean=t.trim().toUpperCase().replace(/\s+/g,'');
+      let o='';
+      for(let i=0;i+5<=clean.length;i+=5)o+=rev[clean.slice(i,i+5)]||'?';
+      return o||'[not valid Bacon cipher]';
+    }
+  },
+
+  { id:'railfence', name:'Rail Fence', cat:'Cipher',
+    desc:'Writes text in zigzag across N rails then reads off each rail sequentially.',
+    encLabel:'text → rail fence', decLabel:'rail fence → plain text', opts:[
+      {id:'rails',label:'Rails',type:'range',min:2,max:8,def:'3'}
+    ],
+    encode(t,o){
+      const rails=Math.max(2,Math.min(8,parseInt(o.rails)||3));
+      const fence=Array.from({length:rails},()=>[]);
+      let r=0,d=1;
+      for(const c of t){fence[r].push(c);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
+      return fence.map(row=>row.join('')).join('');
+    },
+    decode(t,o){
+      const rails=Math.max(2,Math.min(8,parseInt(o.rails)||3));
+      const len=t.length;
+      if(len===0)return'';
+      // figure out pattern
+      const pattern=[];let r=0,d=1;
+      for(let i=0;i<len;i++){pattern.push(r);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
+      const fenceLens=Array.from({length:rails},(_,ri)=>pattern.filter(x=>x===ri).length);
+      let pos=0,fenceStart=[];
+      for(const fl of fenceLens){fenceStart.push(pos);pos+=fl;}
+      const idxInRail=Array(rails).fill(0);
+      const result=new Array(len);
+      for(let i=0;i<len;i++){
+        const ri=pattern[i];
+        result[i]=t[fenceStart[ri]+idxInRail[ri]];
+        idxInRail[ri]++;
       }
+      return result.join('');
     }
-    if(!found)break;
-  }
+  },
 
-  const stepsHtml=chain.map((s,i)=>`
-    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:.8rem 1rem;margin-bottom:.5rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:${i===0?'var(--muted)':'var(--pink)'}">
-          ${i===0?'📥 INPUT':`Layer ${i}: ${s.name}`}
-        </span>
-        <button class="btn-ghost btn-xs" onclick="copyText(${JSON.stringify(s.value)},this)">Copy</button>
-      </div>
-      <div class="mono" style="max-height:120px">${esc(s.value)}</div>
-      <div class="meta" style="margin-top:.3rem">Entropy: ${entropy(s.value)} · Length: ${s.value.length}</div>
-    </div>
-    ${i<chain.length-1?'<div style="text-align:center;margin:.2rem 0;color:var(--muted);font-size:.8rem">↓ '+chain[i+1].name+'</div>':''}
-  `).join('');
+  { id:'substitution', name:'Substitution', cat:'Cipher',
+    desc:'Simple substitution: shift the alphabet by an offset (like Caesar but customisable mapping).',
+    encLabel:'text → substitution cipher', decLabel:'substitution cipher → plain text', opts:[
+      {id:'alpha',label:'Key alphabet (26 chars)',type:'text',placeholder:'QWERTYUIOPASDFGHJKLZXCVBNM',def:'QWERTYUIOPASDFGHJKLZXCVBNM'}
+    ],
+    encode(t,o){
+      const key=((o.alpha||'QWERTYUIOPASDFGHJKLZXCVBNM').toUpperCase().replace(/[^A-Z]/g,'')+'ABCDEFGHIJKLMNOPQRSTUVWXYZ').slice(0,26);
+      if(new Set(key).size<26)return'[key must have 26 unique letters]';
+      return t.replace(/[a-z]/g,c=>key[c.charCodeAt(0)-97].toLowerCase())
+              .replace(/[A-Z]/g,c=>key[c.charCodeAt(0)-65]);
+    },
+    decode(t,o){
+      const key=((o.alpha||'QWERTYUIOPASDFGHJKLZXCVBNM').toUpperCase().replace(/[^A-Z]/g,'')+'ABCDEFGHIJKLMNOPQRSTUVWXYZ').slice(0,26);
+      if(new Set(key).size<26)return'[key must have 26 unique letters]';
+      const rev=Array(26);
+      for(let i=0;i<26;i++)rev[key.charCodeAt(i)-65]=String.fromCharCode(65+i);
+      return t.replace(/[a-z]/g,c=>rev[c.charCodeAt(0)-97].toLowerCase())
+              .replace(/[A-Z]/g,c=>rev[c.charCodeAt(0)-65]);
+    }
+  },
 
-  const badge=chain.length>1?`<span class="pill pill-ok" style="margin-left:8px">✓ ${chain.length-1} layer(s) decoded</span>`:'<span class="pill pill-no" style="margin-left:8px">No encoding detected</span>';
+  { id:'columnar', name:'Columnar', cat:'Cipher',
+    desc:'Columnar transposition: write text into rows, reorder columns by keyword.',
+    encLabel:'text → columnar transposition', decLabel:'columnar cipher → plain text', opts:[
+      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. ZEBRA',def:'CIPHER'}
+    ],
+    _order(key){
+      const k=key.toUpperCase().replace(/[^A-Z]/g,'')||'CIPHER';
+      const idx=Array.from(k).map((c,i)=>({c,i}));
+      idx.sort((a,b)=>a.c<b.c?-1:a.c>b.c?1:a.i-b.i);
+      return idx.map(x=>x.i);
+    },
+    encode(t,o){
+      const order=this._order(o.key||'CIPHER');
+      const cols=order.length;
+      const rows=Math.ceil(t.length/cols);
+      const padded=t.padEnd(rows*cols,'X');
+      const grid=[];
+      for(let r=0;r<rows;r++)grid.push(padded.slice(r*cols,(r+1)*cols).split(''));
+      return order.map(c=>grid.map(row=>row[c]).join('')).join('');
+    },
+    decode(t,o){
+      const order=this._order(o.key||'CIPHER');
+      const cols=order.length;
+      const rows=Math.ceil(t.length/cols);
+      const colLen=Math.floor(t.length/cols);
+      const extra=t.length%cols;
+      // build reverse order
+      const rev=Array(cols);
+      order.forEach((orig,sorted)=>rev[orig]=sorted);
+      const colLens=order.map((orig,sorted)=>colLen+(orig<extra?1:0));
+      const colStarts=[];let pos=0;
+      for(let i=0;i<cols;i++){colStarts.push(pos);pos+=colLen+(i<extra?1:0);}
+      const result=[];
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const colIdx=rev[c];
+          const charIdx=colStarts[colIdx]+r;
+          if(charIdx<colStarts[colIdx]+(colLen+(colIdx<extra?1:0)))result.push(t[charIdx]);
+        }
+      }
+      return result.join('').replace(/X+$/,'');
+    }
+  },
 
-  $('chain-out').innerHTML=`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem">
-      <span style="font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Chain depth</span>${badge}
-    </div>
-    <div class="chain-steps" style="margin-bottom:1rem">
-      ${chain.map((s,i)=>`<span class="chain-step" style="${i===chain.length-1?'border-color:var(--green);color:var(--green)':''}">${i===0?'INPUT':s.name}</span>${i<chain.length-1?'<span class="chain-arrow">→</span>':''}`).join('')}
-    </div>
-    ${stepsHtml}`;
+  { id:'playfair', name:'Playfair', cat:'Cipher',
+    desc:'Digraph substitution cipher using a 5×5 key matrix. Encrypts pairs of letters.',
+    encLabel:'text → Playfair cipher', decLabel:'Playfair cipher → plain text', opts:[
+      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. MONARCHY',def:'MONARCHY'}
+    ],
+    _buildMatrix(key){
+      const k=(key.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'')+
+               'ABCDEFGHIKLMNOPQRSTUVWXYZ').split('');
+      const seen=new Set(),matrix=[];
+      for(const c of k){if(!seen.has(c)){seen.add(c);matrix.push(c);}}
+      return matrix;
+    },
+    _pos(matrix,c){const i=matrix.indexOf(c);return[Math.floor(i/5),i%5]},
+    encode(t,o){
+      const matrix=this._buildMatrix(o.key||'MONARCHY');
+      let s=t.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+      // insert X between doubles and make even length
+      let pairs=[];
+      for(let i=0;i<s.length;){
+        let a=s[i],b=s[i+1]||'X';
+        if(a===b){b='X';i++;}else{i+=2;}
+        pairs.push([a,b]);
+      }
+      return pairs.map(([a,b])=>{
+        const[ra,ca]=this._pos(matrix,a),[rb,cb]=this._pos(matrix,b);
+        if(ra===rb)return matrix[ra*5+(ca+1)%5]+matrix[rb*5+(cb+1)%5];
+        if(ca===cb)return matrix[((ra+1)%5)*5+ca]+matrix[((rb+1)%5)*5+cb];
+        return matrix[ra*5+cb]+matrix[rb*5+ca];
+      }).join('');
+    },
+    decode(t,o){
+      const matrix=this._buildMatrix(o.key||'MONARCHY');
+      const s=t.toUpperCase().replace(/[^A-Z]/g,'');
+      const pairs=[];
+      for(let i=0;i<s.length;i+=2)pairs.push([s[i],s[i+1]||'X']);
+      return pairs.map(([a,b])=>{
+        const[ra,ca]=this._pos(matrix,a),[rb,cb]=this._pos(matrix,b);
+        if(ra===rb)return matrix[ra*5+(ca+24)%5]+matrix[rb*5+(cb+24)%5];
+        if(ca===cb)return matrix[((ra+4)%5)*5+ca]+matrix[((rb+4)%5)*5+cb];
+        return matrix[ra*5+cb]+matrix[rb*5+ca];
+      }).join('');
+    }
+  },
+
+  { id:'affine', name:'Affine', cat:'Cipher',
+    desc:'Affine cipher: E(x) = (ax + b) mod 26. "a" must be coprime to 26.',
+    encLabel:'text → affine cipher', decLabel:'affine cipher → plain text', opts:[
+      {id:'a',label:'a (mult, coprime to 26)',type:'number',min:1,max:25,def:'5'},
+      {id:'b',label:'b (shift)',type:'number',min:0,max:25,def:'8'}
+    ],
+    _modInverse(a,m){for(let x=1;x<m;x++)if((a*x)%m===1)return x;return null},
+    encode(t,o){
+      const a=parseInt(o.a)||5,b=parseInt(o.b)||8;
+      const inv=this._modInverse(a,26);
+      if(!inv)return`[a=${a} is not coprime to 26 — try 1,3,5,7,9,11,15,17,19,21,23,25]`;
+      return t.replace(/[a-z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-97)+b)%26)+97))
+              .replace(/[A-Z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-65)+b)%26)+65));
+    },
+    decode(t,o){
+      const a=parseInt(o.a)||5,b=parseInt(o.b)||8;
+      const inv=this._modInverse(a,26);
+      if(!inv)return`[a=${a} is not coprime to 26]`;
+      return t.replace(/[a-z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-97-b+26*26))%26+26)%26)+97))
+              .replace(/[A-Z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-65-b+26*26))%26+26)%26)+65));
+    }
+  },
+
+  { id:'beaufort', name:'Beaufort', cat:'Cipher',
+    desc:'Beaufort cipher: variant of Vigenère where E(x) = (key - plain) mod 26. Self-reciprocal.',
+    encLabel:'text → Beaufort cipher', decLabel:'Beaufort cipher → plain text', opts:[
+      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. FORTIFY',def:'FORTIFY'}
+    ],
+    _prep(k){return(k||'FORTIFY').toLowerCase().replace(/[^a-z]/g,'')},
+    encode(t,o){
+      const k=this._prep(o.key);if(!k)return'[keyword required]';
+      let ki=0;
+      return t.replace(/[a-zA-Z]/g,c=>{
+        const b=c>='a'?97:65,ki2=k[ki++%k.length].charCodeAt(0)-97;
+        return String.fromCharCode(((ki2-(c.charCodeAt(0)-b)+26)%26)+b);
+      });
+    },
+    decode(t,o){return this.encode(t,o)} // Beaufort is self-reciprocal
+  },
+
+  { id:'jwt', name:'JWT', cat:'Token',
+    desc:'JSON Web Token: base64url-encoded header.payload.signature. Decode reveals the claims.',
+    encLabel:'payload JSON → JWT (unsigned)', decLabel:'JWT → decoded header + payload', opts:[],
+    encode(t){
+      try{
+        const payload=JSON.parse(t);
+        const header={alg:'HS256',typ:'JWT'};
+        const enc=obj=>btoa(JSON.stringify(obj)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+        return enc(header)+'.'+enc(payload)+'.[signature — sign with your secret key]';
+      }catch{
+        const header={alg:'HS256',typ:'JWT'};
+        const enc=obj=>btoa(JSON.stringify(obj)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+        const payload={sub:'1234567890',data:t,iat:Math.floor(Date.now()/1000)};
+        return enc(header)+'.'+enc(payload)+'.[signature]';
+      }
+    },
+    decode(t){
+      try{
+        const parts=t.trim().split('.');
+        if(parts.length<2)return'[not a valid JWT — need header.payload.signature]';
+        const dec=p=>{let s=p.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(atob(s))};
+        const h=dec(parts[0]),p=dec(parts[1]);
+        return '=== HEADER ===\n'+JSON.stringify(h,null,2)+'\n\n=== PAYLOAD ===\n'+JSON.stringify(p,null,2)+'\n\n=== SIGNATURE ===\n'+parts[2]+'\n(Not verified — requires secret key)';
+      }catch{return'[not valid JWT — check format: xxxxx.yyyyy.zzzzz]'}
+    }
+  },
+
+  { id:'punycode', name:'Punycode', cat:'Encoding',
+    desc:'Punycode / IDN for international domain names. Converts Unicode domains to ASCII xn-- form.',
+    encLabel:'unicode domain → punycode', decLabel:'punycode → unicode domain', opts:[],
+    // Simplified Punycode for basic ASCII/latin conversion
+    encode(t){
+      try{
+        const url='http://'+t.trim().toLowerCase();
+        return new URL(url).hostname;
+      }catch{return t.trim().replace(/[^\x00-\x7F]/g,c=>'xn--[U+'+c.codePointAt(0).toString(16).toUpperCase()+']')}
+    },
+    decode(t){
+      try{
+        if(!t.includes('xn--'))return t+' (no Punycode detected)';
+        return t.trim()+' → Punycode detected. Use a full IDN library (e.g. "punycode" npm) for complete conversion.';
+      }catch{return'[Punycode decode error]'}
+    }
+  },
+
+];
+
+// ═══════════════════════════════════════════════════════ STATE
+let currentMethod = METHODS[0];
+let opts = {};
+
+// ═══════════════════════════════════════════════════════ BUILD METHOD STRIP
+function buildStrip(){
+  const strip=document.getElementById('method-strip-inner');
+  const cats=[...new Set(METHODS.map(m=>m.cat))];
+  let html='';
+  cats.forEach((cat,ci)=>{
+    if(ci>0)html+=`<span class="mcat-sep">│</span>`;
+    METHODS.filter(m=>m.cat===cat).forEach(m=>{
+      html+=`<button class="mbtn${m.id===currentMethod.id?' active':''}" id="mb-${m.id}" onclick="selectMethod('${m.id}')">${m.name}</button>`;
+    });
+  });
+  strip.innerHTML=html;
 }
 
-function chainSample(){$('chain-input').value='VFRHZXJ3b3JsZA%3D%3D';}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// FORENSICS
-// ═══════════════════════════════════════════════════════════════════════════════
-function runForensics(){
-  const s=$('for-input').value;
-  if(!s.trim())return;
-  const h=entropy(s);
-  const bytes=Array.from(s);
-  const total=bytes.length;
-
-  // char class counts
-  const upper=bytes.filter(c=>/[A-Z]/.test(c)).length;
-  const lower=bytes.filter(c=>/[a-z]/.test(c)).length;
-  const digits=bytes.filter(c=>/[0-9]/.test(c)).length;
-  const special=bytes.filter(c=>/[^A-Za-z0-9]/.test(c)).length;
-  const spaces=bytes.filter(c=>c===' ').length;
-  const nonPrint=bytes.filter(c=>!/[\x09\x0a\x0d\x20-\x7e]/.test(c)).length;
-  const unique=[...new Set(bytes)].length;
-
-  // entropy classification
-  let entropyClass,entColor;
-  if(h<1){entropyClass='Very low (highly repetitive or single char)';entColor='var(--muted)';}
-  else if(h<2.5){entropyClass='Low (natural language / structured text)';entColor='var(--green)';}
-  else if(h<4){entropyClass='Medium (mixed content / light encoding)';entColor='var(--green)';}
-  else if(h<5.5){entropyClass='High (Base64, compressed, binary data)';entColor='var(--amber)';}
-  else if(h<7){entropyClass='Very high (encrypted / compressed data)';entColor='var(--red)';}
-  else{entropyClass='Max entropy (cryptographic / random data)';entColor='var(--red)';}
-
-  const entPct=Math.min(100,(h/8)*100);
-  const entBarColor=h<3?'var(--green)':h<5?'var(--amber)':'var(--red)';
-
-  // hash identification
-  const hashes=identifyHashes(s.trim());
-
-  // file signature (if looks like hex)
-  const cleanHex=s.trim().replace(/[\s:]/g,'');
-  let fileSigs=[];
-  if(/^[0-9a-fA-F]+$/.test(cleanHex)&&cleanHex.length>=8)fileSigs=detectFileSig(cleanHex);
-
-  // detect encodings
-  const detectedEnc=DECODERS.filter(d=>d.detect(s)).map(d=>d.name);
-
-  // byte frequency top 10
-  const freq={};
-  for(const c of s)freq[c]=(freq[c]||0)+1;
-  const topChars=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
-
-  // Possible language (simple IC check)
-  const letters=s.toUpperCase().replace(/[^A-Z]/g,'');
-  const langIC=letters.length>10?ic(letters):null;
-  let langGuess='Insufficient data';
-  if(langIC!==null){
-    if(langIC>0.065)langGuess='Likely English / natural language';
-    else if(langIC>0.05)langGuess='Possibly monoalphabetic cipher';
-    else if(langIC>0.038)langGuess='Possibly Vigenère or polyalphabetic cipher';
-    else langGuess='Possibly random / encrypted data';
-  }
-
-  $('for-out').innerHTML=`
-    <div class="sec-lbl">Entropy classification</div>
-    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:1rem 1.1rem;margin-bottom:.75rem">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.4rem">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:${entColor}">${h}</span>
-        <span style="font-size:.75rem;color:${entColor}">${entropyClass}</span>
-      </div>
-      <div class="ebar-wrap"><div class="ebar-track"><div class="ebar-fill" style="width:${entPct.toFixed(1)}%;background:${entBarColor}"></div></div><div class="ebar-labels"><span>0 (repetitive)</span><span>8 (random)</span></div></div>
-    </div>
-
-    <div class="sec-lbl">Statistical fingerprint</div>
-    <div class="fgrid">
-      <div class="fcard"><div class="fcard-title">Total chars</div><div class="fcard-val">${total}</div></div>
-      <div class="fcard"><div class="fcard-title">Unique chars</div><div class="fcard-val">${unique}</div><div class="fcard-sub">${((unique/total)*100).toFixed(1)}% uniqueness</div></div>
-      <div class="fcard"><div class="fcard-title">Uppercase</div><div class="fcard-val" style="color:var(--cyan)">${upper}</div><div class="fcard-sub">${((upper/total)*100).toFixed(1)}%</div></div>
-      <div class="fcard"><div class="fcard-title">Lowercase</div><div class="fcard-val" style="color:var(--violet)">${lower}</div><div class="fcard-sub">${((lower/total)*100).toFixed(1)}%</div></div>
-      <div class="fcard"><div class="fcard-title">Digits</div><div class="fcard-val" style="color:var(--amber)">${digits}</div><div class="fcard-sub">${((digits/total)*100).toFixed(1)}%</div></div>
-      <div class="fcard"><div class="fcard-title">Special</div><div class="fcard-val" style="color:var(--pink)">${special}</div><div class="fcard-sub">${((special/total)*100).toFixed(1)}%</div></div>
-      <div class="fcard"><div class="fcard-title">Non-printable</div><div class="fcard-val" style="color:${nonPrint>0?'var(--red)':'var(--green)'}">${nonPrint}</div></div>
-      <div class="fcard"><div class="fcard-title">Index of coincidence</div><div class="fcard-val" style="color:var(--cyan)">${langIC!==null?langIC.toFixed(4):'N/A'}</div><div class="fcard-sub">${langGuess}</div></div>
-    </div>
-
-    <div class="sec-lbl">Top 10 character frequency</div>
-    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:.75rem">
-      ${topChars.map(([c,n])=>{
-        const pct=((n/total)*100);
-        const label=c===' '?'[SPACE]':c==='\n'?'[LF]':c==='\r'?'[CR]':c==='\t'?'[TAB]':esc(c);
-        return `<div style="display:flex;align-items:center;gap:10px;padding:.45rem 1rem;border-bottom:1px solid var(--b1)">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--cyan);min-width:60px">${label}</span>
-          <div style="flex:1;background:var(--b1);border-radius:3px;height:6px;overflow:hidden"><div style="height:100%;background:var(--violet);width:${pct.toFixed(1)}%;border-radius:3px"></div></div>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);min-width:60px;text-align:right">${n} (${pct.toFixed(1)}%)</span>
-        </div>`;
-      }).join('')}
-    </div>
-
-    <div class="sec-lbl">Detected encoding / cipher patterns</div>
-    <div style="margin-bottom:.75rem">${detectedEnc.length?detectedEnc.map(n=>`<span class="dtag dtag-h" style="display:inline-flex;margin:3px"><span class="dot"></span>${n}</span>`).join(''):'<span class="dtag dtag-l"><span class="dot"></span>No common patterns detected</span>'}</div>
-
-    ${hashes.length?`<div class="sec-lbl">Hash identification (${hashes.length} match${hashes.length>1?'es':''})</div>
-    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:.75rem">
-      ${hashes.map(h=>`<div class="sig-row"><div class="sig-type">${esc(h.name)}</div><div class="sig-desc">${esc(h.cat)} · ${h.len||'variable'} chars</div></div>`).join('')}
-    </div>`:''}
-
-    ${fileSigs.length?`<div class="sec-lbl">File magic signature</div>
-    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:.75rem">
-      ${fileSigs.map(f=>`<div class="sig-row"><div class="sig-type">${esc(f.ext)}</div><div class="sig-desc">${esc(f.type)}</div></div>`).join('')}
-    </div>`:''}
-
-    <div style="margin-top:.75rem">
-      <button class="btn-ghost btn-xs" onclick="copyText(${JSON.stringify(
-        `=== CIPHERSENSE FORENSIC REPORT ===\nEntropy: ${h} (${entropyClass})\nLength: ${total} chars | Unique: ${unique}\nUpper: ${upper} | Lower: ${lower} | Digits: ${digits} | Special: ${special}\nIndex of Coincidence: ${langIC!==null?langIC.toFixed(4):'N/A'}\nLanguage guess: ${langGuess}\nDetected formats: ${detectedEnc.join(', ')||'None'}\nHash matches: ${hashes.map(h=>h.name).join(', ')||'None'}\nFile signatures: ${fileSigs.map(f=>f.type).join(', ')||'None'}`
-      )},this)">Export report</button>
-    </div>`;
+// ═══════════════════════════════════════════════════════ BUILD OPTIONS BAR
+function buildOpts(){
+  const bar=document.getElementById('opts-bar');
+  const m=currentMethod;
+  if(!m.opts||m.opts.length===0){bar.className='options-bar';bar.innerHTML='';return;}
+  // reset opts to defaults
+  m.opts.forEach(o=>{if(opts[o.id]===undefined)opts[o.id]=o.def||''});
+  let html='';
+  m.opts.forEach(o=>{
+    html+=`<div class="opt-group"><span class="opt-label">${o.label}</span>`;
+    if(o.type==='select'){
+      html+=`<select id="opt-${o.id}" onchange="setOpt('${o.id}',this.value)">`;
+      o.choices.forEach(c=>html+=`<option value="${c}"${c===opts[o.id]?' selected':''}>${c}</option>`);
+      html+=`</select>`;
+    } else if(o.type==='range'){
+      html+=`<input type="range" id="opt-${o.id}" min="${o.min}" max="${o.max}" value="${opts[o.id]||o.def}" oninput="setOpt('${o.id}',this.value);$('ovv-${o.id}').textContent=this.value">`;
+      html+=`<span class="opt-val" id="ovv-${o.id}">${opts[o.id]||o.def}</span>`;
+    } else if(o.type==='number'){
+      html+=`<input type="number" id="opt-${o.id}" min="${o.min}" max="${o.max}" value="${opts[o.id]||o.def}" oninput="setOpt('${o.id}',this.value)">`;
+    } else {
+      html+=`<input type="text" id="opt-${o.id}" value="${opts[o.id]||''}" placeholder="${o.placeholder||''}" oninput="setOpt('${o.id}',this.value)">`;
+    }
+    html+=`</div>`;
+  });
+  bar.innerHTML=html;
+  bar.className='options-bar show';
 }
 
-function forSample(){$('for-input').value='SGVsbG8gV29ybGQgZnJvbSBDaXBoZXJTZW5zZSE=';}
+function $(id){return document.getElementById(id)}
+function setOpt(id,val){opts[id]=val;run()}
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════════════════════════
-buildEncSidebar();
+// ═══════════════════════════════════════════════════════ UPDATE INFO BAR
+function updateInfo(){
+  const m=currentMethod;
+  $('mi-name').textContent=m.name;
+  $('mi-cat').textContent=m.cat;
+  $('mi-desc').textContent=m.desc;
+  const ei=document.querySelector('.mi-enc');
+  const di=document.querySelector('.mi-dec');
+  if(ei)ei.textContent='↑ Encode: '+m.encLabel;
+  if(di)di.textContent='↓ Decode: '+m.decLabel;
+}
+
+// ═══════════════════════════════════════════════════════ SELECT METHOD
+function selectMethod(id){
+  currentMethod=METHODS.find(m=>m.id===id)||METHODS[0];
+  opts={};
+  if(currentMethod.opts)currentMethod.opts.forEach(o=>opts[o.id]=o.def||'');
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
+  const btn=$('mb-'+id);if(btn)btn.classList.add('active');
+  buildOpts();
+  updateInfo();
+  run();
+}
+
+// ═══════════════════════════════════════════════════════ MAIN RUN
+function run(){
+  const input=$('main-input').value;
+  $('in-count').textContent=input.length+' chars';
+
+  const encOut=$('enc-out');
+  const decOut=$('dec-out');
+  const encChip=$('enc-chip');
+  const decChip=$('dec-chip');
+
+  if(!input.trim()){
+    encOut.innerHTML='<span class="placeholder-text">Encoded result will appear here…</span>';
+    decOut.innerHTML='<span class="placeholder-text">Decoded (plain text) result will appear here…</span>';
+    encChip.textContent='—';encChip.className='chip';
+    decChip.textContent='—';decChip.className='chip';
+    return;
+  }
+
+  // ENCODE
+  try{
+    const encoded=currentMethod.encode(input,opts);
+    if(encoded&&encoded.startsWith('[')&&encoded.endsWith(']')){
+      encOut.textContent=encoded;
+      encChip.textContent='error';encChip.className='chip chip-err';
+    } else {
+      encOut.textContent=encoded||'(empty)';
+      encChip.textContent='✓ encoded';encChip.className='chip chip-ok';
+    }
+  }catch(e){
+    encOut.textContent='[encode error: '+e.message+']';
+    encChip.textContent='error';encChip.className='chip chip-err';
+  }
+
+  // DECODE
+  try{
+    const decoded=currentMethod.decode(input,opts);
+    if(decoded&&decoded.startsWith('[')&&decoded.endsWith(']')&&decoded!==input){
+      decOut.textContent=decoded;
+      decChip.textContent='not valid';decChip.className='chip chip-err';
+    } else {
+      decOut.textContent=decoded||'(empty)';
+      decChip.textContent='✓ decoded';decChip.className='chip chip-ok';
+    }
+  }catch(e){
+    decOut.textContent='[decode error: '+e.message+']';
+    decChip.textContent='error';decChip.className='chip chip-err';
+  }
+}
+
+function onInput(){run()}
+
+// ═══════════════════════════════════════════════════════ COPY
+function copyOut(which){
+  const el=$(which+'-out');
+  const text=el.textContent;
+  if(!text||text.includes('will appear here'))return;
+  navigator.clipboard.writeText(text).catch(()=>{});
+  const btn=document.querySelector(which==='enc'?'.btn-enc':'.btn-dec');
+  if(btn){const o=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('copied-flash');setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied-flash')},1400);}
+}
+
+// ═══════════════════════════════════════════════════════ SWAP
+function swapEncToInput(){
+  const encText=$('enc-out').textContent;
+  if(!encText||encText.includes('will appear here'))return;
+  $('main-input').value=encText;
+  run();
+}
+
+// ═══════════════════════════════════════════════════════ CLEAR
+function clearAll(){
+  $('main-input').value='';run();
+}
+
+// ═══════════════════════════════════════════════════════ SAMPLES
+const SAMPLES=[
+  {method:'base64',text:'Hello, Security Researcher!'},
+  {method:'hex',text:'The quick brown fox'},
+  {method:'binary',text:'Hello World'},
+  {method:'caesar',text:'Attack at dawn',opts:{shift:'7'}},
+  {method:'vigenere',text:'Meet me at midnight',opts:{key:'SECRET'}},
+  {method:'morse',text:'SOS HELP'},
+  {method:'rot13',text:'Why did the hacker cross the road?'},
+  {method:'playfair',text:'HIDE THE GOLD'},
+  {method:'xor',text:'CipherSense rules'},
+  {method:'affine',text:'Affine cipher example'},
+];
+let _si=0;
+function loadSample(){
+  const s=SAMPLES[_si++%SAMPLES.length];
+  selectMethod(s.method);
+  if(s.opts)Object.assign(opts,s.opts);
+  // refresh opt inputs
+  if(s.opts){
+    Object.entries(s.opts).forEach(([k,v])=>{
+      const el=$('opt-'+k);
+      if(el){el.value=v;const vv=$('ovv-'+k);if(vv)vv.textContent=v;}
+    });
+  }
+  $('main-input').value=s.text;
+  run();
+}
+
+// ═══════════════════════════════════════════════════════ INIT
+buildStrip();
+buildOpts();
+updateInfo();
 </script>
 </body>
 </html>
