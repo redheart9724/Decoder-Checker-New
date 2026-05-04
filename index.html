@@ -3,573 +3,555 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherSense — Bidirectional Cipher Tool</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<title>CipherSense v3 — Multi-Layer Cipher Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════ RESET & BASE */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#0b0e14;
-  --ink2:#131720;
-  --ink3:#1a2030;
-  --ink4:#222b3d;
-  --ink5:#2d3a52;
-  --wire:#334060;
-  --wire2:#3f5070;
-  --text:#e8edf8;
-  --text2:#94a3c0;
-  --text3:#4f627e;
-  --enc:#00ffb3;   /* encode = mint green */
-  --dec:#ff6b9d;   /* decode = hot pink */
-  --gold:#ffd166;
-  --sky:#4fc3f7;
-  --enc-glow:rgba(0,255,179,.1);
-  --dec-glow:rgba(255,107,157,.1);
-  --r:10px;
+  --ink:#080b10;--ink2:#0f1319;--ink3:#161c27;--ink4:#1e2637;--ink5:#28344a;
+  --wire:#334060;--wire2:#3f5070;
+  --text:#e8edf8;--text2:#8899b8;--text3:#4a5c7a;
+  --enc:#00ffb3;--dec:#ff6b9d;--gold:#ffd166;--sky:#4fc3f7;--violet:#b388ff;
+  --enc-g:rgba(0,255,179,.08);--dec-g:rgba(255,107,157,.08);
+  --layer-colors:#00ffb3,#4fc3f7,#b388ff,#ffd166,#ff6b9d,#ff9800,#e040fb,#69f0ae;
 }
 html{scroll-behavior:smooth}
-body{
-  background:var(--ink);
-  color:var(--text);
-  font-family:'Outfit',sans-serif;
-  min-height:100vh;
-  overflow-x:hidden;
-}
-
-/* animated dot-grid bg */
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:radial-gradient(circle,rgba(79,195,247,.08) 1px,transparent 1px);
-  background-size:32px 32px;
-  pointer-events:none;z-index:0;
-  animation:bgdrift 30s linear infinite;
-}
-@keyframes bgdrift{from{background-position:0 0}to{background-position:32px 32px}}
-
-/* ═══════════════════════════════════════ SCROLLBAR */
+body{background:var(--ink);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(79,195,247,.06) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;z-index:0;animation:drift 40s linear infinite}
+@keyframes drift{to{background-position:30px 30px}}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--ink)}
 ::-webkit-scrollbar-thumb{background:var(--wire);border-radius:2px}
 
-/* ═══════════════════════════════════════ LAYOUT */
-.root{position:relative;z-index:1;display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
+/* ── ROOT GRID ── */
+.root{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
 
-/* ═══════════════════════════════════════ HEADER */
-header{
-  padding:1.1rem 2rem;
-  border-bottom:1px solid var(--ink4);
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;
-  background:rgba(11,14,20,.85);backdrop-filter:blur(12px);
-  position:sticky;top:0;z-index:100;
-}
-.logo{display:flex;align-items:center;gap:12px}
-.logo svg{width:34px;height:34px;flex-shrink:0}
-.logo-text{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
-.logo-text b{color:var(--enc)}
-.logo-sub{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
-.hpills{display:flex;gap:6px;flex-wrap:wrap}
-.hpill{
-  font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.06em;
-  padding:3px 10px;border-radius:20px;border:1px solid;white-space:nowrap;
-}
-.hpill-e{background:var(--enc-glow);color:var(--enc);border-color:rgba(0,255,179,.25)}
-.hpill-d{background:var(--dec-glow);color:var(--dec);border-color:rgba(255,107,157,.25)}
-.hpill-g{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
+/* ── HEADER ── */
+header{padding:.9rem 1.5rem;border-bottom:1px solid var(--ink4);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;background:rgba(8,11,16,.9);backdrop-filter:blur(12px);position:sticky;top:0;z-index:200}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:32px;height:32px;flex-shrink:0}
+.brand-name{font-size:1.2rem;font-weight:800;letter-spacing:-.02em}
+.brand-name em{font-style:normal;color:var(--enc)}
+.brand-sub{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--text3);letter-spacing:.12em;text-transform:uppercase}
+.hpills{display:flex;gap:5px;flex-wrap:wrap}
+.hp{font-family:'Space Mono',monospace;font-size:.55rem;padding:2px 9px;border-radius:20px;border:1px solid;letter-spacing:.06em;white-space:nowrap}
+.hp-g{background:var(--enc-g);color:var(--enc);border-color:rgba(0,255,179,.2)}
+.hp-p{background:var(--dec-g);color:var(--dec);border-color:rgba(255,107,157,.2)}
+.hp-y{background:rgba(255,209,102,.07);color:var(--gold);border-color:rgba(255,209,102,.18)}
+.hp-b{background:rgba(79,195,247,.07);color:var(--sky);border-color:rgba(79,195,247,.18)}
 
-/* ═══════════════════════════════════════ METHOD STRIP */
-.method-strip{
-  background:var(--ink2);
-  border-bottom:1px solid var(--ink4);
-  padding:.6rem 1.5rem;
-  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
-}
-.ms-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-right:.4rem;white-space:nowrap}
-.mcat{display:contents}
-.mcat-sep{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--ink5);margin:0 .2rem;user-select:none}
+/* ── TABS ── */
+.tabs{display:flex;background:var(--ink2);border-bottom:1px solid var(--ink4);padding:.4rem 1.5rem 0;gap:2px}
+.tab{font-family:'Space Mono',monospace;font-size:.65rem;padding:7px 16px;border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;background:transparent;color:var(--text3);cursor:pointer;transition:all .12s;letter-spacing:.04em;white-space:nowrap}
+.tab:hover{color:var(--text);background:var(--ink3)}
+.tab.active{background:var(--ink3);color:var(--text);border-color:var(--ink5);border-bottom-color:var(--ink3)}
+.tab.active.t-enc{color:var(--enc)}
+.tab.active.t-dec{color:var(--dec)}
+.tab.active.t-auto{color:var(--gold)}
+.pane{display:none;flex:1}
+.pane.active{display:flex;flex-direction:column}
 
-.mbtn{
-  font-family:'Space Mono',monospace;font-size:.65rem;
-  padding:5px 12px;border-radius:6px;border:1px solid var(--ink5);
-  background:transparent;color:var(--text3);cursor:pointer;
-  transition:all .12s;white-space:nowrap;letter-spacing:.02em;
-}
+/* ── METHOD BAR ── */
+.method-bar{background:var(--ink2);border-bottom:1px solid var(--ink4);padding:.5rem 1.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;flex-shrink:0}
+.mb-lbl{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-right:.3rem;white-space:nowrap}
+.mb-sep{font-family:'Space Mono',monospace;font-size:.5rem;color:var(--ink5);user-select:none;margin:0 .15rem}
+.mbtn{font-family:'Space Mono',monospace;font-size:.62rem;padding:4px 10px;border-radius:5px;border:1px solid var(--ink5);background:transparent;color:var(--text3);cursor:pointer;transition:all .1s;white-space:nowrap}
 .mbtn:hover{background:var(--ink3);color:var(--text);border-color:var(--wire)}
-.mbtn.active{background:var(--ink3);color:var(--text);border-color:var(--sky);
-  box-shadow:0 0 8px rgba(79,195,247,.15)}
+.mbtn.active{background:var(--ink4);color:var(--text);border-color:var(--sky);box-shadow:0 0 6px rgba(79,195,247,.12)}
 
-/* ═══════════════════════════════════════ MAIN GRID */
-.main{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:auto 1fr;
-  gap:0;
-  padding:1.5rem;
-  gap:1.2rem;
-}
-@media(max-width:780px){.main{grid-template-columns:1fr;grid-template-rows:auto auto auto}}
+/* ── SHARED PANEL STYLES ── */
+.panel{background:var(--ink2);border:1px solid var(--ink4);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:.6rem .9rem;border-bottom:1px solid var(--ink4);background:var(--ink3);flex-shrink:0}
+.ph-title{font-size:.75rem;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+.ph-actions{display:flex;gap:5px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-sky{background:var(--sky);box-shadow:0 0 5px var(--sky)}
+.dot-enc{background:var(--enc);box-shadow:0 0 5px var(--enc)}
+.dot-dec{background:var(--dec);box-shadow:0 0 5px var(--dec)}
+.dot-gold{background:var(--gold);box-shadow:0 0 5px var(--gold)}
 
-/* ═══════════════════════════════════════ OPTIONS BAR */
-.options-bar{
-  grid-column:1/-1;
-  display:none;
-  background:var(--ink2);
-  border:1px solid var(--ink4);
-  border-radius:var(--r);
-  padding:.75rem 1.1rem;
-  align-items:center;
-  gap:1rem;
-  flex-wrap:wrap;
-}
-.options-bar.show{display:flex}
-.opt-group{display:flex;align-items:center;gap:.5rem}
-.opt-label{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--text3);white-space:nowrap}
-.opt-group input[type=text],
-.opt-group input[type=number],
-.opt-group select{
-  font-family:'Space Mono',monospace;font-size:.75rem;
-  background:var(--ink3);border:1px solid var(--wire);
-  border-radius:6px;color:var(--text);
-  padding:5px 10px;outline:none;
-  transition:border-color .15s;
-  min-width:80px;
-}
-.opt-group input:focus,.opt-group select:focus{border-color:var(--sky)}
-.opt-group input[type=range]{accent-color:var(--sky);min-width:100px;cursor:pointer}
-.opt-val{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--sky);min-width:20px}
-
-/* ═══════════════════════════════════════ INPUT PANEL */
-.panel{
-  background:var(--ink2);
-  border:1px solid var(--ink4);
-  border-radius:var(--r);
-  display:flex;flex-direction:column;
-  overflow:hidden;
-  min-height:300px;
-}
-.panel-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.65rem 1rem;
-  border-bottom:1px solid var(--ink4);
-  background:var(--ink3);
-  flex-shrink:0;
-}
-.panel-title{font-size:.78rem;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:7px}
-.panel-title .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dot-enc{background:var(--enc);box-shadow:0 0 6px var(--enc)}
-.dot-dec{background:var(--dec);box-shadow:0 0 6px var(--dec)}
-.dot-in{background:var(--sky);box-shadow:0 0 6px var(--sky)}
-.panel-actions{display:flex;gap:6px;align-items:center}
-
-textarea{
-  flex:1;width:100%;
-  background:transparent;border:none;outline:none;
-  font-family:'Space Mono',monospace;font-size:.8rem;
-  color:var(--text);line-height:1.7;
-  padding:1rem 1.1rem;resize:none;
-  caret-color:var(--sky);
-}
+textarea{flex:1;width:100%;background:transparent;border:none;outline:none;font-family:'Space Mono',monospace;font-size:.78rem;color:var(--text);line-height:1.75;padding:.85rem 1rem;resize:none;caret-color:var(--sky);min-height:120px}
 textarea::placeholder{color:var(--text3)}
 
-/* Output panels stacked on right */
-.right-col{display:flex;flex-direction:column;gap:1.2rem}
-.out-panel{
-  background:var(--ink2);
-  border:1px solid var(--ink4);
-  border-radius:var(--r);
-  display:flex;flex-direction:column;
-  flex:1;
-  overflow:hidden;
-}
-.out-panel.enc-panel{border-color:rgba(0,255,179,.2)}
-.out-panel.dec-panel{border-color:rgba(255,107,157,.2)}
-.out-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.6rem 1rem;
-  border-bottom:1px solid var(--ink4);
-  flex-shrink:0;
-}
-.enc-panel .out-header{background:rgba(0,255,179,.06)}
-.dec-panel .out-header{background:rgba(255,107,157,.06)}
-.out-title{font-size:.75rem;font-weight:700;letter-spacing:.06em;display:flex;align-items:center;gap:7px}
-.out-title span.enc-label{color:var(--enc)}
-.out-title span.dec-label{color:var(--dec)}
-.out-meta{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3)}
+/* ── BUTTONS ── */
+.btn{font-family:'Space Mono',monospace;font-size:.6rem;padding:5px 11px;border-radius:6px;border:1px solid var(--wire);background:transparent;color:var(--text2);cursor:pointer;transition:all .1s;white-space:nowrap;letter-spacing:.02em}
+.btn:hover{background:var(--ink4);color:var(--text);border-color:var(--wire2)}
+.btn:active{transform:scale(.96)}
+.btn-enc{border-color:rgba(0,255,179,.3);color:var(--enc)}
+.btn-enc:hover{background:rgba(0,255,179,.07)}
+.btn-dec{border-color:rgba(255,107,157,.3);color:var(--dec)}
+.btn-dec:hover{background:rgba(255,107,157,.07)}
+.btn-gold{border-color:rgba(255,209,102,.3);color:var(--gold)}
+.btn-gold:hover{background:rgba(255,209,102,.07)}
+.btn-sky{border-color:rgba(79,195,247,.3);color:var(--sky)}
+.btn-sky:hover{background:rgba(79,195,247,.07)}
+.btn-solid-enc{background:var(--enc);color:#000;border-color:var(--enc);font-weight:700}
+.btn-solid-enc:hover{background:#33ffca}
+.btn-solid-dec{background:var(--dec);color:#000;border-color:var(--dec);font-weight:700}
+.btn-solid-dec:hover{background:#ff9cbb}
 
-.out-content{
-  font-family:'Space Mono',monospace;font-size:.78rem;
-  color:var(--text);line-height:1.75;
-  padding:1rem 1.1rem;
-  flex:1;overflow-y:auto;word-break:break-all;white-space:pre-wrap;
-  min-height:110px;
-}
-.enc-panel .out-content{color:#a8ffd8}
-.dec-panel .out-content{color:#ffc0d9}
-
-.placeholder-text{color:var(--text3)!important;font-style:italic}
-
-/* status chips */
-.chip{
-  font-family:'Space Mono',monospace;font-size:.58rem;
-  padding:2px 8px;border-radius:12px;border:1px solid;
-}
+/* ── CHIPS ── */
+.chip{font-family:'Space Mono',monospace;font-size:.55rem;padding:2px 8px;border-radius:10px;border:1px solid}
 .chip-ok{background:rgba(0,255,179,.08);color:var(--enc);border-color:rgba(0,255,179,.2)}
 .chip-err{background:rgba(255,107,157,.08);color:var(--dec);border-color:rgba(255,107,157,.2)}
-.chip-oneway{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
 .chip-info{background:rgba(79,195,247,.08);color:var(--sky);border-color:rgba(79,195,247,.2)}
+.chip-gold{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
 
-/* buttons */
-.btn{
-  font-family:'Space Mono',monospace;font-size:.62rem;
-  padding:5px 12px;border-radius:6px;border:1px solid var(--wire);
-  background:transparent;color:var(--text2);cursor:pointer;
-  transition:all .12s;letter-spacing:.02em;white-space:nowrap;
+/* ── OPTION ROWS ── */
+.opt-bar{display:none;background:var(--ink2);border:1px solid var(--ink4);border-radius:8px;padding:.6rem 1rem;align-items:center;gap:.85rem;flex-wrap:wrap;flex-shrink:0}
+.opt-bar.show{display:flex}
+.og{display:flex;align-items:center;gap:.4rem}
+.og label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);white-space:nowrap}
+.og input[type=text],.og input[type=number],.og select{font-family:'Space Mono',monospace;font-size:.72rem;background:var(--ink3);border:1px solid var(--wire);border-radius:5px;color:var(--text);padding:4px 8px;outline:none;transition:border-color .12s;min-width:75px}
+.og input:focus,.og select:focus{border-color:var(--sky)}
+.og input[type=range]{accent-color:var(--sky);min-width:90px;cursor:pointer}
+.ov{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--sky);min-width:18px}
+
+/* ════════════════════════════════════════
+   ENCODE PANE — CHAIN BUILDER
+════════════════════════════════════════ */
+.enc-pane-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem 1.5rem;flex:1;overflow:hidden}
+@media(max-width:800px){.enc-pane-grid{grid-template-columns:1fr;overflow:auto}}
+.enc-left{display:flex;flex-direction:column;gap:1rem;min-height:0}
+.enc-right{display:flex;flex-direction:column;gap:1rem;min-height:0;overflow-y:auto}
+
+/* chain builder */
+.chain-builder{background:var(--ink2);border:1px solid var(--ink4);border-radius:10px;overflow:hidden;flex-shrink:0}
+.chain-list{padding:.5rem .7rem;display:flex;flex-direction:column;gap:.4rem;min-height:40px}
+.chain-item{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--ink3);border:1px solid var(--ink5);border-radius:7px;
+  padding:.45rem .7rem;cursor:grab;user-select:none;
+  transition:all .12s;
 }
-.btn:hover{background:var(--ink4);color:var(--text);border-color:var(--wire2)}
-.btn-enc{border-color:rgba(0,255,179,.3);color:var(--enc)}
-.btn-enc:hover{background:rgba(0,255,179,.08)}
-.btn-dec{border-color:rgba(255,107,157,.3);color:var(--dec)}
-.btn-dec:hover{background:rgba(255,107,157,.08)}
-.btn:active{transform:scale(.96)}
+.chain-item:hover{border-color:var(--wire2)}
+.chain-item.dragging{opacity:.4;border-style:dashed}
+.chain-item.drag-over{border-color:var(--sky);box-shadow:0 0 0 1px var(--sky)}
+.ci-num{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:14px;text-align:center}
+.ci-color{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ci-name{font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;flex:1}
+.ci-opts{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-del{font-size:.7rem;color:var(--text3);background:transparent;border:none;cursor:pointer;padding:2px 5px;border-radius:4px;transition:all .1s;flex-shrink:0;line-height:1}
+.ci-del:hover{color:var(--dec);background:rgba(255,107,157,.1)}
+.ci-drag{color:var(--text3);font-size:.65rem;cursor:grab;flex-shrink:0;padding:2px 4px}
 
-/* swap fab */
-.swap-btn{
-  position:fixed;bottom:1.5rem;right:1.5rem;
-  width:46px;height:46px;border-radius:50%;
-  background:var(--ink3);border:1px solid var(--wire2);
-  color:var(--text);font-size:1.2rem;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 20px rgba(0,0,0,.4);
-  transition:all .15s;z-index:200;
+.chain-empty{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--text3);text-align:center;padding:.8rem;font-style:italic}
+
+/* add-to-chain method picker */
+.add-method-row{padding:.5rem .7rem;border-top:1px solid var(--ink4);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;background:var(--ink3)}
+.add-lbl{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
+.add-select{font-family:'Space Mono',monospace;font-size:.68rem;background:var(--ink4);border:1px solid var(--wire);border-radius:5px;color:var(--text);padding:4px 8px;outline:none;flex:1;min-width:100px}
+.add-select:focus{border-color:var(--sky)}
+
+/* layer options inline edit */
+.layer-opts{padding:.5rem .7rem;border-top:1px solid var(--ink4);background:var(--ink2)}
+.lo-title{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.08em}
+.lo-fields{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.lo-fields label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3)}
+.lo-fields input[type=text],.lo-fields input[type=number],.lo-fields select{font-family:'Space Mono',monospace;font-size:.68rem;background:var(--ink3);border:1px solid var(--wire);border-radius:5px;color:var(--text);padding:4px 8px;outline:none;min-width:70px}
+.lo-fields input:focus,.lo-fields select:focus{border-color:var(--enc)}
+.lo-fields input[type=range]{accent-color:var(--enc);min-width:80px}
+.lo-rv{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--enc)}
+
+/* encode results */
+.enc-result-card{
+  background:var(--ink3);border:1px solid var(--ink5);border-radius:8px;
+  overflow:hidden;animation:fadeIn .15s ease;
 }
-.swap-btn:hover{background:var(--ink4);transform:rotate(180deg)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.erc-header{display:flex;align-items:center;gap:6px;padding:.45rem .7rem;border-bottom:1px solid var(--ink4);background:var(--ink2)}
+.erc-step{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:52px}
+.erc-name{font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;flex:1}
+.erc-len{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--text3)}
+.erc-body{font-family:'Space Mono',monospace;font-size:.72rem;line-height:1.65;padding:.55rem .7rem;word-break:break-all;white-space:pre-wrap;max-height:90px;overflow-y:auto}
+.erc-footer{display:flex;justify-content:flex-end;padding:.3rem .6rem;border-top:1px solid var(--ink4)}
 
-/* method info bar */
-.method-info{
-  grid-column:1/-1;
-  display:flex;align-items:center;gap:10px;
-  padding:.55rem 1rem;
-  background:var(--ink2);border:1px solid var(--ink4);
-  border-radius:8px;font-size:.75rem;color:var(--text2);line-height:1.5;
-  flex-wrap:wrap;
-}
-.mi-name{font-weight:700;color:var(--text);font-size:.82rem}
-.mi-cat{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);background:var(--ink3);padding:2px 8px;border-radius:4px}
-.mi-enc{color:var(--enc);font-size:.7rem}
-.mi-dec{color:var(--dec);font-size:.7rem}
+/* ════════════════════════════════════════
+   DECODE PANE
+════════════════════════════════════════ */
+.dec-pane-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem 1.5rem;flex:1;overflow:hidden}
+@media(max-width:800px){.dec-pane-grid{grid-template-columns:1fr;overflow:auto}}
+.dec-left{display:flex;flex-direction:column;gap:1rem;min-height:0}
+.dec-right{display:flex;flex-direction:column;gap:1rem;min-height:0;overflow-y:auto}
 
-/* copy feedback */
-.copied-flash{color:var(--enc)!important;border-color:rgba(0,255,179,.4)!important}
+/* decode chain display */
+.dec-chain{display:flex;flex-direction:column;gap:.5rem}
+.dc-layer{background:var(--ink3);border:1px solid var(--ink5);border-radius:8px;overflow:hidden;animation:fadeIn .15s ease}
+.dc-hdr{display:flex;align-items:center;gap:7px;padding:.45rem .8rem;border-bottom:1px solid var(--ink4)}
+.dc-arrow{font-size:.7rem;color:var(--text3)}
+.dc-name{font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;flex:1}
+.dc-chip{margin-left:auto}
+.dc-body{font-family:'Space Mono',monospace;font-size:.72rem;line-height:1.65;padding:.55rem .8rem;word-break:break-all;white-space:pre-wrap;max-height:80px;overflow-y:auto}
+.dc-final{background:var(--ink2);border:1px solid rgba(0,255,179,.25);border-radius:8px;overflow:hidden}
+.dc-final .dc-hdr{background:rgba(0,255,179,.06)}
+.dc-final .dc-body{color:#a8ffd8;font-size:.8rem;max-height:200px}
 
-/* table output */
-.result-table{width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:.7rem}
-.result-table th{color:var(--text3);font-weight:400;text-align:left;padding:4px 6px;border-bottom:1px solid var(--ink4)}
-.result-table td{padding:4px 6px;border-bottom:1px solid var(--ink4);vertical-align:top;line-height:1.6}
-.result-table tr:last-child td{border-bottom:none}
-.result-table tr:hover td{background:var(--ink3)}
-.tc{color:var(--sky)}
+/* single-layer decode output */
+.dec-out-area{font-family:'Space Mono',monospace;font-size:.78rem;line-height:1.75;padding:.85rem 1rem;flex:1;overflow-y:auto;word-break:break-all;white-space:pre-wrap;color:#ffc0d9}
 
-/* live count */
-.live-count{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
+/* ════════════════════════════════════════
+   AUTO DETECT PANE
+════════════════════════════════════════ */
+.auto-pane-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem 1.5rem;flex:1;overflow:hidden}
+@media(max-width:800px){.auto-pane-grid{grid-template-columns:1fr;overflow:auto}}
+.auto-left{display:flex;flex-direction:column;gap:1rem;min-height:0}
+.auto-right{display:flex;flex-direction:column;gap:1rem;min-height:0;overflow-y:auto}
 
-/* section label */
-.slbl{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+.detect-badge{font-family:'Space Mono',monospace;font-size:.6rem;padding:3px 9px;border-radius:5px;border:1px solid;display:inline-flex;align-items:center;gap:5px;margin:2px}
+.db-h{background:rgba(0,255,179,.08);color:var(--enc);border-color:rgba(0,255,179,.2)}
+.db-m{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
+.db-l{background:rgba(74,92,122,.1);color:var(--text3);border-color:rgba(74,92,122,.2)}
+.detect-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+.auto-layer{background:var(--ink3);border:1px solid var(--ink5);border-radius:8px;overflow:hidden;margin-bottom:.4rem;animation:fadeIn .15s ease}
+.al-hdr{display:flex;align-items:center;gap:7px;padding:.4rem .75rem;border-bottom:1px solid var(--ink4);background:var(--ink2)}
+.al-num{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:50px}
+.al-name{font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;flex:1}
+.al-body{font-family:'Space Mono',monospace;font-size:.7rem;line-height:1.65;padding:.5rem .75rem;word-break:break-all;white-space:pre-wrap;max-height:80px;overflow-y:auto}
+.al-final{background:var(--ink2);border:1px solid rgba(0,255,179,.25);border-radius:8px;overflow:hidden;margin-top:.4rem}
+.al-final .al-hdr{background:rgba(0,255,179,.06)}
+.al-final .al-body{color:#a8ffd8;max-height:220px}
+
+/* lcount */
+.lcount{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
+
+.placeholder{color:var(--text3);font-style:italic;font-family:'Space Mono',monospace;font-size:.72rem;padding:.85rem 1rem}
+.copied-fx{color:var(--enc)!important;border-color:rgba(0,255,179,.4)!important}
+
+/* iteration selector */
+.iter-row{display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;background:var(--ink3);border-top:1px solid var(--ink4)}
+.iter-lbl{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);white-space:nowrap}
+.iter-btns{display:flex;gap:4px}
+.iter-btn{font-family:'Space Mono',monospace;font-size:.65rem;width:26px;height:26px;border-radius:5px;border:1px solid var(--ink5);background:transparent;color:var(--text3);cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center}
+.iter-btn:hover{background:var(--ink4);color:var(--text)}
+.iter-btn.active{background:var(--ink4);color:var(--sky);border-color:var(--sky)}
+.iter-info{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
 </style>
 </head>
 <body>
 <div class="root">
 
-<!-- ══════════════ HEADER -->
+<!-- HEADER -->
 <header>
-  <div class="logo">
-    <svg viewBox="0 0 34 34" fill="none">
-      <rect width="34" height="34" rx="8" fill="#0b0e14" stroke="#2d3a52"/>
-      <circle cx="17" cy="17" r="7" stroke="#00ffb3" stroke-width="1.5" stroke-dasharray="3 2"/>
-      <circle cx="17" cy="17" r="3" fill="#ff6b9d"/>
-      <path d="M10 17h4M20 17h4M17 10v4M17 20v4" stroke="#4fc3f7" stroke-width="1.2" stroke-linecap="round"/>
+  <div class="brand">
+    <svg viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="7" fill="#080b10" stroke="#1e2637"/>
+      <circle cx="16" cy="16" r="6" stroke="#00ffb3" stroke-width="1.4" stroke-dasharray="3 2"/>
+      <circle cx="16" cy="16" r="2.5" fill="#ff6b9d"/>
+      <circle cx="16" cy="16" r="9" stroke="#4fc3f7" stroke-width=".8" stroke-dasharray="1.5 3" opacity=".5"/>
+      <path d="M10 16h3M19 16h3M16 10v3M16 19v3" stroke="#4fc3f7" stroke-width="1" stroke-linecap="round"/>
     </svg>
-    <div>
-      <div class="logo-text">Cipher<b>Sense</b></div>
-      <div class="logo-sub">Bidirectional Crypto Tool</div>
-    </div>
+    <div><div class="brand-name">Cipher<em>Sense</em> <span style="font-size:.7rem;font-weight:400;color:var(--text3)">v3</span></div><div class="brand-sub">Multi-Layer Cipher Tool</div></div>
   </div>
   <div class="hpills">
-    <span class="hpill hpill-e">↑ ENCODE ANY TEXT</span>
-    <span class="hpill hpill-d">↓ DECODE ANY TEXT</span>
-    <span class="hpill hpill-g">20+ METHODS · LIVE</span>
+    <span class="hp hp-g">↑ MULTI-LAYER ENCODE</span>
+    <span class="hp hp-p">↓ MULTI-LAYER DECODE</span>
+    <span class="hp hp-y">⚡ AUTO-DETECT LAYERS</span>
+    <span class="hp hp-b">20+ METHODS</span>
   </div>
 </header>
 
-<!-- ══════════════ METHOD STRIP -->
-<div class="method-strip">
-  <span class="ms-label">Method →</span>
-  <div id="method-strip-inner"></div>
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active t-enc" onclick="switchTab('enc',this)">↑ Encoder</button>
+  <button class="tab t-dec" onclick="switchTab('dec',this)">↓ Decoder</button>
+  <button class="tab t-auto" onclick="switchTab('auto',this)">⚡ Auto-Detect &amp; Peel</button>
 </div>
 
-<!-- ══════════════ MAIN -->
-<div class="main" id="main-grid">
+<!-- ══════════════════════════════════════════════════════════
+     ENCODE PANE
+══════════════════════════════════════════════════════════ -->
+<div class="pane active" id="pane-enc">
 
-  <!-- method info row -->
-  <div class="method-info" id="mi-row">
-    <span class="mi-name" id="mi-name">Base64</span>
-    <span class="mi-cat" id="mi-cat">Encoding</span>
-    <span id="mi-desc" style="flex:1">Standard Base64 encoding (RFC 4648). Safe for text, binary data, and data URIs.</span>
-    <span class="mi-enc">↑ Encode: text → Base64</span>
-    <span class="mi-dec">↓ Decode: Base64 → plain text</span>
+  <!-- method bar for adding to chain -->
+  <div class="method-bar">
+    <span class="mb-lbl">+ Add layer →</span>
+    <div id="enc-method-strip"></div>
   </div>
 
-  <!-- options bar (shown when method needs params) -->
-  <div class="options-bar" id="opts-bar"></div>
+  <div class="enc-pane-grid">
+    <!-- LEFT: input + chain builder -->
+    <div class="enc-left">
 
-  <!-- LEFT: INPUT -->
-  <div class="panel" id="input-panel">
-    <div class="panel-header">
-      <div class="panel-title"><span class="dot dot-in"></span>Your Input</div>
-      <div class="panel-actions">
-        <span class="live-count" id="in-count">0 chars</span>
-        <button class="btn" onclick="loadSample()">▷ Sample</button>
-        <button class="btn" onclick="clearAll()">✕ Clear</button>
+      <!-- Input -->
+      <div class="panel" style="flex-shrink:0">
+        <div class="ph">
+          <div class="ph-title"><span class="dot dot-sky"></span>Plain Text Input</div>
+          <div class="ph-actions">
+            <span class="lcount" id="enc-incount">0 chars</span>
+            <button class="btn" onclick="encLoadSample()">▷ Sample</button>
+            <button class="btn" onclick="clearEnc()">✕ Clear</button>
+          </div>
+        </div>
+        <textarea id="enc-input" placeholder="Type or paste your plain text here…&#10;&#10;Then build an encoding chain on the right →&#10;Add layers in any order, configure each one." oninput="runEnc()" spellcheck="false"></textarea>
       </div>
+
+      <!-- Chain Builder -->
+      <div class="chain-builder" style="flex-shrink:0">
+        <div class="ph">
+          <div class="ph-title"><span class="dot dot-enc"></span>Encoding Chain</div>
+          <div class="ph-actions">
+            <span class="chip chip-info" id="enc-chain-count">0 layers</span>
+            <button class="btn btn-enc" onclick="clearChain()">Clear chain</button>
+          </div>
+        </div>
+        <div class="chain-list" id="chain-list">
+          <div class="chain-empty" id="chain-empty">No layers yet — click a method above to add one</div>
+        </div>
+
+        <!-- quick-add row -->
+        <div class="add-method-row">
+          <span class="add-lbl">Quick add:</span>
+          <select class="add-select" id="quick-add-select">
+            <option value="">— pick method —</option>
+          </select>
+          <button class="btn btn-enc" onclick="quickAdd()">+ Add</button>
+        </div>
+
+        <!-- selected layer options -->
+        <div id="layer-opts-panel" style="display:none" class="layer-opts">
+          <div class="lo-title" id="lo-title">Layer options</div>
+          <div class="lo-fields" id="lo-fields"></div>
+        </div>
+      </div>
+
     </div>
-    <textarea id="main-input"
-      placeholder="Type or paste anything here…&#10;&#10;• Plain text  →  instantly encoded below&#10;• Encoded text  →  instantly decoded below&#10;&#10;Both happen at the same time, live."
-      oninput="onInput()"
-      spellcheck="false"></textarea>
+
+    <!-- RIGHT: encoded output per layer -->
+    <div class="enc-right" id="enc-results">
+      <div class="placeholder">Build a chain on the left, then results will cascade here layer by layer →</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DECODE PANE
+══════════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-dec">
+
+  <!-- method bar -->
+  <div class="method-bar">
+    <span class="mb-lbl">Method →</span>
+    <div id="dec-method-strip"></div>
   </div>
 
-  <!-- RIGHT: ENCODE + DECODE -->
-  <div class="right-col">
+  <!-- options bar for current decode method -->
+  <div id="dec-opts-bar" class="opt-bar" style="margin:.4rem 1.5rem 0"></div>
 
-    <!-- ENCODE OUTPUT -->
-    <div class="out-panel enc-panel">
-      <div class="out-header">
-        <div class="out-title">
-          <span class="dot dot-enc"></span>
-          <span class="enc-label">↑ ENCODED OUTPUT</span>
+  <div class="dec-pane-grid">
+    <!-- LEFT -->
+    <div class="dec-left">
+      <div class="panel" style="flex-shrink:0">
+        <div class="ph">
+          <div class="ph-title"><span class="dot dot-sky"></span>Encoded Input</div>
+          <div class="ph-actions">
+            <span class="lcount" id="dec-incount">0 chars</span>
+            <button class="btn" onclick="decLoadSample()">▷ Sample</button>
+            <button class="btn" onclick="clearDec()">✕ Clear</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <span class="chip" id="enc-chip">—</span>
-          <button class="btn btn-enc" onclick="copyOut('enc')">Copy</button>
+        <textarea id="dec-input" placeholder="Paste encoded / ciphertext here…&#10;&#10;• Single encoding → decoded instantly&#10;• Multi-layer → set iterations below&#10;• Unknown layers → use Auto-Detect tab" oninput="runDec()" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Iterations selector -->
+      <div class="panel" style="flex-shrink:0;overflow:visible">
+        <div class="ph">
+          <div class="ph-title"><span class="dot dot-dec"></span>Decode Iterations (layers)</div>
+          <div class="ph-actions"><span class="chip chip-info" id="dec-iter-chip">1×</span></div>
+        </div>
+        <div class="iter-row">
+          <span class="iter-lbl">How many times to decode:</span>
+          <div class="iter-btns" id="dec-iter-btns">
+            <!-- generated -->
+          </div>
+          <span class="iter-info" id="dec-iter-info">1 layer → 1 decode pass</span>
         </div>
       </div>
-      <div class="out-content" id="enc-out"><span class="placeholder-text">Encoded result will appear here…</span></div>
     </div>
 
-    <!-- DECODE OUTPUT -->
-    <div class="out-panel dec-panel">
-      <div class="out-header">
-        <div class="out-title">
-          <span class="dot dot-dec"></span>
-          <span class="dec-label">↓ DECODED OUTPUT</span>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <span class="chip" id="dec-chip">—</span>
-          <button class="btn btn-dec" onclick="copyOut('dec')">Copy</button>
+    <!-- RIGHT: decode chain output -->
+    <div class="dec-right">
+      <div class="ph" style="background:var(--ink2);border:1px solid var(--ink4);border-radius:10px;margin-bottom:.5rem">
+        <div class="ph-title"><span class="dot dot-dec"></span>Decoded Output</div>
+        <div class="ph-actions">
+          <span class="chip" id="dec-status-chip">—</span>
+          <button class="btn btn-dec" onclick="copyDecOut()">Copy result</button>
         </div>
       </div>
-      <div class="out-content" id="dec-out"><span class="placeholder-text">Decoded (plain text) result will appear here…</span></div>
+      <div class="dec-chain" id="dec-chain-out">
+        <div class="placeholder">Decoded layers will appear here…</div>
+      </div>
     </div>
-
   </div>
+</div>
 
-</div><!-- /main -->
+<!-- ══════════════════════════════════════════════════════════
+     AUTO-DETECT PANE
+══════════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-auto">
+  <div class="auto-pane-grid">
+    <div class="auto-left">
+      <div class="panel" style="flex-shrink:0">
+        <div class="ph">
+          <div class="ph-title"><span class="dot dot-gold"></span>Unknown Encoded Input</div>
+          <div class="ph-actions">
+            <span class="lcount" id="auto-incount">0 chars</span>
+            <button class="btn" onclick="autoLoadSample()">▷ Sample</button>
+            <button class="btn" onclick="clearAuto()">✕ Clear</button>
+          </div>
+        </div>
+        <textarea id="auto-input" placeholder="Paste anything here — even if you don't know how many times it was encoded.&#10;&#10;CipherSense will automatically detect and peel every encoding layer until it reaches plain text." oninput="runAuto()" spellcheck="false"></textarea>
+      </div>
+
+      <!-- detected formats -->
+      <div class="panel" style="flex-shrink:0">
+        <div class="ph">
+          <div class="ph-title"><span class="dot dot-gold"></span>Detected Formats</div>
+          <div class="ph-actions"><span class="chip chip-gold" id="auto-layer-chip">0 layers found</span></div>
+        </div>
+        <div style="padding:.6rem .8rem" id="auto-detect-tags">
+          <div class="placeholder" style="padding:0">Paste input to detect formats…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="auto-right" id="auto-chain-out">
+      <div class="placeholder">Auto-detected layers will be peeled here, one by one, until plain text is reached…</div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /root -->
-
-<button class="swap-btn" title="Swap: use encoded output as new input" onclick="swapEncToInput()">⇅</button>
 
 <script>
 'use strict';
-
-// ═══════════════════════════════════════════════════════ UTILITIES
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+// ═══════════════════════════════════════════════════════════════ UTILITIES
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function safeAtob(s){try{return atob(s)}catch{return null}}
-function isPrintable(s){return typeof s==='string'&&/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s)}
-
-function hexToText(hex){
-  const c=hex.replace(/[\s:0x]/g,'').replace(/^0x/gi,'');
-  if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0)return null;
-  let o='';
-  for(let i=0;i<c.length;i+=2){
-    const code=parseInt(c.slice(i,i+2),16);
-    o+=String.fromCharCode(code);
-  }
-  return o;
+function isPrintable(s){return typeof s==='string'&&s.length>0&&/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s)}
+function hasLetters(s){return/[a-zA-Z]{2,}/.test(s)}
+function copyText(text,btn){
+  navigator.clipboard.writeText(text).catch(()=>{});
+  if(!btn)return;
+  const o=btn.textContent;btn.textContent='✓';btn.classList.add('copied-fx');
+  setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied-fx')},1300);
 }
+const LAYER_COLORS=['#00ffb3','#4fc3f7','#b388ff','#ffd166','#ff6b9d','#ff9800','#e040fb','#69f0ae','#f48fb1','#80deea'];
+function layerColor(i){return LAYER_COLORS[i%LAYER_COLORS.length]}
 
-function copyBtn(btn){
-  const o=btn.textContent;
-  btn.textContent='✓';btn.classList.add('copied-flash');
-  setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied-flash')},1400);
-}
-
-// ═══════════════════════════════════════════════════════ METHOD DEFINITIONS
-// Each method has:
-//   encode(text, opts) → string  — converts plain text → encoded
-//   decode(text, opts) → string  — converts encoded → plain text
-//   options[]  — param definitions
-//   note: string  — shown in info bar
-const METHODS = [
-
-  // ── ENCODINGS ──────────────────────────────────────────────────────────────
-  { id:'base64', name:'Base64', cat:'Encoding',
-    desc:'Standard Base64 (RFC 4648). Converts any text or binary to printable ASCII.',
-    encLabel:'text → Base64', decLabel:'Base64 → plain text', opts:[],
-    encode(t){ try{return btoa(unescape(encodeURIComponent(t)))}catch{return'[encode error]'} },
+// ═══════════════════════════════════════════════════════════════ METHODS
+// Each method: id, name, cat, desc, encLabel, decLabel, opts[], encode(t,o), decode(t,o)
+const METHODS=[
+  {id:'base64',name:'Base64',cat:'Encoding',desc:'Standard Base64 (RFC 4648).',encLabel:'→ Base64',decLabel:'Base64 →',opts:[],
+    encode(t){try{return btoa(unescape(encodeURIComponent(t)))}catch{return'[encode error]'}},
     decode(t){
-      try{
-        let s=t.trim().replace(/\s/g,'');
-        while(s.length%4)s+='=';
-        const r=safeAtob(s);
-        if(r===null)return'[not valid Base64]';
-        // try UTF-8 decode
-        try{return decodeURIComponent(escape(r))}catch{return r}
-      }catch{return'[not valid Base64]'}
+      try{let s=t.trim().replace(/\s/g,'');while(s.length%4)s+='=';
+      const r=safeAtob(s);if(r===null)return null;
+      try{return decodeURIComponent(escape(r))}catch{return r}}catch{return null}
     }
   },
-
-  { id:'base64url', name:'Base64 URL', cat:'Encoding',
-    desc:'URL-safe Base64 using - and _ instead of + and /. No padding. Used in JWTs and URLs.',
-    encLabel:'text → Base64URL', decLabel:'Base64URL → plain text', opts:[],
-    encode(t){
-      try{return btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}
-      catch{return'[encode error]'}
-    },
+  {id:'base64url',name:'Base64URL',cat:'Encoding',desc:'URL-safe Base64 using - and _ (no padding).',encLabel:'→ Base64URL',decLabel:'Base64URL →',opts:[],
+    encode(t){try{return btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}catch{return'[encode error]'}},
     decode(t){
-      try{
-        let s=t.trim().replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');
-        while(s.length%4)s+='=';
-        const r=safeAtob(s);
-        if(r===null)return'[not valid Base64URL]';
-        try{return decodeURIComponent(escape(r))}catch{return r}
-      }catch{return'[not valid Base64URL]'}
+      try{let s=t.trim().replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
+      const r=safeAtob(s);if(!r)return null;
+      try{return decodeURIComponent(escape(r))}catch{return r}}catch{return null}
     }
   },
-
-  { id:'base32', name:'Base32', cat:'Encoding',
-    desc:'Base32 uses uppercase A–Z and digits 2–7. Common in TOTP/2FA secrets.',
-    encLabel:'text → Base32', decLabel:'Base32 → plain text', opts:[],
+  {id:'base32',name:'Base32',cat:'Encoding',desc:'Base32 (RFC 4648) — A-Z + 2-7.',encLabel:'→ Base32',decLabel:'Base32 →',opts:[],
     encode(t){
-      const alpha='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
       let bits='',o='';
       for(let i=0;i<t.length;i++)bits+=t.charCodeAt(i).toString(2).padStart(8,'0');
       while(bits.length%5)bits+='0';
-      for(let i=0;i<bits.length;i+=5)o+=alpha[parseInt(bits.slice(i,i+5),2)];
-      while(o.length%8)o+='=';
-      return o;
+      for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];
+      while(o.length%8)o+='=';return o;
     },
     decode(t){
       try{
-        const alpha='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         const inp=t.trim().toUpperCase().replace(/=/g,'').replace(/\s/g,'');
         let bits='',o='';
-        for(const c of inp){const i=alpha.indexOf(c);if(i<0)return'[invalid Base32 character: '+c+']';bits+=i.toString(2).padStart(5,'0');}
+        for(const c of inp){const i=a.indexOf(c);if(i<0)return null;bits+=i.toString(2).padStart(5,'0');}
         for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));
-        return o||'[empty result]';
-      }catch{return'[not valid Base32]'}
+        return o||null;
+      }catch{return null}
     }
   },
-
-  { id:'hex', name:'Hex', cat:'Encoding',
-    desc:'Hexadecimal encoding. Each byte = 2 hex digits. Decodes any hex string back to plain text.',
-    encLabel:'text → hex bytes', decLabel:'hex → plain text', opts:[
-      {id:'sep',label:'Separator',type:'select',choices:['space','none','colon','0x-prefix'],def:'space'}
-    ],
+  {id:'hex',name:'Hex',cat:'Encoding',desc:'Hexadecimal encoding. Each byte = 2 hex digits.',encLabel:'→ Hex',decLabel:'Hex →',
+    opts:[{id:'sep',label:'Separator',type:'select',choices:['space','none','colon','0x-prefix'],def:'space'}],
     encode(t,o){
       const sep={'space':' ','none':'','colon':':','0x-prefix':' '}[o.sep||'space'];
       const prefix=o.sep==='0x-prefix'?'0x':'';
       return Array.from(t).map(c=>prefix+c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep);
     },
-    decode(t,o){
-      const r=hexToText(t);
-      if(r===null)return'[not valid hex]';
-      if(isPrintable(r))return r;
-      // show bytes as text anyway, replacing non-printable with •
-      return Array.from(r).map(c=>{const code=c.charCodeAt(0);return code>=32&&code<=126?c:(code===10?'\n':code===9?'\t':'•')}).join('');
-    }
-  },
-
-  { id:'binary', name:'Binary', cat:'Encoding',
-    desc:'8-bit binary representation of each character. Decode groups of 8 bits back to text.',
-    encLabel:'text → 8-bit binary', decLabel:'binary → plain text', opts:[
-      {id:'sep',label:'Separator',type:'select',choices:['space','none'],def:'space'}
-    ],
-    encode(t,o){
-      const sep=o.sep==='none'?'':' ';
-      return Array.from(t).map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(sep);
-    },
-    decode(t,o){
+    decode(t){
       try{
-        const clean=t.trim().replace(/\s/g,'');
-        if(!/^[01]+$/.test(clean))return'[not valid binary — only 0s and 1s allowed]';
-        if(clean.length%8!==0)return`[binary length must be multiple of 8 — got ${clean.length} bits]`;
-        let o2='';
-        for(let i=0;i<clean.length;i+=8)o2+=String.fromCharCode(parseInt(clean.slice(i,i+8),2));
-        return o2;
-      }catch{return'[not valid binary]'}
+        const c=t.trim().replace(/0x/gi,'').replace(/[\s:]/g,'');
+        if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0)return null;
+        let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));
+        return isPrintable(o)?o:null;
+      }catch{return null}
     }
   },
-
-  { id:'octal', name:'Octal', cat:'Encoding',
-    desc:'Octal (base-8) encoding. Each character represented as 3-digit octal number.',
-    encLabel:'text → octal', decLabel:'octal → plain text', opts:[],
+  {id:'binary',name:'Binary',cat:'Encoding',desc:'8-bit binary per character.',encLabel:'→ Binary',decLabel:'Binary →',
+    opts:[{id:'sep',label:'Separator',type:'select',choices:['space','none'],def:'space'}],
+    encode(t,o){const sep=o.sep==='none'?'':' ';return Array.from(t).map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(sep)},
+    decode(t){
+      try{
+        const c=t.trim().replace(/\s/g,'');
+        if(!/^[01]+$/.test(c)||c.length%8!==0)return null;
+        let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));
+        return isPrintable(o)?o:null;
+      }catch{return null}
+    }
+  },
+  {id:'octal',name:'Octal',cat:'Encoding',desc:'Octal base-8 per character.',encLabel:'→ Octal',decLabel:'Octal →',opts:[],
     encode(t){return Array.from(t).map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' ')},
     decode(t){
       try{
         const tokens=t.trim().split(/\s+/);
-        return tokens.map(tok=>{const n=parseInt(tok,8);if(isNaN(n))return'?';return String.fromCharCode(n)}).join('');
-      }catch{return'[not valid octal]'}
+        if(!tokens.every(tk=>/^[0-7]{1,3}$/.test(tk)))return null;
+        const o=tokens.map(tk=>String.fromCharCode(parseInt(tk,8))).join('');
+        return isPrintable(o)?o:null;
+      }catch{return null}
     }
   },
-
-  { id:'decimal', name:'Decimal', cat:'Encoding',
-    desc:'Decimal ASCII codes. Each character represented as its decimal code point (0-127).',
-    encLabel:'text → decimal codes', decLabel:'decimal codes → plain text', opts:[
-      {id:'sep',label:'Separator',type:'select',choices:['space','comma','pipe'],def:'space'}
-    ],
-    encode(t,o){
-      const sep={'space':' ','comma':',','pipe':'|'}[o.sep||'space'];
-      return Array.from(t).map(c=>c.charCodeAt(0)).join(sep);
-    },
-    decode(t,o){
+  {id:'decimal',name:'Decimal',cat:'Encoding',desc:'Decimal ASCII code per character.',encLabel:'→ Decimal',decLabel:'Decimal →',
+    opts:[{id:'sep',label:'Separator',type:'select',choices:['space','comma','pipe'],def:'space'}],
+    encode(t,o){const sep={'space':' ','comma':',','pipe':'|'}[o.sep||'space'];return Array.from(t).map(c=>c.charCodeAt(0)).join(sep)},
+    decode(t){
       try{
         const tokens=t.trim().split(/[\s,|]+/);
-        return tokens.map(tok=>{
-          const n=parseInt(tok,10);
-          if(isNaN(n))return'?';
-          return String.fromCharCode(n);
-        }).join('');
-      }catch{return'[not valid decimal ASCII]'}
+        if(!tokens.every(tk=>/^\d+$/.test(tk)))return null;
+        const o=tokens.map(tk=>String.fromCharCode(+tk)).join('');
+        return isPrintable(o)?o:null;
+      }catch{return null}
     }
   },
-
-  { id:'url', name:'URL %enc', cat:'Encoding',
-    desc:'Percent-encoding for URLs. Special characters become %XX sequences.',
-    encLabel:'text → %XX URL-encoded', decLabel:'%XX → plain text', opts:[],
+  {id:'url',name:'URL %enc',cat:'Encoding',desc:'Percent-encoding for URLs.',encLabel:'→ URL %enc',decLabel:'URL %enc →',opts:[],
     encode(t){return encodeURIComponent(t)},
-    decode(t){try{return decodeURIComponent(t.trim())}catch{try{return unescape(t.trim())}catch{return'[not valid URL encoding]'}}}
+    decode(t){try{const d=decodeURIComponent(t.trim());return d!==t.trim()?d:null}catch{return null}}
   },
-
-  { id:'html', name:'HTML Ents', cat:'Encoding',
-    desc:'HTML entity encoding. Special chars become &amp;, &lt;, &#123; etc.',
-    encLabel:'text → HTML entities', decLabel:'HTML entities → plain text', opts:[
-      {id:'mode',label:'Mode',type:'select',choices:['named','decimal','hex'],def:'named'}
-    ],
+  {id:'html',name:'HTML Ents',cat:'Encoding',desc:'HTML entity encoding.',encLabel:'→ HTML',decLabel:'HTML →',
+    opts:[{id:'mode',label:'Mode',type:'select',choices:['named','decimal','hex'],def:'named'}],
     encode(t,o){
-      const named={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
-      if((o.mode||'named')==='named')return t.replace(/[&<>"']/g,c=>named[c]||c);
+      const nm={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+      if((o.mode||'named')==='named')return t.replace(/[&<>"']/g,c=>nm[c]||c);
       if(o.mode==='decimal')return Array.from(t).map(c=>`&#${c.charCodeAt(0)};`).join('');
       return Array.from(t).map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('');
     },
     decode(t){
-      const el=document.createElement('textarea');el.innerHTML=t;return el.value;
+      try{
+        if(!/&[#a-zA-Z]/.test(t))return null;
+        const el=document.createElement('textarea');el.innerHTML=t;
+        const r=el.value;return r!==t?r:null;
+      }catch{return null}
     }
   },
-
-  { id:'unicode', name:'Unicode', cat:'Encoding',
-    desc:'Unicode escape sequences: \\uXXXX, \\xXX, or U+XXXX notation.',
-    encLabel:'text → \\uXXXX escapes', decLabel:'\\uXXXX → plain text', opts:[
-      {id:'fmt',label:'Format',type:'select',choices:['\\uXXXX','\\xXX','U+XXXX'],def:'\\uXXXX'}
-    ],
+  {id:'unicode',name:'Unicode',cat:'Encoding',desc:'\\uXXXX / \\xXX Unicode escapes.',encLabel:'→ \\uXXXX',decLabel:'\\uXXXX →',
+    opts:[{id:'fmt',label:'Format',type:'select',choices:['\\uXXXX','\\xXX','U+XXXX'],def:'\\uXXXX'}],
     encode(t,o){
       const f=o.fmt||'\\uXXXX';
       if(f==='\\uXXXX')return Array.from(t).map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join('');
@@ -577,550 +559,613 @@ const METHODS = [
       return Array.from(t).map(c=>'U+'+c.charCodeAt(0).toString(16).toUpperCase().padStart(4,'0')).join(' ');
     },
     decode(t){
+      if(!/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|U\+[0-9a-fA-F]{4}/i.test(t))return null;
       let s=t;
       s=s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
       s=s.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
       s=s.replace(/U\+([0-9a-fA-F]{4,6})/gi,(_,h)=>String.fromCodePoint(parseInt(h,16)));
-      return s;
+      return s!==t?s:null;
     }
   },
-
-  // ── CIPHERS ────────────────────────────────────────────────────────────────
-  { id:'rot13', name:'ROT13', cat:'Cipher',
-    desc:'Rotates each letter by 13 positions. Symmetric — applying twice restores original.',
-    encLabel:'text → ROT13', decLabel:'ROT13 → plain text', opts:[],
+  // ── CIPHERS ──
+  {id:'rot13',name:'ROT13',cat:'Cipher',desc:'Rotate letters by 13 (symmetric).',encLabel:'→ ROT13',decLabel:'ROT13 →',opts:[],
     encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))},
     decode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))}
   },
-
-  { id:'rot47', name:'ROT47', cat:'Cipher',
-    desc:'Like ROT13 but rotates all 94 printable ASCII chars (! to ~) by 47.',
-    encLabel:'text → ROT47', decLabel:'ROT47 → plain text', opts:[],
+  {id:'rot47',name:'ROT47',cat:'Cipher',desc:'Rotate all 94 printable ASCII chars by 47.',encLabel:'→ ROT47',decLabel:'ROT47 →',opts:[],
     encode(t){return t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))},
     decode(t){return t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))}
   },
-
-  { id:'atbash', name:'Atbash', cat:'Cipher',
-    desc:'Hebrew substitution cipher: A↔Z, B↔Y, C↔X. Symmetric — decode = encode.',
-    encLabel:'text → Atbash', decLabel:'Atbash → plain text', opts:[],
+  {id:'atbash',name:'Atbash',cat:'Cipher',desc:'A↔Z substitution (symmetric).',encLabel:'→ Atbash',decLabel:'Atbash →',opts:[],
     encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))},
     decode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))}
   },
-
-  { id:'caesar', name:'Caesar', cat:'Cipher',
-    desc:'Shifts each letter by N positions in the alphabet. Classic Roman cipher.',
-    encLabel:'text → Caesar cipher', decLabel:'Caesar cipher → plain text', opts:[
-      {id:'shift',label:'Shift',type:'range',min:1,max:25,def:'3'}
-    ],
-    encode(t,o){
-      const n=parseInt(o.shift)||3;
-      return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97))
-              .replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65));
-    },
-    decode(t,o){
-      const n=parseInt(o.shift)||3;
-      return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97))
-              .replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));
-    }
+  {id:'caesar',name:'Caesar',cat:'Cipher',desc:'Shift letters by N positions.',encLabel:'→ Caesar',decLabel:'Caesar →',
+    opts:[{id:'shift',label:'Shift',type:'range',min:1,max:25,def:'3'}],
+    encode(t,o){const n=+o.shift||3;return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65))},
+    decode(t,o){const n=+o.shift||3;return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65))}
   },
-
-  { id:'vigenere', name:'Vigenère', cat:'Cipher',
-    desc:'Polyalphabetic cipher using a repeating keyword. Enter a key to encrypt or decrypt.',
-    encLabel:'text → Vigenère cipher', decLabel:'Vigenère cipher → plain text', opts:[
-      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. SECRET',def:'KEY'}
-    ],
-    _prep(key){return(key||'KEY').toLowerCase().replace(/[^a-z]/g,'')},
-    encode(t,o){
-      const k=this._prep(o.key);if(!k.length)return'[keyword required]';
-      let ki=0;
-      return t.replace(/[a-zA-Z]/g,c=>{
-        const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;
-        return String.fromCharCode(((c.charCodeAt(0)-b+sh)%26)+b);
-      });
-    },
-    decode(t,o){
-      const k=this._prep(o.key);if(!k.length)return'[keyword required]';
-      let ki=0;
-      return t.replace(/[a-zA-Z]/g,c=>{
-        const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;
-        return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b);
-      });
-    }
+  {id:'vigenere',name:'Vigenère',cat:'Cipher',desc:'Polyalphabetic cipher with keyword.',encLabel:'→ Vigenère',decLabel:'Vigenère →',
+    opts:[{id:'key',label:'Keyword',type:'text',placeholder:'SECRET',def:'KEY'}],
+    _k(k){return(k||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key'},
+    encode(t,o){const k=this._k(o.key);let i=0;return t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,s=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b+s)%26)+b)})},
+    decode(t,o){const k=this._k(o.key);let i=0;return t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,s=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-s+26)%26)+b)})}
   },
-
-  { id:'xor', name:'XOR', cat:'Cipher',
-    desc:'XOR each byte with a key byte. Reversible — encrypt and decrypt use the same operation.',
-    encLabel:'text → XOR bytes (hex)', decLabel:'XOR hex → plain text', opts:[
-      {id:'key',label:'Key byte (0–255)',type:'number',min:0,max:255,def:'42'},
-      {id:'fmt',label:'Output',type:'select',choices:['hex','decimal','binary'],def:'hex'}
-    ],
+  {id:'xor',name:'XOR',cat:'Cipher',desc:'XOR each byte with a key byte.',encLabel:'→ XOR (hex)',decLabel:'XOR (hex) →',
+    opts:[{id:'key',label:'Key (0-255)',type:'number',min:0,max:255,def:'42'},{id:'fmt',label:'Output',type:'select',choices:['hex','decimal'],def:'hex'}],
     encode(t,o){
-      const k=parseInt(o.key)||42,fmt=o.fmt||'hex';
+      const k=+o.key||42,fmt=o.fmt||'hex';
       const bytes=Array.from(t).map(c=>c.charCodeAt(0)^k);
-      if(fmt==='hex')return bytes.map(b=>b.toString(16).padStart(2,'0')).join(' ');
-      if(fmt==='decimal')return bytes.join(' ');
-      return bytes.map(b=>b.toString(2).padStart(8,'0')).join(' ');
+      return fmt==='hex'?bytes.map(b=>b.toString(16).padStart(2,'0')).join(' '):bytes.join(' ');
     },
     decode(t,o){
-      const k=parseInt(o.key)||42,fmt=o.fmt||'hex';
+      const k=+o.key||42,fmt=o.fmt||'hex';
       try{
         let bytes=[];
-        if(fmt==='hex'){
-          const c=t.trim().replace(/[\s:]/g,'');
-          if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0)return'[invalid hex for XOR decode]';
-          for(let i=0;i<c.length;i+=2)bytes.push(parseInt(c.slice(i,i+2),16));
-        } else if(fmt==='decimal'){
-          bytes=t.trim().split(/[\s,]+/).map(Number);
-        } else {
-          const c=t.trim().replace(/\s/g,'');
-          if(c.length%8!==0)return'[binary length must be multiple of 8]';
-          for(let i=0;i<c.length;i+=8)bytes.push(parseInt(c.slice(i,i+8),2));
-        }
-        return bytes.map(b=>String.fromCharCode(b^k)).join('');
-      }catch{return'[XOR decode error]'}
+        if(fmt==='hex'){const c=t.trim().replace(/\s/g,'');if(c.length%2!==0)return null;for(let i=0;i<c.length;i+=2)bytes.push(parseInt(c.slice(i,i+2),16));}
+        else bytes=t.trim().split(/[\s,]+/).map(Number);
+        const o2=bytes.map(b=>String.fromCharCode(b^k)).join('');
+        return isPrintable(o2)?o2:null;
+      }catch{return null}
     }
   },
-
-  { id:'morse', name:'Morse', cat:'Cipher',
-    desc:'International Morse code. Dots and dashes. Words separated by /.',
-    encLabel:'text → morse code', decLabel:'morse code → plain text', opts:[],
-    _enc:{A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.','.':'.-.-.-',',':'--..--','?':'..--..','-':'-....-','!':'-.-.--',' ':'/'
-    },
-    encode(t){
-      return t.toUpperCase().split('').map(c=>this._enc[c]||'').filter(Boolean).join(' ');
-    },
+  {id:'morse',name:'Morse',cat:'Cipher',desc:'International Morse code.',encLabel:'→ Morse',decLabel:'Morse →',opts:[],
+    _e:{A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.','.':'.-.-.-',',':'--..--','?':'..--..','!':'-.-.--',' ':'/'},
+    encode(t){return t.toUpperCase().split('').map(c=>this._e[c]||'').filter(Boolean).join(' ')},
     decode(t){
-      const rev={};for(const[k,v]of Object.entries(this._enc))rev[v]=k;
-      return t.trim().split(/\s+/).map(sym=>{
-        if(sym==='/')return ' ';
-        return rev[sym]||'?';
-      }).join('');
+      const rev={};for(const[k,v]of Object.entries(this._e))rev[v]=k;
+      return t.trim().split(/\s+/).map(s=>s==='/'?' ':rev[s]||'?').join('');
     }
   },
-
-  { id:'bacon', name:"Bacon's", cat:'Cipher',
-    desc:"Francis Bacon's bilateral cipher: each letter encoded as 5-char A/B sequence.",
-    encLabel:"text → A/B sequences", decLabel:"A/B sequences → plain text", opts:[],
-    _map:{A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'},
-    encode(t){return t.toUpperCase().split('').map(c=>this._map[c]||c).join(' ')},
+  {id:'bacon',name:"Bacon's",cat:'Cipher',desc:'5-char A/B sequences per letter.',encLabel:"→ Bacon's",decLabel:"Bacon's →",opts:[],
+    _m:{A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'},
+    encode(t){return t.toUpperCase().split('').map(c=>this._m[c]||c).join(' ')},
     decode(t){
-      const rev={};for(const[k,v]of Object.entries(this._map))rev[v]=k;
-      const clean=t.trim().toUpperCase().replace(/\s+/g,'');
-      let o='';
-      for(let i=0;i+5<=clean.length;i+=5)o+=rev[clean.slice(i,i+5)]||'?';
-      return o||'[not valid Bacon cipher]';
+      const rev={};for(const[k,v]of Object.entries(this._m))rev[v]=k;
+      const c=t.trim().toUpperCase().replace(/\s+/g,'');
+      let o='';for(let i=0;i+5<=c.length;i+=5)o+=rev[c.slice(i,i+5)]||'?';
+      return hasLetters(o)?o:null;
     }
   },
-
-  { id:'railfence', name:'Rail Fence', cat:'Cipher',
-    desc:'Writes text in zigzag across N rails then reads off each rail sequentially.',
-    encLabel:'text → rail fence', decLabel:'rail fence → plain text', opts:[
-      {id:'rails',label:'Rails',type:'range',min:2,max:8,def:'3'}
-    ],
+  {id:'railfence',name:'Rail Fence',cat:'Cipher',desc:'Zigzag transposition cipher.',encLabel:'→ Rail Fence',decLabel:'Rail Fence →',
+    opts:[{id:'rails',label:'Rails',type:'range',min:2,max:8,def:'3'}],
     encode(t,o){
-      const rails=Math.max(2,Math.min(8,parseInt(o.rails)||3));
-      const fence=Array.from({length:rails},()=>[]);
-      let r=0,d=1;
+      const rails=Math.max(2,Math.min(8,+o.rails||3));
+      const fence=Array.from({length:rails},()=>[]);let r=0,d=1;
       for(const c of t){fence[r].push(c);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
       return fence.map(row=>row.join('')).join('');
     },
     decode(t,o){
-      const rails=Math.max(2,Math.min(8,parseInt(o.rails)||3));
-      const len=t.length;
-      if(len===0)return'';
-      // figure out pattern
-      const pattern=[];let r=0,d=1;
-      for(let i=0;i<len;i++){pattern.push(r);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
-      const fenceLens=Array.from({length:rails},(_,ri)=>pattern.filter(x=>x===ri).length);
-      let pos=0,fenceStart=[];
-      for(const fl of fenceLens){fenceStart.push(pos);pos+=fl;}
-      const idxInRail=Array(rails).fill(0);
-      const result=new Array(len);
-      for(let i=0;i<len;i++){
-        const ri=pattern[i];
-        result[i]=t[fenceStart[ri]+idxInRail[ri]];
-        idxInRail[ri]++;
-      }
-      return result.join('');
+      const rails=Math.max(2,Math.min(8,+o.rails||3)),len=t.length;
+      if(!len)return'';
+      const pat=[];let r=0,d=1;
+      for(let i=0;i<len;i++){pat.push(r);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
+      const rlen=Array.from({length:rails},(_,ri)=>pat.filter(x=>x===ri).length);
+      let pos=0;const rs=[];
+      for(const l of rlen){rs.push(pos);pos+=l;}
+      const ri2=Array(rails).fill(0),res=new Array(len);
+      for(let i=0;i<len;i++){const ri=pat[i];res[i]=t[rs[ri]+ri2[ri]];ri2[ri]++;}
+      return res.join('');
     }
   },
-
-  { id:'substitution', name:'Substitution', cat:'Cipher',
-    desc:'Simple substitution: shift the alphabet by an offset (like Caesar but customisable mapping).',
-    encLabel:'text → substitution cipher', decLabel:'substitution cipher → plain text', opts:[
-      {id:'alpha',label:'Key alphabet (26 chars)',type:'text',placeholder:'QWERTYUIOPASDFGHJKLZXCVBNM',def:'QWERTYUIOPASDFGHJKLZXCVBNM'}
-    ],
+  {id:'affine',name:'Affine',cat:'Cipher',desc:'E(x)=(ax+b) mod 26. a must be coprime to 26.',encLabel:'→ Affine',decLabel:'Affine →',
+    opts:[{id:'a',label:'a',type:'number',min:1,max:25,def:'5'},{id:'b',label:'b',type:'number',min:0,max:25,def:'8'}],
+    _inv(a,m){for(let x=1;x<m;x++)if((a*x)%m===1)return x;return null},
     encode(t,o){
-      const key=((o.alpha||'QWERTYUIOPASDFGHJKLZXCVBNM').toUpperCase().replace(/[^A-Z]/g,'')+'ABCDEFGHIJKLMNOPQRSTUVWXYZ').slice(0,26);
-      if(new Set(key).size<26)return'[key must have 26 unique letters]';
-      return t.replace(/[a-z]/g,c=>key[c.charCodeAt(0)-97].toLowerCase())
-              .replace(/[A-Z]/g,c=>key[c.charCodeAt(0)-65]);
+      const a=+o.a||5,b=+o.b||8,inv=this._inv(a,26);
+      if(!inv)return`[a=${a} not coprime to 26]`;
+      return t.replace(/[a-z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-97)+b)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-65)+b)%26)+65));
     },
     decode(t,o){
-      const key=((o.alpha||'QWERTYUIOPASDFGHJKLZXCVBNM').toUpperCase().replace(/[^A-Z]/g,'')+'ABCDEFGHIJKLMNOPQRSTUVWXYZ').slice(0,26);
-      if(new Set(key).size<26)return'[key must have 26 unique letters]';
-      const rev=Array(26);
-      for(let i=0;i<26;i++)rev[key.charCodeAt(i)-65]=String.fromCharCode(65+i);
-      return t.replace(/[a-z]/g,c=>rev[c.charCodeAt(0)-97].toLowerCase())
-              .replace(/[A-Z]/g,c=>rev[c.charCodeAt(0)-65]);
+      const a=+o.a||5,b=+o.b||8,inv=this._inv(a,26);
+      if(!inv)return null;
+      return t.replace(/[a-z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-97-b+2600)))%26+26)%26+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-65-b+2600)))%26+26)%26+65));
     }
   },
-
-  { id:'columnar', name:'Columnar', cat:'Cipher',
-    desc:'Columnar transposition: write text into rows, reorder columns by keyword.',
-    encLabel:'text → columnar transposition', decLabel:'columnar cipher → plain text', opts:[
-      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. ZEBRA',def:'CIPHER'}
-    ],
-    _order(key){
-      const k=key.toUpperCase().replace(/[^A-Z]/g,'')||'CIPHER';
-      const idx=Array.from(k).map((c,i)=>({c,i}));
-      idx.sort((a,b)=>a.c<b.c?-1:a.c>b.c?1:a.i-b.i);
-      return idx.map(x=>x.i);
-    },
-    encode(t,o){
-      const order=this._order(o.key||'CIPHER');
-      const cols=order.length;
-      const rows=Math.ceil(t.length/cols);
-      const padded=t.padEnd(rows*cols,'X');
-      const grid=[];
-      for(let r=0;r<rows;r++)grid.push(padded.slice(r*cols,(r+1)*cols).split(''));
-      return order.map(c=>grid.map(row=>row[c]).join('')).join('');
-    },
-    decode(t,o){
-      const order=this._order(o.key||'CIPHER');
-      const cols=order.length;
-      const rows=Math.ceil(t.length/cols);
-      const colLen=Math.floor(t.length/cols);
-      const extra=t.length%cols;
-      // build reverse order
-      const rev=Array(cols);
-      order.forEach((orig,sorted)=>rev[orig]=sorted);
-      const colLens=order.map((orig,sorted)=>colLen+(orig<extra?1:0));
-      const colStarts=[];let pos=0;
-      for(let i=0;i<cols;i++){colStarts.push(pos);pos+=colLen+(i<extra?1:0);}
-      const result=[];
-      for(let r=0;r<rows;r++){
-        for(let c=0;c<cols;c++){
-          const colIdx=rev[c];
-          const charIdx=colStarts[colIdx]+r;
-          if(charIdx<colStarts[colIdx]+(colLen+(colIdx<extra?1:0)))result.push(t[charIdx]);
-        }
-      }
-      return result.join('').replace(/X+$/,'');
-    }
+  {id:'beaufort',name:'Beaufort',cat:'Cipher',desc:'Variant of Vigenère — self-reciprocal.',encLabel:'→ Beaufort',decLabel:'Beaufort →',
+    opts:[{id:'key',label:'Keyword',type:'text',placeholder:'FORTIFY',def:'FORTIFY'}],
+    _k(k){return(k||'FORTIFY').toLowerCase().replace(/[^a-z]/g,'')||'fortify'},
+    encode(t,o){const k=this._k(o.key);let i=0;return t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((sh-(c.charCodeAt(0)-b)+26)%26)+b)})},
+    decode(t,o){return this.encode(t,o)}
   },
-
-  { id:'playfair', name:'Playfair', cat:'Cipher',
-    desc:'Digraph substitution cipher using a 5×5 key matrix. Encrypts pairs of letters.',
-    encLabel:'text → Playfair cipher', decLabel:'Playfair cipher → plain text', opts:[
-      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. MONARCHY',def:'MONARCHY'}
-    ],
-    _buildMatrix(key){
-      const k=(key.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'')+
-               'ABCDEFGHIKLMNOPQRSTUVWXYZ').split('');
-      const seen=new Set(),matrix=[];
-      for(const c of k){if(!seen.has(c)){seen.add(c);matrix.push(c);}}
-      return matrix;
-    },
-    _pos(matrix,c){const i=matrix.indexOf(c);return[Math.floor(i/5),i%5]},
-    encode(t,o){
-      const matrix=this._buildMatrix(o.key||'MONARCHY');
-      let s=t.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
-      // insert X between doubles and make even length
-      let pairs=[];
-      for(let i=0;i<s.length;){
-        let a=s[i],b=s[i+1]||'X';
-        if(a===b){b='X';i++;}else{i+=2;}
-        pairs.push([a,b]);
-      }
-      return pairs.map(([a,b])=>{
-        const[ra,ca]=this._pos(matrix,a),[rb,cb]=this._pos(matrix,b);
-        if(ra===rb)return matrix[ra*5+(ca+1)%5]+matrix[rb*5+(cb+1)%5];
-        if(ca===cb)return matrix[((ra+1)%5)*5+ca]+matrix[((rb+1)%5)*5+cb];
-        return matrix[ra*5+cb]+matrix[rb*5+ca];
-      }).join('');
-    },
-    decode(t,o){
-      const matrix=this._buildMatrix(o.key||'MONARCHY');
-      const s=t.toUpperCase().replace(/[^A-Z]/g,'');
-      const pairs=[];
-      for(let i=0;i<s.length;i+=2)pairs.push([s[i],s[i+1]||'X']);
-      return pairs.map(([a,b])=>{
-        const[ra,ca]=this._pos(matrix,a),[rb,cb]=this._pos(matrix,b);
-        if(ra===rb)return matrix[ra*5+(ca+24)%5]+matrix[rb*5+(cb+24)%5];
-        if(ca===cb)return matrix[((ra+4)%5)*5+ca]+matrix[((rb+4)%5)*5+cb];
-        return matrix[ra*5+cb]+matrix[rb*5+ca];
-      }).join('');
-    }
-  },
-
-  { id:'affine', name:'Affine', cat:'Cipher',
-    desc:'Affine cipher: E(x) = (ax + b) mod 26. "a" must be coprime to 26.',
-    encLabel:'text → affine cipher', decLabel:'affine cipher → plain text', opts:[
-      {id:'a',label:'a (mult, coprime to 26)',type:'number',min:1,max:25,def:'5'},
-      {id:'b',label:'b (shift)',type:'number',min:0,max:25,def:'8'}
-    ],
-    _modInverse(a,m){for(let x=1;x<m;x++)if((a*x)%m===1)return x;return null},
-    encode(t,o){
-      const a=parseInt(o.a)||5,b=parseInt(o.b)||8;
-      const inv=this._modInverse(a,26);
-      if(!inv)return`[a=${a} is not coprime to 26 — try 1,3,5,7,9,11,15,17,19,21,23,25]`;
-      return t.replace(/[a-z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-97)+b)%26)+97))
-              .replace(/[A-Z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-65)+b)%26)+65));
-    },
-    decode(t,o){
-      const a=parseInt(o.a)||5,b=parseInt(o.b)||8;
-      const inv=this._modInverse(a,26);
-      if(!inv)return`[a=${a} is not coprime to 26]`;
-      return t.replace(/[a-z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-97-b+26*26))%26+26)%26)+97))
-              .replace(/[A-Z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-65-b+26*26))%26+26)%26)+65));
-    }
-  },
-
-  { id:'beaufort', name:'Beaufort', cat:'Cipher',
-    desc:'Beaufort cipher: variant of Vigenère where E(x) = (key - plain) mod 26. Self-reciprocal.',
-    encLabel:'text → Beaufort cipher', decLabel:'Beaufort cipher → plain text', opts:[
-      {id:'key',label:'Keyword',type:'text',placeholder:'e.g. FORTIFY',def:'FORTIFY'}
-    ],
-    _prep(k){return(k||'FORTIFY').toLowerCase().replace(/[^a-z]/g,'')},
-    encode(t,o){
-      const k=this._prep(o.key);if(!k)return'[keyword required]';
-      let ki=0;
-      return t.replace(/[a-zA-Z]/g,c=>{
-        const b=c>='a'?97:65,ki2=k[ki++%k.length].charCodeAt(0)-97;
-        return String.fromCharCode(((ki2-(c.charCodeAt(0)-b)+26)%26)+b);
-      });
-    },
-    decode(t,o){return this.encode(t,o)} // Beaufort is self-reciprocal
-  },
-
-  { id:'jwt', name:'JWT', cat:'Token',
-    desc:'JSON Web Token: base64url-encoded header.payload.signature. Decode reveals the claims.',
-    encLabel:'payload JSON → JWT (unsigned)', decLabel:'JWT → decoded header + payload', opts:[],
-    encode(t){
-      try{
-        const payload=JSON.parse(t);
-        const header={alg:'HS256',typ:'JWT'};
-        const enc=obj=>btoa(JSON.stringify(obj)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-        return enc(header)+'.'+enc(payload)+'.[signature — sign with your secret key]';
-      }catch{
-        const header={alg:'HS256',typ:'JWT'};
-        const enc=obj=>btoa(JSON.stringify(obj)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-        const payload={sub:'1234567890',data:t,iat:Math.floor(Date.now()/1000)};
-        return enc(header)+'.'+enc(payload)+'.[signature]';
-      }
-    },
-    decode(t){
-      try{
-        const parts=t.trim().split('.');
-        if(parts.length<2)return'[not a valid JWT — need header.payload.signature]';
-        const dec=p=>{let s=p.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(atob(s))};
-        const h=dec(parts[0]),p=dec(parts[1]);
-        return '=== HEADER ===\n'+JSON.stringify(h,null,2)+'\n\n=== PAYLOAD ===\n'+JSON.stringify(p,null,2)+'\n\n=== SIGNATURE ===\n'+parts[2]+'\n(Not verified — requires secret key)';
-      }catch{return'[not valid JWT — check format: xxxxx.yyyyy.zzzzz]'}
-    }
-  },
-
-  { id:'punycode', name:'Punycode', cat:'Encoding',
-    desc:'Punycode / IDN for international domain names. Converts Unicode domains to ASCII xn-- form.',
-    encLabel:'unicode domain → punycode', decLabel:'punycode → unicode domain', opts:[],
-    // Simplified Punycode for basic ASCII/latin conversion
-    encode(t){
-      try{
-        const url='http://'+t.trim().toLowerCase();
-        return new URL(url).hostname;
-      }catch{return t.trim().replace(/[^\x00-\x7F]/g,c=>'xn--[U+'+c.codePointAt(0).toString(16).toUpperCase()+']')}
-    },
-    decode(t){
-      try{
-        if(!t.includes('xn--'))return t+' (no Punycode detected)';
-        return t.trim()+' → Punycode detected. Use a full IDN library (e.g. "punycode" npm) for complete conversion.';
-      }catch{return'[Punycode decode error]'}
-    }
-  },
-
 ];
 
-// ═══════════════════════════════════════════════════════ STATE
-let currentMethod = METHODS[0];
-let opts = {};
+// ═══════════════════════════════════════════════════════════════ ENCODE STATE
+let encChain=[]; // [{methodId, opts:{}, label}]
+let selectedLayerIdx=-1;
 
-// ═══════════════════════════════════════════════════════ BUILD METHOD STRIP
-function buildStrip(){
-  const strip=document.getElementById('method-strip-inner');
+// ═══════════════════════════════════════════════════════════════ DECODE STATE
+let decMethod=METHODS[0];
+let decOpts={};
+let decIter=1;
+
+// ═══════════════════════════════════════════════════════════════ BUILD METHOD STRIPS
+function buildMethodStrip(containerId,clickFn,activeFn){
+  const el=$(containerId);
   const cats=[...new Set(METHODS.map(m=>m.cat))];
   let html='';
   cats.forEach((cat,ci)=>{
-    if(ci>0)html+=`<span class="mcat-sep">│</span>`;
+    if(ci>0)html+=`<span class="mb-sep">│</span>`;
     METHODS.filter(m=>m.cat===cat).forEach(m=>{
-      html+=`<button class="mbtn${m.id===currentMethod.id?' active':''}" id="mb-${m.id}" onclick="selectMethod('${m.id}')">${m.name}</button>`;
+      const active=activeFn(m.id)?'active':'';
+      html+=`<button class="mbtn ${active}" id="${containerId}-${m.id}" onclick="${clickFn}('${m.id}')">${m.name}</button>`;
     });
   });
-  strip.innerHTML=html;
+  el.innerHTML=html;
 }
 
-// ═══════════════════════════════════════════════════════ BUILD OPTIONS BAR
-function buildOpts(){
-  const bar=document.getElementById('opts-bar');
-  const m=currentMethod;
-  if(!m.opts||m.opts.length===0){bar.className='options-bar';bar.innerHTML='';return;}
-  // reset opts to defaults
-  m.opts.forEach(o=>{if(opts[o.id]===undefined)opts[o.id]=o.def||''});
+function buildDecMethodStrip(){
+  buildMethodStrip('dec-method-strip','selectDecMethod',id=>id===decMethod.id);
+}
+
+function buildEncMethodStrip(){
+  // for encode strip, click adds to chain
+  const el=$('enc-method-strip');
+  const cats=[...new Set(METHODS.map(m=>m.cat))];
+  let html='';
+  cats.forEach((cat,ci)=>{
+    if(ci>0)html+=`<span class="mb-sep">│</span>`;
+    METHODS.filter(m=>m.cat===cat).forEach(m=>{
+      html+=`<button class="mbtn" id="enc-strip-${m.id}" onclick="addLayer('${m.id}')">${m.name}</button>`;
+    });
+  });
+  el.innerHTML=html;
+  // also build quick-add select
+  const sel=$('quick-add-select');
+  sel.innerHTML='<option value="">— pick method —</option>';
+  METHODS.forEach(m=>sel.innerHTML+=`<option value="${m.id}">${m.name} (${m.cat})</option>`);
+}
+
+function quickAdd(){
+  const sel=$('quick-add-select');
+  if(sel.value)addLayer(sel.value);
+  sel.value='';
+}
+
+// ═══════════════════════════════════════════════════════════════ CHAIN MANAGEMENT
+function defaultOpts(m){
+  const o={};(m.opts||[]).forEach(opt=>o[opt.id]=opt.def||'');return o;
+}
+
+function addLayer(methodId){
+  const m=METHODS.find(x=>x.id===methodId);if(!m)return;
+  encChain.push({methodId,opts:defaultOpts(m)});
+  selectedLayerIdx=encChain.length-1;
+  renderChain();
+  runEnc();
+}
+
+function removeLayer(i){
+  encChain.splice(i,1);
+  if(selectedLayerIdx>=encChain.length)selectedLayerIdx=encChain.length-1;
+  renderChain();
+  runEnc();
+}
+
+function clearChain(){encChain=[];selectedLayerIdx=-1;renderChain();runEnc();}
+
+function selectLayer(i){
+  selectedLayerIdx=i;
+  renderChain();
+  renderLayerOpts();
+}
+
+// Drag-and-drop reorder
+let dragIdx=-1;
+function onDragStart(i){dragIdx=i;setTimeout(()=>{const items=document.querySelectorAll('.chain-item');if(items[i])items[i].classList.add('dragging')},0)}
+function onDragOver(e,i){e.preventDefault();document.querySelectorAll('.chain-item').forEach((el,j)=>{el.classList.toggle('drag-over',j===i&&j!==dragIdx)})}
+function onDrop(e,i){
+  e.preventDefault();
+  if(dragIdx<0||dragIdx===i)return;
+  const moved=encChain.splice(dragIdx,1)[0];
+  encChain.splice(i,0,moved);
+  dragIdx=-1;
+  selectedLayerIdx=i;
+  document.querySelectorAll('.chain-item').forEach(el=>el.classList.remove('drag-over','dragging'));
+  renderChain();runEnc();
+}
+function onDragEnd(){
+  dragIdx=-1;
+  document.querySelectorAll('.chain-item').forEach(el=>el.classList.remove('dragging','drag-over'));
+}
+
+function renderChain(){
+  const list=$('chain-list');
+  const empty=$('chain-empty');
+  $('enc-chain-count').textContent=encChain.length+(encChain.length===1?' layer':' layers');
+  if(!encChain.length){
+    list.innerHTML='<div class="chain-empty" id="chain-empty">No layers yet — click a method above to add one</div>';
+    $('layer-opts-panel').style.display='none';
+    return;
+  }
+  list.innerHTML=encChain.map((layer,i)=>{
+    const m=METHODS.find(x=>x.id===layer.methodId);
+    const col=layerColor(i);
+    const optsStr=Object.entries(layer.opts).map(([k,v])=>`${k}:${v}`).join(', ');
+    const sel=selectedLayerIdx===i?'border-color:'+col+';box-shadow:0 0 0 1px '+col:'';
+    return `<div class="chain-item" style="${sel}" draggable="true"
+      onclick="selectLayer(${i})"
+      ondragstart="onDragStart(${i})" ondragover="onDragOver(event,${i})" ondrop="onDrop(event,${i})" ondragend="onDragEnd()">
+      <span class="ci-drag">⠿</span>
+      <span class="ci-num">${i+1}</span>
+      <span class="ci-color" style="background:${col}"></span>
+      <span class="ci-name" style="color:${col}">${m?m.name:'?'}</span>
+      ${optsStr?`<span class="ci-opts">[${esc(optsStr)}]</span>`:''}
+      <button class="ci-del" onclick="event.stopPropagation();removeLayer(${i})">✕</button>
+    </div>`;
+  }).join('');
+  renderLayerOpts();
+}
+
+function renderLayerOpts(){
+  const panel=$('layer-opts-panel');
+  if(selectedLayerIdx<0||selectedLayerIdx>=encChain.length){panel.style.display='none';return;}
+  const layer=encChain[selectedLayerIdx];
+  const m=METHODS.find(x=>x.id===layer.methodId);
+  if(!m||!m.opts||!m.opts.length){panel.style.display='none';return;}
+  panel.style.display='block';
+  $('lo-title').textContent=`Layer ${selectedLayerIdx+1}: ${m.name} — options`;
+  let html='';
+  m.opts.forEach(opt=>{
+    html+=`<label>${opt.label}</label>`;
+    if(opt.type==='select'){
+      html+=`<select onchange="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value)">`;
+      opt.choices.forEach(c=>html+=`<option value="${c}"${c===layer.opts[opt.id]?' selected':''}>${c}</option>`);
+      html+=`</select>`;
+    }else if(opt.type==='range'){
+      html+=`<input type="range" min="${opt.min}" max="${opt.max}" value="${layer.opts[opt.id]||opt.def}"
+        oninput="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value);this.nextElementSibling.textContent=this.value">`;
+      html+=`<span class="lo-rv">${layer.opts[opt.id]||opt.def}</span>`;
+    }else if(opt.type==='number'){
+      html+=`<input type="number" min="${opt.min}" max="${opt.max}" value="${layer.opts[opt.id]||opt.def}"
+        oninput="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value)">`;
+    }else{
+      html+=`<input type="text" value="${layer.opts[opt.id]||''}" placeholder="${opt.placeholder||''}"
+        oninput="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value)">`;
+    }
+  });
+  $('lo-fields').innerHTML=html;
+}
+
+function setLayerOpt(i,key,val){
+  if(i<0||i>=encChain.length)return;
+  encChain[i].opts[key]=val;
+  renderChain();
+  runEnc();
+}
+
+// ═══════════════════════════════════════════════════════════════ RUN ENCODE
+function runEnc(){
+  const input=$('enc-input').value;
+  $('enc-incount').textContent=input.length+' chars';
+  const results=$('enc-results');
+  if(!input.trim()||!encChain.length){
+    results.innerHTML='<div class="placeholder">Build a chain on the left → results cascade here layer by layer</div>';
+    return;
+  }
+  let current=input;
+  let html='';
+  // Show original
+  html+=makeEncCard(0,'Input (plain text)',input,'var(--sky)',null);
+  encChain.forEach((layer,i)=>{
+    const m=METHODS.find(x=>x.id===layer.methodId);
+    if(!m){current='[unknown method]';return;}
+    try{
+      const result=m.encode(current,layer.opts);
+      const col=layerColor(i);
+      html+=makeEncCard(i+1,`Layer ${i+1}: ${m.name}`,result,col,result);
+      current=result;
+    }catch(e){
+      html+=makeEncCard(i+1,`Layer ${i+1}: ${m.name} — ERROR`,'['+e.message+']','var(--dec)',null);
+    }
+  });
+  // Final output highlighted
+  html+=makeEncFinalCard(current);
+  results.innerHTML=html;
+}
+
+function makeEncCard(step,label,text,color,copyText2){
+  return `<div class="enc-result-card">
+    <div class="erc-header">
+      <span class="erc-step" style="color:${color}">step ${step}</span>
+      <span class="erc-name" style="color:${color}">${esc(label)}</span>
+      <span class="erc-len">${text.length} chars</span>
+    </div>
+    <div class="erc-body">${esc(text)}</div>
+    ${copyText2?`<div class="erc-footer"><button class="btn btn-enc" style="font-size:.55rem;padding:3px 8px" onclick="copyText(${JSON.stringify(copyText2)},this)">Copy</button></div>`:''}
+  </div>`;
+}
+function makeEncFinalCard(text){
+  return `<div class="enc-result-card" style="border-color:rgba(0,255,179,.3);box-shadow:0 0 12px rgba(0,255,179,.06)">
+    <div class="erc-header" style="background:rgba(0,255,179,.06)">
+      <span class="erc-step" style="color:var(--enc)">✓ FINAL</span>
+      <span class="erc-name" style="color:var(--enc)">Final encoded output</span>
+      <span class="erc-len">${text.length} chars</span>
+    </div>
+    <div class="erc-body" style="color:#a8ffd8;max-height:160px">${esc(text)}</div>
+    <div class="erc-footer">
+      <button class="btn btn-solid-enc" style="font-size:.6rem;padding:5px 14px" onclick="copyText(${JSON.stringify(text)},this)">Copy final</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════ DECODE METHOD + OPTIONS
+function selectDecMethod(id){
+  decMethod=METHODS.find(m=>m.id===id)||METHODS[0];
+  decOpts=defaultOpts(decMethod);
+  buildDecMethodStrip();
+  buildDecOptsBar();
+  runDec();
+}
+
+function buildDecOptsBar(){
+  const bar=$('dec-opts-bar');
+  const m=decMethod;
+  if(!m.opts||!m.opts.length){bar.className='opt-bar';bar.innerHTML='';return;}
   let html='';
   m.opts.forEach(o=>{
-    html+=`<div class="opt-group"><span class="opt-label">${o.label}</span>`;
+    if(decOpts[o.id]===undefined)decOpts[o.id]=o.def||'';
+    html+=`<div class="og"><label>${o.label}</label>`;
     if(o.type==='select'){
-      html+=`<select id="opt-${o.id}" onchange="setOpt('${o.id}',this.value)">`;
-      o.choices.forEach(c=>html+=`<option value="${c}"${c===opts[o.id]?' selected':''}>${c}</option>`);
+      html+=`<select onchange="setDecOpt('${o.id}',this.value)">`;
+      o.choices.forEach(c=>html+=`<option value="${c}"${c===decOpts[o.id]?' selected':''}>${c}</option>`);
       html+=`</select>`;
-    } else if(o.type==='range'){
-      html+=`<input type="range" id="opt-${o.id}" min="${o.min}" max="${o.max}" value="${opts[o.id]||o.def}" oninput="setOpt('${o.id}',this.value);$('ovv-${o.id}').textContent=this.value">`;
-      html+=`<span class="opt-val" id="ovv-${o.id}">${opts[o.id]||o.def}</span>`;
-    } else if(o.type==='number'){
-      html+=`<input type="number" id="opt-${o.id}" min="${o.min}" max="${o.max}" value="${opts[o.id]||o.def}" oninput="setOpt('${o.id}',this.value)">`;
-    } else {
-      html+=`<input type="text" id="opt-${o.id}" value="${opts[o.id]||''}" placeholder="${o.placeholder||''}" oninput="setOpt('${o.id}',this.value)">`;
+    }else if(o.type==='range'){
+      html+=`<input type="range" min="${o.min}" max="${o.max}" value="${decOpts[o.id]||o.def}" oninput="setDecOpt('${o.id}',this.value);$('dov-${o.id}').textContent=this.value">`;
+      html+=`<span class="ov" id="dov-${o.id}">${decOpts[o.id]||o.def}</span>`;
+    }else if(o.type==='number'){
+      html+=`<input type="number" min="${o.min}" max="${o.max}" value="${decOpts[o.id]||o.def}" oninput="setDecOpt('${o.id}',this.value)">`;
+    }else{
+      html+=`<input type="text" value="${decOpts[o.id]||''}" placeholder="${o.placeholder||''}" oninput="setDecOpt('${o.id}',this.value)">`;
     }
     html+=`</div>`;
   });
-  bar.innerHTML=html;
-  bar.className='options-bar show';
+  bar.innerHTML=html;bar.className='opt-bar show';
 }
 
-function $(id){return document.getElementById(id)}
-function setOpt(id,val){opts[id]=val;run()}
+function setDecOpt(id,val){decOpts[id]=val;runDec();}
 
-// ═══════════════════════════════════════════════════════ UPDATE INFO BAR
-function updateInfo(){
-  const m=currentMethod;
-  $('mi-name').textContent=m.name;
-  $('mi-cat').textContent=m.cat;
-  $('mi-desc').textContent=m.desc;
-  const ei=document.querySelector('.mi-enc');
-  const di=document.querySelector('.mi-dec');
-  if(ei)ei.textContent='↑ Encode: '+m.encLabel;
-  if(di)di.textContent='↓ Decode: '+m.decLabel;
+// ═══════════════════════════════════════════════════════════════ ITERATION BUTTONS
+function buildIterBtns(){
+  const wrap=$('dec-iter-btns');
+  wrap.innerHTML='';
+  [1,2,3,4,5,6,7,8].forEach(n=>{
+    const btn=document.createElement('button');
+    btn.className='iter-btn'+(n===decIter?' active':'');
+    btn.textContent=n+'×';
+    btn.onclick=()=>{decIter=n;buildIterBtns();runDec();};
+    wrap.appendChild(btn);
+  });
+  $('dec-iter-chip').textContent=decIter+'×';
+  $('dec-iter-info').textContent=`${decIter} layer${decIter>1?'s':''} → ${decIter} decode pass${decIter>1?'es':''}`;
 }
 
-// ═══════════════════════════════════════════════════════ SELECT METHOD
-function selectMethod(id){
-  currentMethod=METHODS.find(m=>m.id===id)||METHODS[0];
-  opts={};
-  if(currentMethod.opts)currentMethod.opts.forEach(o=>opts[o.id]=o.def||'');
-  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
-  const btn=$('mb-'+id);if(btn)btn.classList.add('active');
-  buildOpts();
-  updateInfo();
-  run();
-}
-
-// ═══════════════════════════════════════════════════════ MAIN RUN
-function run(){
-  const input=$('main-input').value;
-  $('in-count').textContent=input.length+' chars';
-
-  const encOut=$('enc-out');
-  const decOut=$('dec-out');
-  const encChip=$('enc-chip');
-  const decChip=$('dec-chip');
+// ═══════════════════════════════════════════════════════════════ RUN DECODE
+function runDec(){
+  const input=$('dec-input').value;
+  $('dec-incount').textContent=input.length+' chars';
+  const chainOut=$('dec-chain-out');
+  const statusChip=$('dec-status-chip');
 
   if(!input.trim()){
-    encOut.innerHTML='<span class="placeholder-text">Encoded result will appear here…</span>';
-    decOut.innerHTML='<span class="placeholder-text">Decoded (plain text) result will appear here…</span>';
-    encChip.textContent='—';encChip.className='chip';
-    decChip.textContent='—';decChip.className='chip';
+    chainOut.innerHTML='<div class="placeholder">Decoded layers will appear here…</div>';
+    statusChip.textContent='—';statusChip.className='chip';
     return;
   }
 
-  // ENCODE
-  try{
-    const encoded=currentMethod.encode(input,opts);
-    if(encoded&&encoded.startsWith('[')&&encoded.endsWith(']')){
-      encOut.textContent=encoded;
-      encChip.textContent='error';encChip.className='chip chip-err';
-    } else {
-      encOut.textContent=encoded||'(empty)';
-      encChip.textContent='✓ encoded';encChip.className='chip chip-ok';
-    }
-  }catch(e){
-    encOut.textContent='[encode error: '+e.message+']';
-    encChip.textContent='error';encChip.className='chip chip-err';
+  let current=input;
+  let html='';
+  let allOk=true;
+
+  for(let i=0;i<decIter;i++){
+    let result;
+    try{result=decMethod.decode(current,decOpts);}catch(e){result=null;}
+    const ok=result!==null&&result!==undefined;
+    const out=ok?result:'[could not decode — check method/key/format]';
+    const col=layerColor(i);
+    html+=`<div class="dc-layer">
+      <div class="dc-hdr">
+        <span style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:52px">pass ${i+1}</span>
+        <span class="dc-arrow" style="color:${col}">↓</span>
+        <span class="dc-name" style="color:${col}">${esc(decMethod.name)} decode</span>
+        <span class="chip ${ok?'chip-ok':'chip-err'} dc-chip">${ok?'✓ decoded':'✗ failed'}</span>
+      </div>
+      <div class="dc-body">${esc(out)}</div>
+    </div>`;
+    if(!ok){allOk=false;break;}
+    current=result;
   }
 
-  // DECODE
-  try{
-    const decoded=currentMethod.decode(input,opts);
-    if(decoded&&decoded.startsWith('[')&&decoded.endsWith(']')&&decoded!==input){
-      decOut.textContent=decoded;
-      decChip.textContent='not valid';decChip.className='chip chip-err';
-    } else {
-      decOut.textContent=decoded||'(empty)';
-      decChip.textContent='✓ decoded';decChip.className='chip chip-ok';
-    }
-  }catch(e){
-    decOut.textContent='[decode error: '+e.message+']';
-    decChip.textContent='error';decChip.className='chip chip-err';
-  }
+  // Final result box
+  html+=`<div class="dc-final">
+    <div class="dc-hdr">
+      <span class="dc-name" style="color:var(--enc)">✓ Final plain text (after ${decIter} layer${decIter>1?'s':''})</span>
+      <button class="btn btn-dec" style="font-size:.55rem;padding:3px 9px;margin-left:auto" onclick="copyText(${JSON.stringify(current)},this)">Copy</button>
+    </div>
+    <div class="dc-body" style="max-height:200px;color:#a8ffd8;font-size:.8rem">${esc(current)}</div>
+  </div>`;
+
+  chainOut.innerHTML=html;
+  statusChip.textContent=allOk?`✓ ${decIter} layer${decIter>1?'s':''}`:' failed';
+  statusChip.className='chip '+(allOk?'chip-ok':'chip-err');
 }
 
-function onInput(){run()}
-
-// ═══════════════════════════════════════════════════════ COPY
-function copyOut(which){
-  const el=$(which+'-out');
-  const text=el.textContent;
-  if(!text||text.includes('will appear here'))return;
-  navigator.clipboard.writeText(text).catch(()=>{});
-  const btn=document.querySelector(which==='enc'?'.btn-enc':'.btn-dec');
-  if(btn){const o=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('copied-flash');setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied-flash')},1400);}
+function copyDecOut(){
+  const layers=document.querySelectorAll('.dc-final .dc-body');
+  if(layers.length)copyText(layers[layers.length-1].textContent,null);
+  navigator.clipboard.writeText(layers[layers.length-1]?.textContent||'').catch(()=>{});
 }
 
-// ═══════════════════════════════════════════════════════ SWAP
-function swapEncToInput(){
-  const encText=$('enc-out').textContent;
-  if(!encText||encText.includes('will appear here'))return;
-  $('main-input').value=encText;
-  run();
-}
-
-// ═══════════════════════════════════════════════════════ CLEAR
-function clearAll(){
-  $('main-input').value='';run();
-}
-
-// ═══════════════════════════════════════════════════════ SAMPLES
-const SAMPLES=[
-  {method:'base64',text:'Hello, Security Researcher!'},
-  {method:'hex',text:'The quick brown fox'},
-  {method:'binary',text:'Hello World'},
-  {method:'caesar',text:'Attack at dawn',opts:{shift:'7'}},
-  {method:'vigenere',text:'Meet me at midnight',opts:{key:'SECRET'}},
-  {method:'morse',text:'SOS HELP'},
-  {method:'rot13',text:'Why did the hacker cross the road?'},
-  {method:'playfair',text:'HIDE THE GOLD'},
-  {method:'xor',text:'CipherSense rules'},
-  {method:'affine',text:'Affine cipher example'},
+// ═══════════════════════════════════════════════════════════════ AUTO-DETECT ENGINE
+// Priority-ordered list of detectors — returns decoded text or null
+const AUTO_DETECTORS=[
+  {name:'Base64',     try(s){if(!/^[A-Za-z0-9+/]{4,}={0,2}$/.test(s.trim())||s.trim().length%4!==0)return null;const r=METHODS.find(m=>m.id==='base64').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
+  {name:'Base64URL',  try(s){if(!/^[A-Za-z0-9_-]{4,}$/.test(s.trim()))return null;const r=METHODS.find(m=>m.id==='base64url').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
+  {name:'Base32',     try(s){if(!/^[A-Z2-7]+=*$/i.test(s.trim())||s.trim().length<8)return null;const r=METHODS.find(m=>m.id==='base32').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
+  {name:'Hex',        try(s){const c=s.trim().replace(/0x/gi,'').replace(/[\s:]/g,'');if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0||c.length<4)return null;const r=METHODS.find(m=>m.id==='hex').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
+  {name:'Binary',     try(s){const c=s.trim().replace(/\s/g,'');if(!/^[01]+$/.test(c)||c.length%8!==0||c.length<8)return null;const r=METHODS.find(m=>m.id==='binary').decode(s);return r&&isPrintable(r)?r:null}},
+  {name:'Octal',      try(s){if(!/^(\s*[0-3][0-7]{2}\s*)+$/.test(s.trim()))return null;const r=METHODS.find(m=>m.id==='octal').decode(s);return r&&isPrintable(r)?r:null}},
+  {name:'URL %enc',   try(s){if(!/%[0-9a-fA-F]{2}/.test(s))return null;const r=METHODS.find(m=>m.id==='url').decode(s);return r&&r!==s?r:null}},
+  {name:'HTML Ents',  try(s){if(!/&[#a-zA-Z]/.test(s))return null;const r=METHODS.find(m=>m.id==='html').decode(s);return r&&r!==s?r:null}},
+  {name:'Unicode Esc',try(s){if(!/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}/.test(s))return null;const r=METHODS.find(m=>m.id==='unicode').decode(s);return r&&r!==s?r:null}},
+  {name:'ROT13',      try(s){if(!/[a-zA-Z]/.test(s))return null;const r=METHODS.find(m=>m.id==='rot13').decode(s);return r&&r!==s&&hasLetters(r)?r:null}},
 ];
-let _si=0;
-function loadSample(){
-  const s=SAMPLES[_si++%SAMPLES.length];
-  selectMethod(s.method);
-  if(s.opts)Object.assign(opts,s.opts);
-  // refresh opt inputs
-  if(s.opts){
-    Object.entries(s.opts).forEach(([k,v])=>{
-      const el=$('opt-'+k);
-      if(el){el.value=v;const vv=$('ovv-'+k);if(vv)vv.textContent=v;}
-    });
+
+function autoDetectLayers(input){
+  const layers=[];
+  let current=input;
+  const MAX=16;
+  for(let i=0;i<MAX;i++){
+    let found=false;
+    for(const det of AUTO_DETECTORS){
+      const result=det.try(current);
+      if(result&&result!==current){
+        layers.push({name:det.name,input:current,output:result});
+        current=result;found=true;break;
+      }
+    }
+    if(!found)break;
   }
-  $('main-input').value=s.text;
-  run();
+  return{layers,final:current};
 }
 
-// ═══════════════════════════════════════════════════════ INIT
-buildStrip();
-buildOpts();
-updateInfo();
+function runAuto(){
+  const input=$('auto-input').value;
+  $('auto-incount').textContent=input.length+' chars';
+  const tagsEl=$('auto-detect-tags');
+  const chainOut=$('auto-chain-out');
+  const chip=$('auto-layer-chip');
+
+  if(!input.trim()){
+    tagsEl.innerHTML='<div class="placeholder" style="padding:0">Paste input to detect formats…</div>';
+    chainOut.innerHTML='<div class="placeholder">Auto-detected layers will be peeled here…</div>';
+    chip.textContent='0 layers found';chip.className='chip chip-gold';
+    return;
+  }
+
+  const{layers,final}=autoDetectLayers(input);
+
+  // update chip
+  chip.textContent=layers.length+(layers.length===1?' layer':' layers')+' found';
+  chip.className='chip '+(layers.length?'chip-ok':'chip-gold');
+
+  // detected tags
+  if(!layers.length){
+    tagsEl.innerHTML='<span class="detect-badge db-l"><span class="detect-dot"></span>No encoding pattern detected — may be plain text or an unsupported cipher</span>';
+  }else{
+    tagsEl.innerHTML=layers.map((l,i)=>`<span class="detect-badge db-h" style="border-color:${layerColor(i)};color:${layerColor(i)};background:rgba(0,0,0,.2)"><span class="detect-dot" style="background:${layerColor(i)}"></span>Layer ${i+1}: ${esc(l.name)}</span>`).join('');
+  }
+
+  // chain output
+  if(!layers.length){
+    chainOut.innerHTML=`<div class="al-final">
+      <div class="al-hdr"><span class="al-num" style="color:var(--enc)">plain text</span><span class="al-name" style="color:var(--enc)">No encoding detected</span></div>
+      <div class="al-body">${esc(input)}</div>
+    </div>`;
+    return;
+  }
+
+  let html='';
+  // show original
+  html+=`<div class="auto-layer">
+    <div class="al-hdr" style="background:var(--ink3)">
+      <span class="al-num">input</span>
+      <span class="al-name" style="color:var(--sky)">Original input</span>
+      <span class="chip chip-info" style="margin-left:auto">${input.length} chars</span>
+    </div>
+    <div class="al-body" style="color:var(--text2)">${esc(input)}</div>
+  </div>`;
+
+  layers.forEach((l,i)=>{
+    const col=layerColor(i);
+    html+=`<div style="text-align:center;padding:.2rem 0;font-family:'Space Mono',monospace;font-size:.6rem;color:${col}">↓ decode ${esc(l.name)}</div>
+    <div class="auto-layer">
+      <div class="al-hdr">
+        <span class="al-num" style="color:${col}">layer ${i+1}</span>
+        <span class="al-name" style="color:${col}">${esc(l.name)}</span>
+        <span class="chip chip-ok" style="margin-left:auto">✓ decoded</span>
+      </div>
+      <div class="al-body">${esc(l.output)}</div>
+    </div>`;
+  });
+
+  // final
+  html+=`<div style="text-align:center;padding:.3rem 0;font-family:'Space Mono',monospace;font-size:.65rem;color:var(--enc)">✓ plain text reached</div>
+  <div class="al-final">
+    <div class="al-hdr">
+      <span class="al-num" style="color:var(--enc)">final</span>
+      <span class="al-name" style="color:var(--enc)">Plain text (after ${layers.length} layer${layers.length>1?'s':''})</span>
+      <button class="btn btn-enc" style="font-size:.55rem;padding:3px 9px;margin-left:auto" onclick="copyText(${JSON.stringify(final)},this)">Copy</button>
+    </div>
+    <div class="al-body">${esc(final)}</div>
+  </div>`;
+
+  chainOut.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════ TAB SWITCHING
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  $('pane-'+name).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════ CLEAR HELPERS
+function clearEnc(){$('enc-input').value='';$('enc-incount').textContent='0 chars';runEnc();}
+function clearDec(){$('dec-input').value='';$('dec-incount').textContent='0 chars';runDec();}
+function clearAuto(){$('auto-input').value='';runAuto();}
+
+// ═══════════════════════════════════════════════════════════════ SAMPLES
+const ENC_SAMPLES=['Hello, Security Researcher!','The quick brown fox jumps over the lazy dog','Attack at dawn','CipherSense v3 multi-layer tool'];
+let _esi=0;
+function encLoadSample(){
+  $('enc-input').value=ENC_SAMPLES[_esi++%ENC_SAMPLES.length];
+  $('enc-incount').textContent=$('enc-input').value.length+' chars';
+  runEnc();
+}
+
+const DEC_SAMPLES=[
+  {text:'SGVsbG8sIFNlY3VyaXR5IFJlc2VhcmNoZXIh',method:'base64',iter:1},
+  {text:'48 65 6c 6c 6f 20 57 6f 72 6c 64',method:'hex',iter:1},
+  {text:'01001000 01100101 01101100 01101100 01101111',method:'binary',iter:1},
+  {text:'Cvvcmo cv nczb',method:'caesar',iter:1,opts:{shift:'2'}},
+  {text:'.... . .-.. .-.. ---  .-- --- .-. .-.. -..',method:'morse',iter:1},
+];
+let _dsi=0;
+function decLoadSample(){
+  const s=DEC_SAMPLES[_dsi++%DEC_SAMPLES.length];
+  selectDecMethod(s.method);
+  if(s.opts){Object.assign(decOpts,s.opts);buildDecOptsBar();}
+  decIter=s.iter||1;buildIterBtns();
+  $('dec-input').value=s.text;
+  $('dec-incount').textContent=s.text.length+' chars';
+  runDec();
+}
+
+const AUTO_SAMPLES=[
+  'VFRHZXJ3b3JsZA==', // Base64 of hex of "CipherWorld"
+  'SGVsbG8gV29ybGQ=', // Hello World base64
+  '53 47 56 73 62 47 38 67 56 32 39 79 62 47 51 3d', // hex of base64 of "Hello World"
+  'IFBEG VKBEG SVKEH BEGFL', // some cipher text
+];
+let _asi=0;
+function autoLoadSample(){
+  $('auto-input').value=AUTO_SAMPLES[_asi++%AUTO_SAMPLES.length];
+  runAuto();
+}
+
+// ═══════════════════════════════════════════════════════════════ INIT
+buildEncMethodStrip();
+buildDecMethodStrip();
+buildDecOptsBar();
+buildIterBtns();
+
+// Add a default 2-layer sample chain to show the feature
+addLayer('base64');
+addLayer('url');
+$('enc-input').value='Hello, Security Researcher!';
+runEnc();
 </script>
 </body>
 </html>
