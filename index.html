@@ -3,1169 +3,1085 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherSense v3 — Multi-Layer Cipher Tool</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<title>CipherSense — Smart Decoder</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Epilogue:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#080b10;--ink2:#0f1319;--ink3:#161c27;--ink4:#1e2637;--ink5:#28344a;
-  --wire:#334060;--wire2:#3f5070;
-  --text:#e8edf8;--text2:#8899b8;--text3:#4a5c7a;
-  --enc:#00ffb3;--dec:#ff6b9d;--gold:#ffd166;--sky:#4fc3f7;--violet:#b388ff;
-  --enc-g:rgba(0,255,179,.08);--dec-g:rgba(255,107,157,.08);
-  --layer-colors:#00ffb3,#4fc3f7,#b388ff,#ffd166,#ff6b9d,#ff9800,#e040fb,#69f0ae;
+  --bg:#060810;
+  --s1:#0c0f18;
+  --s2:#111520;
+  --s3:#171c2c;
+  --s4:#1f2638;
+  --b1:#252e45;
+  --b2:#2e3a56;
+  --text:#dce6ff;
+  --dim:#6a7fa8;
+  --mute:#3a4a68;
+  --green:#00f5a0;
+  --pink:#ff4d8d;
+  --blue:#3d8eff;
+  --gold:#ffcb47;
+  --violet:#9d6fff;
+  --cyan:#00d4ff;
+  --red:#ff4444;
+  --gg:rgba(0,245,160,.07);
+  --pg:rgba(255,77,141,.07);
 }
-html{scroll-behavior:smooth}
-body{background:var(--ink);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(79,195,247,.06) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;z-index:0;animation:drift 40s linear infinite}
-@keyframes drift{to{background-position:30px 30px}}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:var(--ink)}
-::-webkit-scrollbar-thumb{background:var(--wire);border-radius:2px}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Epilogue',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
 
-/* ── ROOT GRID ── */
-.root{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+/* animated scanline bg */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,.012) 2px,rgba(0,212,255,.012) 4px);
+  pointer-events:none;z-index:0;animation:scan 8s linear infinite;
+}
+@keyframes scan{from{background-position:0 0}to{background-position:0 200px}}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,245,160,.06),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 100%,rgba(61,142,255,.05),transparent);
+  pointer-events:none;z-index:0;
+}
 
-/* ── HEADER ── */
-header{padding:.9rem 1.5rem;border-bottom:1px solid var(--ink4);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;background:rgba(8,11,16,.9);backdrop-filter:blur(12px);position:sticky;top:0;z-index:200}
-.brand{display:flex;align-items:center;gap:10px}
-.brand svg{width:32px;height:32px;flex-shrink:0}
-.brand-name{font-size:1.2rem;font-weight:800;letter-spacing:-.02em}
-.brand-name em{font-style:normal;color:var(--enc)}
-.brand-sub{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--text3);letter-spacing:.12em;text-transform:uppercase}
-.hpills{display:flex;gap:5px;flex-wrap:wrap}
-.hp{font-family:'Space Mono',monospace;font-size:.55rem;padding:2px 9px;border-radius:20px;border:1px solid;letter-spacing:.06em;white-space:nowrap}
-.hp-g{background:var(--enc-g);color:var(--enc);border-color:rgba(0,255,179,.2)}
-.hp-p{background:var(--dec-g);color:var(--dec);border-color:rgba(255,107,157,.2)}
-.hp-y{background:rgba(255,209,102,.07);color:var(--gold);border-color:rgba(255,209,102,.18)}
-.hp-b{background:rgba(79,195,247,.07);color:var(--sky);border-color:rgba(79,195,247,.18)}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 
-/* ── TABS ── */
-.tabs{display:flex;background:var(--ink2);border-bottom:1px solid var(--ink4);padding:.4rem 1.5rem 0;gap:2px}
-.tab{font-family:'Space Mono',monospace;font-size:.65rem;padding:7px 16px;border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;background:transparent;color:var(--text3);cursor:pointer;transition:all .12s;letter-spacing:.04em;white-space:nowrap}
-.tab:hover{color:var(--text);background:var(--ink3)}
-.tab.active{background:var(--ink3);color:var(--text);border-color:var(--ink5);border-bottom-color:var(--ink3)}
-.tab.active.t-enc{color:var(--enc)}
-.tab.active.t-dec{color:var(--dec)}
-.tab.active.t-auto{color:var(--gold)}
-.pane{display:none;flex:1}
-.pane.active{display:flex;flex-direction:column}
+/* ══ LAYOUT ══ */
+.app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;max-width:1000px;margin:0 auto;padding:0 1.5rem 4rem}
 
-/* ── METHOD BAR ── */
-.method-bar{background:var(--ink2);border-bottom:1px solid var(--ink4);padding:.5rem 1.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;flex-shrink:0}
-.mb-lbl{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-right:.3rem;white-space:nowrap}
-.mb-sep{font-family:'Space Mono',monospace;font-size:.5rem;color:var(--ink5);user-select:none;margin:0 .15rem}
-.mbtn{font-family:'Space Mono',monospace;font-size:.62rem;padding:4px 10px;border-radius:5px;border:1px solid var(--ink5);background:transparent;color:var(--text3);cursor:pointer;transition:all .1s;white-space:nowrap}
-.mbtn:hover{background:var(--ink3);color:var(--text);border-color:var(--wire)}
-.mbtn.active{background:var(--ink4);color:var(--text);border-color:var(--sky);box-shadow:0 0 6px rgba(79,195,247,.12)}
+/* ══ HEADER ══ */
+header{padding:1.8rem 0 1.2rem;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--b1);margin-bottom:2rem}
+.logo-wrap{display:flex;flex-direction:column;gap:4px}
+.logo{font-size:1.7rem;font-weight:900;letter-spacing:-.03em;line-height:1}
+.logo span{color:var(--green)}
+.logo-tag{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--dim);letter-spacing:.18em;text-transform:uppercase}
+.ver{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--mute);letter-spacing:.1em}
 
-/* ── SHARED PANEL STYLES ── */
-.panel{background:var(--ink2);border:1px solid var(--ink4);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
-.ph{display:flex;align-items:center;justify-content:space-between;padding:.6rem .9rem;border-bottom:1px solid var(--ink4);background:var(--ink3);flex-shrink:0}
-.ph-title{font-size:.75rem;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
-.ph-actions{display:flex;gap:5px;align-items:center}
-.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dot-sky{background:var(--sky);box-shadow:0 0 5px var(--sky)}
-.dot-enc{background:var(--enc);box-shadow:0 0 5px var(--enc)}
-.dot-dec{background:var(--dec);box-shadow:0 0 5px var(--dec)}
-.dot-gold{background:var(--gold);box-shadow:0 0 5px var(--gold)}
+/* ══ INPUT SECTION ══ */
+.input-section{margin-bottom:1.5rem}
+.input-label{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem;display:flex;align-items:center;gap:.6rem}
+.input-label::after{content:'';flex:1;height:1px;background:var(--b1)}
 
-textarea{flex:1;width:100%;background:transparent;border:none;outline:none;font-family:'Space Mono',monospace;font-size:.78rem;color:var(--text);line-height:1.75;padding:.85rem 1rem;resize:none;caret-color:var(--sky);min-height:120px}
-textarea::placeholder{color:var(--text3)}
+.input-box{
+  background:var(--s1);
+  border:1px solid var(--b1);
+  border-radius:12px;
+  overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+}
+.input-box:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,245,160,.08),0 0 30px rgba(0,245,160,.04)}
 
-/* ── BUTTONS ── */
-.btn{font-family:'Space Mono',monospace;font-size:.6rem;padding:5px 11px;border-radius:6px;border:1px solid var(--wire);background:transparent;color:var(--text2);cursor:pointer;transition:all .1s;white-space:nowrap;letter-spacing:.02em}
-.btn:hover{background:var(--ink4);color:var(--text);border-color:var(--wire2)}
+textarea{
+  width:100%;min-height:130px;
+  background:transparent;border:none;outline:none;
+  font-family:'IBM Plex Mono',monospace;font-size:.88rem;
+  color:var(--text);line-height:1.75;
+  padding:1.1rem 1.2rem;resize:none;
+  caret-color:var(--green);
+}
+textarea::placeholder{color:var(--mute);font-style:italic}
+
+.input-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem 1rem;border-top:1px solid var(--b1);
+  background:var(--s2);flex-wrap:wrap;gap:.5rem;
+}
+.in-meta{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--dim);display:flex;gap:1rem;align-items:center}
+.in-actions{display:flex;gap:.5rem}
+
+/* ══ BUTTONS ══ */
+.btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.05em;
+  padding:6px 14px;border-radius:6px;border:1px solid;cursor:pointer;
+  transition:all .13s;white-space:nowrap;font-weight:600;
+}
 .btn:active{transform:scale(.96)}
-.btn-enc{border-color:rgba(0,255,179,.3);color:var(--enc)}
-.btn-enc:hover{background:rgba(0,255,179,.07)}
-.btn-dec{border-color:rgba(255,107,157,.3);color:var(--dec)}
-.btn-dec:hover{background:rgba(255,107,157,.07)}
-.btn-gold{border-color:rgba(255,209,102,.3);color:var(--gold)}
-.btn-gold:hover{background:rgba(255,209,102,.07)}
-.btn-sky{border-color:rgba(79,195,247,.3);color:var(--sky)}
-.btn-sky:hover{background:rgba(79,195,247,.07)}
-.btn-solid-enc{background:var(--enc);color:#000;border-color:var(--enc);font-weight:700}
-.btn-solid-enc:hover{background:#33ffca}
-.btn-solid-dec{background:var(--dec);color:#000;border-color:var(--dec);font-weight:700}
-.btn-solid-dec:hover{background:#ff9cbb}
+.btn-primary{background:var(--green);color:#000;border-color:var(--green)}
+.btn-primary:hover{background:#2fffa8}
+.btn-ghost{background:transparent;color:var(--dim);border-color:var(--b2)}
+.btn-ghost:hover{background:var(--s3);color:var(--text);border-color:var(--b2)}
+.btn-pink{background:transparent;color:var(--pink);border-color:rgba(255,77,141,.3)}
+.btn-pink:hover{background:var(--pg)}
+.btn-blue{background:transparent;color:var(--blue);border-color:rgba(61,142,255,.3)}
+.btn-blue:hover{background:rgba(61,142,255,.07)}
 
-/* ── CHIPS ── */
-.chip{font-family:'Space Mono',monospace;font-size:.55rem;padding:2px 8px;border-radius:10px;border:1px solid}
-.chip-ok{background:rgba(0,255,179,.08);color:var(--enc);border-color:rgba(0,255,179,.2)}
-.chip-err{background:rgba(255,107,157,.08);color:var(--dec);border-color:rgba(255,107,157,.2)}
-.chip-info{background:rgba(79,195,247,.08);color:var(--sky);border-color:rgba(79,195,247,.2)}
-.chip-gold{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
+/* ══ DECODE RESULT ══ */
+.result-section{margin-bottom:1.5rem}
 
-/* ── OPTION ROWS ── */
-.opt-bar{display:none;background:var(--ink2);border:1px solid var(--ink4);border-radius:8px;padding:.6rem 1rem;align-items:center;gap:.85rem;flex-wrap:wrap;flex-shrink:0}
-.opt-bar.show{display:flex}
-.og{display:flex;align-items:center;gap:.4rem}
-.og label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);white-space:nowrap}
-.og input[type=text],.og input[type=number],.og select{font-family:'Space Mono',monospace;font-size:.72rem;background:var(--ink3);border:1px solid var(--wire);border-radius:5px;color:var(--text);padding:4px 8px;outline:none;transition:border-color .12s;min-width:75px}
-.og input:focus,.og select:focus{border-color:var(--sky)}
-.og input[type=range]{accent-color:var(--sky);min-width:90px;cursor:pointer}
-.ov{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--sky);min-width:18px}
-
-/* ════════════════════════════════════════
-   ENCODE PANE — CHAIN BUILDER
-════════════════════════════════════════ */
-.enc-pane-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem 1.5rem;flex:1;overflow:hidden}
-@media(max-width:800px){.enc-pane-grid{grid-template-columns:1fr;overflow:auto}}
-.enc-left{display:flex;flex-direction:column;gap:1rem;min-height:0}
-.enc-right{display:flex;flex-direction:column;gap:1rem;min-height:0;overflow-y:auto}
-
-/* chain builder */
-.chain-builder{background:var(--ink2);border:1px solid var(--ink4);border-radius:10px;overflow:hidden;flex-shrink:0}
-.chain-list{padding:.5rem .7rem;display:flex;flex-direction:column;gap:.4rem;min-height:40px}
-.chain-item{
-  display:flex;align-items:center;gap:.5rem;
-  background:var(--ink3);border:1px solid var(--ink5);border-radius:7px;
-  padding:.45rem .7rem;cursor:grab;user-select:none;
-  transition:all .12s;
+.result-header{
+  display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem;flex-wrap:wrap;
 }
-.chain-item:hover{border-color:var(--wire2)}
-.chain-item.dragging{opacity:.4;border-style:dashed}
-.chain-item.drag-over{border-color:var(--sky);box-shadow:0 0 0 1px var(--sky)}
-.ci-num{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:14px;text-align:center}
-.ci-color{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.ci-name{font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;flex:1}
-.ci-opts{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ci-del{font-size:.7rem;color:var(--text3);background:transparent;border:none;cursor:pointer;padding:2px 5px;border-radius:4px;transition:all .1s;flex-shrink:0;line-height:1}
-.ci-del:hover{color:var(--dec);background:rgba(255,107,157,.1)}
-.ci-drag{color:var(--text3);font-size:.65rem;cursor:grab;flex-shrink:0;padding:2px 4px}
+.result-title{font-size:.95rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.r-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+.r-dot-green{background:var(--green);box-shadow:0 0 8px var(--green)}
+.r-dot-gold{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.r-dot-pink{background:var(--pink);box-shadow:0 0 8px var(--pink)}
 
-.chain-empty{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--text3);text-align:center;padding:.8rem;font-style:italic}
-
-/* add-to-chain method picker */
-.add-method-row{padding:.5rem .7rem;border-top:1px solid var(--ink4);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;background:var(--ink3)}
-.add-lbl{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
-.add-select{font-family:'Space Mono',monospace;font-size:.68rem;background:var(--ink4);border:1px solid var(--wire);border-radius:5px;color:var(--text);padding:4px 8px;outline:none;flex:1;min-width:100px}
-.add-select:focus{border-color:var(--sky)}
-
-/* layer options inline edit */
-.layer-opts{padding:.5rem .7rem;border-top:1px solid var(--ink4);background:var(--ink2)}
-.lo-title{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.08em}
-.lo-fields{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
-.lo-fields label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3)}
-.lo-fields input[type=text],.lo-fields input[type=number],.lo-fields select{font-family:'Space Mono',monospace;font-size:.68rem;background:var(--ink3);border:1px solid var(--wire);border-radius:5px;color:var(--text);padding:4px 8px;outline:none;min-width:70px}
-.lo-fields input:focus,.lo-fields select:focus{border-color:var(--enc)}
-.lo-fields input[type=range]{accent-color:var(--enc);min-width:80px}
-.lo-rv{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--enc)}
-
-/* encode results */
-.enc-result-card{
-  background:var(--ink3);border:1px solid var(--ink5);border-radius:8px;
-  overflow:hidden;animation:fadeIn .15s ease;
+.chip{
+  font-family:'IBM Plex Mono',monospace;font-size:.55rem;letter-spacing:.06em;
+  padding:2px 9px;border-radius:20px;border:1px solid;white-space:nowrap;
 }
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.erc-header{display:flex;align-items:center;gap:6px;padding:.45rem .7rem;border-bottom:1px solid var(--ink4);background:var(--ink2)}
-.erc-step{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:52px}
-.erc-name{font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;flex:1}
-.erc-len{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--text3)}
-.erc-body{font-family:'Space Mono',monospace;font-size:.72rem;line-height:1.65;padding:.55rem .7rem;word-break:break-all;white-space:pre-wrap;max-height:90px;overflow-y:auto}
-.erc-footer{display:flex;justify-content:flex-end;padding:.3rem .6rem;border-top:1px solid var(--ink4)}
+.chip-green{background:var(--gg);color:var(--green);border-color:rgba(0,245,160,.2)}
+.chip-pink{background:var(--pg);color:var(--pink);border-color:rgba(255,77,141,.2)}
+.chip-gold{background:rgba(255,203,71,.07);color:var(--gold);border-color:rgba(255,203,71,.2)}
+.chip-blue{background:rgba(61,142,255,.07);color:var(--blue);border-color:rgba(61,142,255,.2)}
+.chip-dim{background:transparent;color:var(--dim);border-color:var(--mute)}
+.chip-violet{background:rgba(157,111,255,.08);color:var(--violet);border-color:rgba(157,111,255,.2)}
 
-/* ════════════════════════════════════════
-   DECODE PANE
-════════════════════════════════════════ */
-.dec-pane-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem 1.5rem;flex:1;overflow:hidden}
-@media(max-width:800px){.dec-pane-grid{grid-template-columns:1fr;overflow:auto}}
-.dec-left{display:flex;flex-direction:column;gap:1rem;min-height:0}
-.dec-right{display:flex;flex-direction:column;gap:1rem;min-height:0;overflow-y:auto}
+/* Final answer box — the BIG output */
+.final-box{
+  background:var(--s1);
+  border:1px solid rgba(0,245,160,.3);
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,245,160,.04),inset 0 1px 0 rgba(0,245,160,.08);
+  margin-bottom:1rem;animation:slideIn .2s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fb-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.75rem 1.1rem;background:rgba(0,245,160,.05);
+  border-bottom:1px solid rgba(0,245,160,.15);flex-wrap:wrap;gap:.5rem;
+}
+.fb-title{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--green);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+.fb-body{
+  font-family:'IBM Plex Mono',monospace;font-size:.95rem;
+  color:#b8ffd8;line-height:1.8;
+  padding:1.1rem 1.2rem;word-break:break-all;white-space:pre-wrap;
+  max-height:280px;overflow-y:auto;
+}
+.fb-footer{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;border-top:1px solid var(--b1);flex-wrap:wrap;gap:.5rem}
+.fb-stat{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--dim)}
 
-/* decode chain display */
-.dec-chain{display:flex;flex-direction:column;gap:.5rem}
-.dc-layer{background:var(--ink3);border:1px solid var(--ink5);border-radius:8px;overflow:hidden;animation:fadeIn .15s ease}
-.dc-hdr{display:flex;align-items:center;gap:7px;padding:.45rem .8rem;border-bottom:1px solid var(--ink4)}
-.dc-arrow{font-size:.7rem;color:var(--text3)}
-.dc-name{font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;flex:1}
-.dc-chip{margin-left:auto}
-.dc-body{font-family:'Space Mono',monospace;font-size:.72rem;line-height:1.65;padding:.55rem .8rem;word-break:break-all;white-space:pre-wrap;max-height:80px;overflow-y:auto}
-.dc-final{background:var(--ink2);border:1px solid rgba(0,255,179,.25);border-radius:8px;overflow:hidden}
-.dc-final .dc-hdr{background:rgba(0,255,179,.06)}
-.dc-final .dc-body{color:#a8ffd8;font-size:.8rem;max-height:200px}
+/* Layer chain timeline */
+.chain-section{margin-bottom:1rem}
+.chain-toggle{
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--dim);
+  letter-spacing:.1em;cursor:pointer;display:flex;align-items:center;gap:.5rem;
+  padding:.4rem 0;border:none;background:transparent;transition:color .12s;
+  text-transform:uppercase;
+}
+.chain-toggle:hover{color:var(--text)}
+.chain-toggle .arrow{transition:transform .2s;font-size:.65rem}
+.chain-toggle.open .arrow{transform:rotate(90deg)}
 
-/* single-layer decode output */
-.dec-out-area{font-family:'Space Mono',monospace;font-size:.78rem;line-height:1.75;padding:.85rem 1rem;flex:1;overflow-y:auto;word-break:break-all;white-space:pre-wrap;color:#ffc0d9}
+.chain-body{display:none;padding:.5rem 0}
+.chain-body.open{display:block}
 
-/* ════════════════════════════════════════
-   AUTO DETECT PANE
-════════════════════════════════════════ */
-.auto-pane-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem 1.5rem;flex:1;overflow:hidden}
-@media(max-width:800px){.auto-pane-grid{grid-template-columns:1fr;overflow:auto}}
-.auto-left{display:flex;flex-direction:column;gap:1rem;min-height:0}
-.auto-right{display:flex;flex-direction:column;gap:1rem;min-height:0;overflow-y:auto}
+.layer-row{
+  display:flex;align-items:stretch;gap:0;
+  margin-bottom:0;
+  animation:fadeLayer .15s ease;
+}
+@keyframes fadeLayer{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
 
-.detect-badge{font-family:'Space Mono',monospace;font-size:.6rem;padding:3px 9px;border-radius:5px;border:1px solid;display:inline-flex;align-items:center;gap:5px;margin:2px}
-.db-h{background:rgba(0,255,179,.08);color:var(--enc);border-color:rgba(0,255,179,.2)}
-.db-m{background:rgba(255,209,102,.08);color:var(--gold);border-color:rgba(255,209,102,.2)}
-.db-l{background:rgba(74,92,122,.1);color:var(--text3);border-color:rgba(74,92,122,.2)}
-.detect-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.layer-connector{display:flex;flex-direction:column;align-items:center;width:28px;flex-shrink:0}
+.lc-dot{width:9px;height:9px;border-radius:50%;border:2px solid;flex-shrink:0;margin-top:14px}
+.lc-line{flex:1;width:2px;background:var(--b2);margin:2px 0}
 
-.auto-layer{background:var(--ink3);border:1px solid var(--ink5);border-radius:8px;overflow:hidden;margin-bottom:.4rem;animation:fadeIn .15s ease}
-.al-hdr{display:flex;align-items:center;gap:7px;padding:.4rem .75rem;border-bottom:1px solid var(--ink4);background:var(--ink2)}
-.al-num{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:50px}
-.al-name{font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;flex:1}
-.al-body{font-family:'Space Mono',monospace;font-size:.7rem;line-height:1.65;padding:.5rem .75rem;word-break:break-all;white-space:pre-wrap;max-height:80px;overflow-y:auto}
-.al-final{background:var(--ink2);border:1px solid rgba(0,255,179,.25);border-radius:8px;overflow:hidden;margin-top:.4rem}
-.al-final .al-hdr{background:rgba(0,255,179,.06)}
-.al-final .al-body{color:#a8ffd8;max-height:220px}
+.layer-card{
+  flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:8px;
+  margin-bottom:6px;overflow:hidden;
+}
+.lc-header{display:flex;align-items:center;gap:.5rem;padding:.45rem .75rem;border-bottom:1px solid var(--b1);background:var(--s3)}
+.lc-num{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--dim);min-width:48px}
+.lc-name{font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:600;flex:1}
+.lc-len{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--dim)}
+.lc-body{font-family:'IBM Plex Mono',monospace;font-size:.7rem;line-height:1.6;padding:.45rem .75rem;color:var(--dim);word-break:break-all;white-space:pre-wrap;max-height:70px;overflow:hidden;position:relative}
+.lc-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:20px;background:linear-gradient(transparent,var(--s2))}
 
-/* lcount */
-.lcount{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
+/* No result */
+.no-result{
+  background:var(--s1);border:1px solid var(--b1);border-radius:12px;
+  padding:2rem;text-align:center;
+}
+.nr-icon{font-size:2rem;opacity:.3;margin-bottom:.5rem}
+.nr-title{font-size:.9rem;font-weight:700;color:var(--dim);margin-bottom:.3rem}
+.nr-sub{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--mute);line-height:1.6}
 
-.placeholder{color:var(--text3);font-style:italic;font-family:'Space Mono',monospace;font-size:.72rem;padding:.85rem 1rem}
-.copied-fx{color:var(--enc)!important;border-color:rgba(0,255,179,.4)!important}
+/* ══ DETECTED FORMATS BAR ══ */
+.formats-bar{
+  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+  padding:.6rem .9rem;background:var(--s2);border:1px solid var(--b1);border-radius:8px;
+  margin-bottom:.8rem;
+}
+.fb-lbl{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;flex-shrink:0}
 
-/* iteration selector */
-.iter-row{display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;background:var(--ink3);border-top:1px solid var(--ink4)}
-.iter-lbl{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);white-space:nowrap}
-.iter-btns{display:flex;gap:4px}
-.iter-btn{font-family:'Space Mono',monospace;font-size:.65rem;width:26px;height:26px;border-radius:5px;border:1px solid var(--ink5);background:transparent;color:var(--text3);cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center}
-.iter-btn:hover{background:var(--ink4);color:var(--text)}
-.iter-btn.active{background:var(--ink4);color:var(--sky);border-color:var(--sky)}
-.iter-info{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3)}
+/* ══ ENCODE SECTION (secondary) ══ */
+.encode-section{margin-top:2rem}
+.section-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.65rem .9rem;background:var(--s2);border:1px solid var(--b1);border-radius:8px 8px 0 0;
+  cursor:pointer;user-select:none;transition:background .12s;
+}
+.section-bar:hover{background:var(--s3)}
+.sb-title{font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:.5rem;color:var(--pink)}
+.sb-arrow{font-size:.7rem;color:var(--dim);transition:transform .2s}
+.sb-arrow.open{transform:rotate(180deg)}
+.encode-body{display:none;background:var(--s1);border:1px solid var(--b1);border-top:none;border-radius:0 0 8px 8px;padding:1rem}
+.encode-body.open{display:block}
+
+/* method grid */
+.method-grid{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.9rem}
+.mchip{
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;
+  padding:4px 10px;border-radius:5px;border:1px solid var(--b1);
+  background:transparent;color:var(--dim);cursor:pointer;
+  transition:all .1s;white-space:nowrap;
+}
+.mchip:hover{background:var(--s3);color:var(--text);border-color:var(--b2)}
+.mchip.active{background:var(--s3);color:var(--pink);border-color:rgba(255,77,141,.3)}
+
+/* encode options */
+.enc-opts{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.8rem;min-height:28px}
+.eo-group{display:flex;align-items:center;gap:.4rem}
+.eo-label{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--dim)}
+.eo-group input,.eo-group select{
+  font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+  background:var(--s3);border:1px solid var(--b2);border-radius:5px;
+  color:var(--text);padding:4px 8px;outline:none;transition:border-color .12s;
+}
+.eo-group input:focus,.eo-group select:focus{border-color:var(--pink)}
+.eo-group input[type=range]{accent-color:var(--pink);min-width:80px}
+.eo-val{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--pink)}
+
+/* encode layers builder */
+.enc-chain-row{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem}
+.enc-layer-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;
+  padding:3px 8px;border-radius:4px;border:1px solid;
+  display:flex;align-items:center;gap:.3rem;
+  background:var(--s3);
+}
+.elt-del{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:.65rem;padding:0 1px;line-height:1;transition:color .1s}
+.elt-del:hover{color:var(--pink)}
+
+/* encode output */
+.enc-out-box{
+  background:var(--s2);border:1px solid rgba(255,77,141,.2);border-radius:8px;overflow:hidden;
+}
+.eob-header{display:flex;align-items:center;justify-content:space-between;padding:.5rem .8rem;border-bottom:1px solid var(--b1);background:var(--pg)}
+.eob-title{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--pink);letter-spacing:.08em}
+.eob-body{font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:#ffb3cc;line-height:1.75;padding:.7rem .9rem;word-break:break-all;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.eob-layer{padding:.35rem .9rem;border-top:1px solid var(--b1);font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--dim);word-break:break-all;line-height:1.6}
+.eob-layer b{color:var(--text2,#8899b8);margin-right:.4rem}
+
+/* iterations row for encode */
+.iter-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap}
+.iter-lbl{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--dim)}
+.iter-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  width:28px;height:26px;border-radius:5px;border:1px solid var(--b1);
+  background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;
+}
+.iter-btn:hover{background:var(--s3);color:var(--text)}
+.iter-btn.active{background:var(--s3);color:var(--pink);border-color:rgba(255,77,141,.4)}
+
+/* status placeholder */
+.status-text{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--dim);padding:.3rem 0}
+
+/* copy flash */
+.flash-ok{color:var(--green)!important;border-color:rgba(0,245,160,.4)!important}
+
+/* loading */
+.loading-bar{height:2px;background:var(--b1);border-radius:1px;overflow:hidden;margin-bottom:.8rem}
+.loading-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan),var(--green));background-size:200%;animation:shimmer .8s linear infinite;border-radius:1px;width:0;transition:width .3s}
+@keyframes shimmer{from{background-position:200%}to{background-position:0%}}
+.loading-bar.active .loading-fill{width:100%}
 </style>
 </head>
 <body>
-<div class="root">
+<div class="app">
 
 <!-- HEADER -->
 <header>
-  <div class="brand">
-    <svg viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="7" fill="#080b10" stroke="#1e2637"/>
-      <circle cx="16" cy="16" r="6" stroke="#00ffb3" stroke-width="1.4" stroke-dasharray="3 2"/>
-      <circle cx="16" cy="16" r="2.5" fill="#ff6b9d"/>
-      <circle cx="16" cy="16" r="9" stroke="#4fc3f7" stroke-width=".8" stroke-dasharray="1.5 3" opacity=".5"/>
-      <path d="M10 16h3M19 16h3M16 10v3M16 19v3" stroke="#4fc3f7" stroke-width="1" stroke-linecap="round"/>
-    </svg>
-    <div><div class="brand-name">Cipher<em>Sense</em> <span style="font-size:.7rem;font-weight:400;color:var(--text3)">v3</span></div><div class="brand-sub">Multi-Layer Cipher Tool</div></div>
+  <div class="logo-wrap">
+    <div class="logo">Cipher<span>Sense</span></div>
+    <div class="logo-tag">Smart Decoder · Auto-Detect · Multi-Layer</div>
   </div>
-  <div class="hpills">
-    <span class="hp hp-g">↑ MULTI-LAYER ENCODE</span>
-    <span class="hp hp-p">↓ MULTI-LAYER DECODE</span>
-    <span class="hp hp-y">⚡ AUTO-DETECT LAYERS</span>
-    <span class="hp hp-b">20+ METHODS</span>
-  </div>
+  <div class="ver">v4.0 &nbsp;·&nbsp; 20+ methods &nbsp;·&nbsp; up to 20 layers</div>
 </header>
 
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab active t-enc" onclick="switchTab('enc',this)">↑ Encoder</button>
-  <button class="tab t-dec" onclick="switchTab('dec',this)">↓ Decoder</button>
-  <button class="tab t-auto" onclick="switchTab('auto',this)">⚡ Auto-Detect &amp; Peel</button>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
-     ENCODE PANE
-══════════════════════════════════════════════════════════ -->
-<div class="pane active" id="pane-enc">
-
-  <!-- method bar for adding to chain -->
-  <div class="method-bar">
-    <span class="mb-lbl">+ Add layer →</span>
-    <div id="enc-method-strip"></div>
-  </div>
-
-  <div class="enc-pane-grid">
-    <!-- LEFT: input + chain builder -->
-    <div class="enc-left">
-
-      <!-- Input -->
-      <div class="panel" style="flex-shrink:0">
-        <div class="ph">
-          <div class="ph-title"><span class="dot dot-sky"></span>Plain Text Input</div>
-          <div class="ph-actions">
-            <span class="lcount" id="enc-incount">0 chars</span>
-            <button class="btn" onclick="encLoadSample()">▷ Sample</button>
-            <button class="btn" onclick="clearEnc()">✕ Clear</button>
-          </div>
-        </div>
-        <textarea id="enc-input" placeholder="Type or paste your plain text here…&#10;&#10;Then build an encoding chain on the right →&#10;Add layers in any order, configure each one." oninput="runEnc()" spellcheck="false"></textarea>
+<!-- INPUT -->
+<div class="input-section">
+  <div class="input-label">Input — paste anything</div>
+  <div class="input-box">
+    <textarea id="main-input"
+      placeholder="Paste any encoded, encrypted, or ciphered text here…&#10;&#10;CipherSense will automatically detect what it is and decode it — even if it has been encoded multiple times.&#10;&#10;e.g.  SGVsbG8gV29ybGQ=   ·   68 65 6c 6c 6f   ·   .... . .-.. .-.. ---   ·   Mjk2YzY5NjM2NTc0MjE="
+      spellcheck="false"
+      oninput="onInput()"></textarea>
+    <div class="input-footer">
+      <div class="in-meta">
+        <span id="in-count">0 chars</span>
+        <span id="in-entropy" style="display:none">entropy: <b id="entropy-val">—</b></span>
       </div>
-
-      <!-- Chain Builder -->
-      <div class="chain-builder" style="flex-shrink:0">
-        <div class="ph">
-          <div class="ph-title"><span class="dot dot-enc"></span>Encoding Chain</div>
-          <div class="ph-actions">
-            <span class="chip chip-info" id="enc-chain-count">0 layers</span>
-            <button class="btn btn-enc" onclick="clearChain()">Clear chain</button>
-          </div>
-        </div>
-        <div class="chain-list" id="chain-list">
-          <div class="chain-empty" id="chain-empty">No layers yet — click a method above to add one</div>
-        </div>
-
-        <!-- quick-add row -->
-        <div class="add-method-row">
-          <span class="add-lbl">Quick add:</span>
-          <select class="add-select" id="quick-add-select">
-            <option value="">— pick method —</option>
-          </select>
-          <button class="btn btn-enc" onclick="quickAdd()">+ Add</button>
-        </div>
-
-        <!-- selected layer options -->
-        <div id="layer-opts-panel" style="display:none" class="layer-opts">
-          <div class="lo-title" id="lo-title">Layer options</div>
-          <div class="lo-fields" id="lo-fields"></div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RIGHT: encoded output per layer -->
-    <div class="enc-right" id="enc-results">
-      <div class="placeholder">Build a chain on the left, then results will cascade here layer by layer →</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
-     DECODE PANE
-══════════════════════════════════════════════════════════ -->
-<div class="pane" id="pane-dec">
-
-  <!-- method bar -->
-  <div class="method-bar">
-    <span class="mb-lbl">Method →</span>
-    <div id="dec-method-strip"></div>
-  </div>
-
-  <!-- options bar for current decode method -->
-  <div id="dec-opts-bar" class="opt-bar" style="margin:.4rem 1.5rem 0"></div>
-
-  <div class="dec-pane-grid">
-    <!-- LEFT -->
-    <div class="dec-left">
-      <div class="panel" style="flex-shrink:0">
-        <div class="ph">
-          <div class="ph-title"><span class="dot dot-sky"></span>Encoded Input</div>
-          <div class="ph-actions">
-            <span class="lcount" id="dec-incount">0 chars</span>
-            <button class="btn" onclick="decLoadSample()">▷ Sample</button>
-            <button class="btn" onclick="clearDec()">✕ Clear</button>
-          </div>
-        </div>
-        <textarea id="dec-input" placeholder="Paste encoded / ciphertext here…&#10;&#10;• Single encoding → decoded instantly&#10;• Multi-layer → set iterations below&#10;• Unknown layers → use Auto-Detect tab" oninput="runDec()" spellcheck="false"></textarea>
-      </div>
-
-      <!-- Iterations selector -->
-      <div class="panel" style="flex-shrink:0;overflow:visible">
-        <div class="ph">
-          <div class="ph-title"><span class="dot dot-dec"></span>Decode Iterations (layers)</div>
-          <div class="ph-actions"><span class="chip chip-info" id="dec-iter-chip">1×</span></div>
-        </div>
-        <div class="iter-row">
-          <span class="iter-lbl">How many times to decode:</span>
-          <div class="iter-btns" id="dec-iter-btns">
-            <!-- generated -->
-          </div>
-          <span class="iter-info" id="dec-iter-info">1 layer → 1 decode pass</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: decode chain output -->
-    <div class="dec-right">
-      <div class="ph" style="background:var(--ink2);border:1px solid var(--ink4);border-radius:10px;margin-bottom:.5rem">
-        <div class="ph-title"><span class="dot dot-dec"></span>Decoded Output</div>
-        <div class="ph-actions">
-          <span class="chip" id="dec-status-chip">—</span>
-          <button class="btn btn-dec" onclick="copyDecOut()">Copy result</button>
-        </div>
-      </div>
-      <div class="dec-chain" id="dec-chain-out">
-        <div class="placeholder">Decoded layers will appear here…</div>
+      <div class="in-actions">
+        <button class="btn btn-ghost" onclick="loadSample()">▷ Sample</button>
+        <button class="btn btn-ghost" onclick="clearAll()">✕ Clear</button>
+        <button class="btn btn-primary" onclick="onInput()">⚡ Decode</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
-     AUTO-DETECT PANE
-══════════════════════════════════════════════════════════ -->
-<div class="pane" id="pane-auto">
-  <div class="auto-pane-grid">
-    <div class="auto-left">
-      <div class="panel" style="flex-shrink:0">
-        <div class="ph">
-          <div class="ph-title"><span class="dot dot-gold"></span>Unknown Encoded Input</div>
-          <div class="ph-actions">
-            <span class="lcount" id="auto-incount">0 chars</span>
-            <button class="btn" onclick="autoLoadSample()">▷ Sample</button>
-            <button class="btn" onclick="clearAuto()">✕ Clear</button>
-          </div>
-        </div>
-        <textarea id="auto-input" placeholder="Paste anything here — even if you don't know how many times it was encoded.&#10;&#10;CipherSense will automatically detect and peel every encoding layer until it reaches plain text." oninput="runAuto()" spellcheck="false"></textarea>
-      </div>
+<!-- LOADING BAR -->
+<div class="loading-bar" id="loading-bar"><div class="loading-fill" id="loading-fill"></div></div>
 
-      <!-- detected formats -->
-      <div class="panel" style="flex-shrink:0">
-        <div class="ph">
-          <div class="ph-title"><span class="dot dot-gold"></span>Detected Formats</div>
-          <div class="ph-actions"><span class="chip chip-gold" id="auto-layer-chip">0 layers found</span></div>
-        </div>
-        <div style="padding:.6rem .8rem" id="auto-detect-tags">
-          <div class="placeholder" style="padding:0">Paste input to detect formats…</div>
-        </div>
-      </div>
+<!-- DECODE RESULT -->
+<div class="result-section" id="result-section" style="display:none">
+
+  <!-- detected formats -->
+  <div class="formats-bar" id="formats-bar">
+    <span class="fb-lbl">Detected →</span>
+    <span id="formats-tags"></span>
+  </div>
+
+  <!-- Final decoded output -->
+  <div id="final-output"></div>
+
+  <!-- Layer chain (collapsible) -->
+  <div class="chain-section" id="chain-section" style="display:none">
+    <button class="chain-toggle" id="chain-toggle" onclick="toggleChain()">
+      <span class="arrow">▶</span>
+      <span id="chain-toggle-label">Show decode chain</span>
+    </button>
+    <div class="chain-body" id="chain-body"></div>
+  </div>
+
+</div>
+
+<!-- NO RESULT -->
+<div id="no-result" style="display:none" class="no-result">
+  <div class="nr-icon">🔍</div>
+  <div class="nr-title">Could not auto-decode</div>
+  <div class="nr-sub">No known encoding pattern was detected.<br>Try the Encoder below to see what your text looks like in various formats,<br>or check if a cipher key is required (Vigenère, XOR, AES…)</div>
+</div>
+
+<!-- ENCODER SECTION (secondary, collapsible) -->
+<div class="encode-section">
+  <div class="section-bar" onclick="toggleEncoder()">
+    <div class="sb-title">
+      <span style="color:var(--pink)">🔐</span> Encoder — encode your text into any format
+    </div>
+    <span class="sb-arrow" id="enc-arrow">▼</span>
+  </div>
+  <div class="encode-body" id="encode-body">
+
+    <!-- method selector -->
+    <div class="input-label" style="margin-bottom:.5rem">Choose encoding method</div>
+    <div class="method-grid" id="method-grid"></div>
+
+    <!-- method options -->
+    <div class="enc-opts" id="enc-opts"></div>
+
+    <!-- iterations -->
+    <div class="iter-row">
+      <span class="iter-lbl">Encode × times (layers):</span>
+      <div id="iter-btns"></div>
+      <span class="status-text" id="iter-info"></span>
     </div>
 
-    <div class="auto-right" id="auto-chain-out">
-      <div class="placeholder">Auto-detected layers will be peeled here, one by one, until plain text is reached…</div>
+    <!-- encode input -->
+    <div class="input-label" style="margin-bottom:.5rem">Text to encode</div>
+    <div class="input-box" style="margin-bottom:.8rem;border-color:var(--b2)">
+      <textarea id="enc-input" style="min-height:70px" placeholder="Type or paste text to encode…" oninput="runEncode()" spellcheck="false"></textarea>
     </div>
+
+    <!-- output -->
+    <div id="enc-output" style="display:none" class="enc-out-box">
+      <div class="eob-header">
+        <span class="eob-title" id="eob-title">Encoded output</span>
+        <button class="btn btn-pink" style="font-size:.58rem;padding:4px 10px" onclick="copyEncOut()">Copy</button>
+      </div>
+      <div id="eob-layers"></div>
+    </div>
+
   </div>
 </div>
 
-</div><!-- /root -->
+</div><!-- /app -->
 
 <script>
 'use strict';
-// ═══════════════════════════════════════════════════════════════ UTILITIES
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ═══════════════════════════════════════════════════════ UTILS
 function safeAtob(s){try{return atob(s)}catch{return null}}
 function isPrintable(s){return typeof s==='string'&&s.length>0&&/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s)}
-function hasLetters(s){return/[a-zA-Z]{2,}/.test(s)}
+function isLikelyText(s){
+  if(!s||!isPrintable(s))return false;
+  const letters=(s.match(/[a-zA-Z]/g)||[]).length;
+  const spaces=(s.match(/\s/g)||[]).length;
+  return letters>0||(spaces>0&&s.length>3);
+}
+function entropy(s){
+  if(!s.length)return 0;
+  const f={};for(const c of s)f[c]=(f[c]||0)+1;
+  let h=0;for(const k in f){const p=f[k]/s.length;h-=p*Math.log2(p);}
+  return h.toFixed(2);
+}
 function copyText(text,btn){
   navigator.clipboard.writeText(text).catch(()=>{});
   if(!btn)return;
-  const o=btn.textContent;btn.textContent='✓';btn.classList.add('copied-fx');
-  setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied-fx')},1300);
+  const o=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('flash-ok');
+  setTimeout(()=>{btn.textContent=o;btn.classList.remove('flash-ok')},1400);
 }
-const LAYER_COLORS=['#00ffb3','#4fc3f7','#b388ff','#ffd166','#ff6b9d','#ff9800','#e040fb','#69f0ae','#f48fb1','#80deea'];
-function layerColor(i){return LAYER_COLORS[i%LAYER_COLORS.length]}
 
-// ═══════════════════════════════════════════════════════════════ METHODS
-// Each method: id, name, cat, desc, encLabel, decLabel, opts[], encode(t,o), decode(t,o)
-const METHODS=[
-  {id:'base64',name:'Base64',cat:'Encoding',desc:'Standard Base64 (RFC 4648).',encLabel:'→ Base64',decLabel:'Base64 →',opts:[],
-    encode(t){try{return btoa(unescape(encodeURIComponent(t)))}catch{return'[encode error]'}},
-    decode(t){
-      try{let s=t.trim().replace(/\s/g,'');while(s.length%4)s+='=';
-      const r=safeAtob(s);if(r===null)return null;
-      try{return decodeURIComponent(escape(r))}catch{return r}}catch{return null}
-    }
+// Layer colors
+const LC=['#00f5a0','#00d4ff','#9d6fff','#ffcb47','#ff4d8d','#ff9800','#e040fb','#69f0ae','#f48fb1','#80deea','#fff176','#a5d6a7'];
+const lc=i=>LC[i%LC.length];
+
+// ═══════════════════════════════════════════════════════ DECODE METHODS
+// Returns decoded string or null
+const DECODERS=[
+
+  {id:'base64', name:'Base64', cat:'Encoding',
+   detect(s){const t=s.trim().replace(/\s/g,'');return/^[A-Za-z0-9+/]{4,}={0,2}$/.test(t)&&t.length%4===0},
+   decode(s){
+     try{
+       let t=s.trim().replace(/\s/g,'');
+       while(t.length%4)t+='=';
+       const r=safeAtob(t);if(!r)return null;
+       try{const u=decodeURIComponent(escape(r));return isPrintable(u)?u:null}
+       catch{return isPrintable(r)?r:null}
+     }catch{return null}
+   }
   },
-  {id:'base64url',name:'Base64URL',cat:'Encoding',desc:'URL-safe Base64 using - and _ (no padding).',encLabel:'→ Base64URL',decLabel:'Base64URL →',opts:[],
-    encode(t){try{return btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}catch{return'[encode error]'}},
-    decode(t){
-      try{let s=t.trim().replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
-      const r=safeAtob(s);if(!r)return null;
-      try{return decodeURIComponent(escape(r))}catch{return r}}catch{return null}
-    }
+
+  {id:'base64url', name:'Base64URL', cat:'Encoding',
+   detect(s){const t=s.trim().replace(/\s/g,'');return/^[A-Za-z0-9_-]{4,}$/.test(t)&&t.length%4!==1},
+   decode(s){
+     try{
+       let t=s.trim().replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');
+       while(t.length%4)t+='=';
+       const r=safeAtob(t);if(!r)return null;
+       try{const u=decodeURIComponent(escape(r));return isPrintable(u)?u:null}
+       catch{return isPrintable(r)?r:null}
+     }catch{return null}
+   }
   },
-  {id:'base32',name:'Base32',cat:'Encoding',desc:'Base32 (RFC 4648) — A-Z + 2-7.',encLabel:'→ Base32',decLabel:'Base32 →',opts:[],
-    encode(t){
-      const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-      let bits='',o='';
-      for(let i=0;i<t.length;i++)bits+=t.charCodeAt(i).toString(2).padStart(8,'0');
-      while(bits.length%5)bits+='0';
-      for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];
-      while(o.length%8)o+='=';return o;
-    },
-    decode(t){
-      try{
-        const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        const inp=t.trim().toUpperCase().replace(/=/g,'').replace(/\s/g,'');
-        let bits='',o='';
-        for(const c of inp){const i=a.indexOf(c);if(i<0)return null;bits+=i.toString(2).padStart(5,'0');}
-        for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));
-        return o||null;
-      }catch{return null}
-    }
+
+  {id:'base32', name:'Base32', cat:'Encoding',
+   detect(s){return/^[A-Z2-7]+=*$/i.test(s.trim())&&s.trim().length>=8},
+   decode(s){
+     try{
+       const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+       const inp=s.trim().toUpperCase().replace(/=/g,'').replace(/\s/g,'');
+       let bits='',o='';
+       for(const c of inp){const i=a.indexOf(c);if(i<0)return null;bits+=i.toString(2).padStart(5,'0');}
+       for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));
+       return isPrintable(o)?o:null;
+     }catch{return null}
+   }
   },
-  {id:'hex',name:'Hex',cat:'Encoding',desc:'Hexadecimal encoding. Each byte = 2 hex digits.',encLabel:'→ Hex',decLabel:'Hex →',
-    opts:[{id:'sep',label:'Separator',type:'select',choices:['space','none','colon','0x-prefix'],def:'space'}],
-    encode(t,o){
-      const sep={'space':' ','none':'','colon':':','0x-prefix':' '}[o.sep||'space'];
-      const prefix=o.sep==='0x-prefix'?'0x':'';
-      return Array.from(t).map(c=>prefix+c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep);
-    },
-    decode(t){
-      try{
-        const c=t.trim().replace(/0x/gi,'').replace(/[\s:]/g,'');
-        if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0)return null;
-        let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));
-        return isPrintable(o)?o:null;
-      }catch{return null}
-    }
+
+  {id:'hex', name:'Hex', cat:'Encoding',
+   detect(s){
+     const c=s.trim().replace(/0x/gi,'').replace(/[\s:,]/g,'');
+     return/^[0-9a-fA-F]+$/.test(c)&&c.length%2===0&&c.length>=4;
+   },
+   decode(s){
+     try{
+       const c=s.trim().replace(/0x/gi,'').replace(/[\s:,]/g,'');
+       if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0)return null;
+       let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));
+       return isPrintable(o)?o:null;
+     }catch{return null}
+   }
   },
-  {id:'binary',name:'Binary',cat:'Encoding',desc:'8-bit binary per character.',encLabel:'→ Binary',decLabel:'Binary →',
-    opts:[{id:'sep',label:'Separator',type:'select',choices:['space','none'],def:'space'}],
-    encode(t,o){const sep=o.sep==='none'?'':' ';return Array.from(t).map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(sep)},
-    decode(t){
-      try{
-        const c=t.trim().replace(/\s/g,'');
-        if(!/^[01]+$/.test(c)||c.length%8!==0)return null;
-        let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));
-        return isPrintable(o)?o:null;
-      }catch{return null}
-    }
+
+  {id:'binary', name:'Binary', cat:'Encoding',
+   detect(s){const c=s.trim().replace(/\s/g,'');return/^[01]+$/.test(c)&&c.length%8===0&&c.length>=8},
+   decode(s){
+     try{
+       const c=s.trim().replace(/\s/g,'');
+       if(c.length%8!==0)return null;
+       let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));
+       return isPrintable(o)?o:null;
+     }catch{return null}
+   }
   },
-  {id:'octal',name:'Octal',cat:'Encoding',desc:'Octal base-8 per character.',encLabel:'→ Octal',decLabel:'Octal →',opts:[],
-    encode(t){return Array.from(t).map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' ')},
-    decode(t){
-      try{
-        const tokens=t.trim().split(/\s+/);
-        if(!tokens.every(tk=>/^[0-7]{1,3}$/.test(tk)))return null;
-        const o=tokens.map(tk=>String.fromCharCode(parseInt(tk,8))).join('');
-        return isPrintable(o)?o:null;
-      }catch{return null}
-    }
+
+  {id:'octal', name:'Octal', cat:'Encoding',
+   detect(s){return/^(\s*[0-3][0-7]{2}\s*)+$/.test(s.trim())&&s.trim().split(/\s+/).length>=2},
+   decode(s){
+     try{
+       const t=s.trim().split(/\s+/);
+       if(!t.every(x=>/^[0-7]{1,3}$/.test(x)))return null;
+       const o=t.map(x=>String.fromCharCode(parseInt(x,8))).join('');
+       return isPrintable(o)?o:null;
+     }catch{return null}
+   }
   },
-  {id:'decimal',name:'Decimal',cat:'Encoding',desc:'Decimal ASCII code per character.',encLabel:'→ Decimal',decLabel:'Decimal →',
-    opts:[{id:'sep',label:'Separator',type:'select',choices:['space','comma','pipe'],def:'space'}],
-    encode(t,o){const sep={'space':' ','comma':',','pipe':'|'}[o.sep||'space'];return Array.from(t).map(c=>c.charCodeAt(0)).join(sep)},
-    decode(t){
-      try{
-        const tokens=t.trim().split(/[\s,|]+/);
-        if(!tokens.every(tk=>/^\d+$/.test(tk)))return null;
-        const o=tokens.map(tk=>String.fromCharCode(+tk)).join('');
-        return isPrintable(o)?o:null;
-      }catch{return null}
-    }
+
+  {id:'decimal', name:'Decimal ASCII', cat:'Encoding',
+   detect(s){
+     const t=s.trim().split(/[\s,]+/);
+     return t.length>=2&&t.every(x=>/^\d+$/.test(x)&&+x>=32&&+x<=126);
+   },
+   decode(s){
+     try{
+       const t=s.trim().split(/[\s,]+/);
+       const o=t.map(x=>String.fromCharCode(+x)).join('');
+       return isPrintable(o)?o:null;
+     }catch{return null}
+   }
   },
-  {id:'url',name:'URL %enc',cat:'Encoding',desc:'Percent-encoding for URLs.',encLabel:'→ URL %enc',decLabel:'URL %enc →',opts:[],
-    encode(t){return encodeURIComponent(t)},
-    decode(t){try{const d=decodeURIComponent(t.trim());return d!==t.trim()?d:null}catch{return null}}
+
+  {id:'url', name:'URL %enc', cat:'Encoding',
+   detect(s){return/%[0-9a-fA-F]{2}/.test(s)},
+   decode(s){
+     try{
+       if(!/%[0-9a-fA-F]{2}/.test(s))return null;
+       const r=decodeURIComponent(s.trim());
+       return r!==s.trim()&&isPrintable(r)?r:null;
+     }catch{return null}
+   }
   },
-  {id:'html',name:'HTML Ents',cat:'Encoding',desc:'HTML entity encoding.',encLabel:'→ HTML',decLabel:'HTML →',
-    opts:[{id:'mode',label:'Mode',type:'select',choices:['named','decimal','hex'],def:'named'}],
-    encode(t,o){
-      const nm={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
-      if((o.mode||'named')==='named')return t.replace(/[&<>"']/g,c=>nm[c]||c);
-      if(o.mode==='decimal')return Array.from(t).map(c=>`&#${c.charCodeAt(0)};`).join('');
-      return Array.from(t).map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('');
-    },
-    decode(t){
-      try{
-        if(!/&[#a-zA-Z]/.test(t))return null;
-        const el=document.createElement('textarea');el.innerHTML=t;
-        const r=el.value;return r!==t?r:null;
-      }catch{return null}
-    }
+
+  {id:'html', name:'HTML Entities', cat:'Encoding',
+   detect(s){return/&[#a-zA-Z][a-zA-Z0-9]*;/.test(s)},
+   decode(s){
+     try{
+       if(!/&[#a-zA-Z]/.test(s))return null;
+       const el=document.createElement('textarea');el.innerHTML=s;
+       const r=el.value;return r!==s&&isPrintable(r)?r:null;
+     }catch{return null}
+   }
   },
-  {id:'unicode',name:'Unicode',cat:'Encoding',desc:'\\uXXXX / \\xXX Unicode escapes.',encLabel:'→ \\uXXXX',decLabel:'\\uXXXX →',
-    opts:[{id:'fmt',label:'Format',type:'select',choices:['\\uXXXX','\\xXX','U+XXXX'],def:'\\uXXXX'}],
-    encode(t,o){
-      const f=o.fmt||'\\uXXXX';
-      if(f==='\\uXXXX')return Array.from(t).map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join('');
-      if(f==='\\xXX')return Array.from(t).map(c=>'\\x'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
-      return Array.from(t).map(c=>'U+'+c.charCodeAt(0).toString(16).toUpperCase().padStart(4,'0')).join(' ');
-    },
-    decode(t){
-      if(!/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|U\+[0-9a-fA-F]{4}/i.test(t))return null;
-      let s=t;
-      s=s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
-      s=s.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
-      s=s.replace(/U\+([0-9a-fA-F]{4,6})/gi,(_,h)=>String.fromCodePoint(parseInt(h,16)));
-      return s!==t?s:null;
-    }
+
+  {id:'unicode', name:'Unicode Esc', cat:'Encoding',
+   detect(s){return/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|U\+[0-9a-fA-F]{4}/i.test(s)},
+   decode(s){
+     if(!/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}/.test(s))return null;
+     let r=s;
+     r=r.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+     r=r.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+     return r!==s&&isPrintable(r)?r:null;
+   }
   },
-  // ── CIPHERS ──
-  {id:'rot13',name:'ROT13',cat:'Cipher',desc:'Rotate letters by 13 (symmetric).',encLabel:'→ ROT13',decLabel:'ROT13 →',opts:[],
-    encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))},
-    decode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))}
+
+  {id:'rot13', name:'ROT13', cat:'Cipher',
+   detect(s){return/[a-zA-Z]/.test(s)&&s.length>=4},
+   decode(s){
+     const r=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97))
+               .replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65));
+     // only return if result differs meaningfully
+     return r!==s?r:null;
+   }
   },
-  {id:'rot47',name:'ROT47',cat:'Cipher',desc:'Rotate all 94 printable ASCII chars by 47.',encLabel:'→ ROT47',decLabel:'ROT47 →',opts:[],
-    encode(t){return t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))},
-    decode(t){return t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))}
+
+  {id:'rot47', name:'ROT47', cat:'Cipher',
+   detect(s){return/[\x21-\x7E]/.test(s)&&s.length>=4},
+   decode(s){
+     const r=s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)));
+     return r!==s&&isPrintable(r)?r:null;
+   }
   },
-  {id:'atbash',name:'Atbash',cat:'Cipher',desc:'A↔Z substitution (symmetric).',encLabel:'→ Atbash',decLabel:'Atbash →',opts:[],
-    encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))},
-    decode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))}
+
+  {id:'atbash', name:'Atbash', cat:'Cipher',
+   detect(s){return/[a-zA-Z]/.test(s)&&s.length>=2},
+   decode(s){
+     const r=s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97)))
+               .replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)));
+     return r!==s?r:null;
+   }
   },
-  {id:'caesar',name:'Caesar',cat:'Cipher',desc:'Shift letters by N positions.',encLabel:'→ Caesar',decLabel:'Caesar →',
-    opts:[{id:'shift',label:'Shift',type:'range',min:1,max:25,def:'3'}],
-    encode(t,o){const n=+o.shift||3;return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65))},
-    decode(t,o){const n=+o.shift||3;return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65))}
+
+  {id:'morse', name:'Morse Code', cat:'Cipher',
+   detect(s){return/^[\s.\-/]+$/.test(s)&&/[.\-]/.test(s)&&s.length>=3},
+   decode(s){
+     const M={'.-':'A','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-.....':'6','--....':'7','---..':'8','----.':'9','-----':'0','.-.-.-':'.','--..--':',','..--..':'?'};
+     const words=s.trim().split(/\s{2,}|\s*\/\s*/);
+     const r=words.map(w=>w.trim().split(/\s+/).map(sym=>M[sym]||'?').join('')).join(' ');
+     return r&&!/^\?+$/.test(r.replace(/\s/g,''))?r:null;
+   }
   },
-  {id:'vigenere',name:'Vigenère',cat:'Cipher',desc:'Polyalphabetic cipher with keyword.',encLabel:'→ Vigenère',decLabel:'Vigenère →',
-    opts:[{id:'key',label:'Keyword',type:'text',placeholder:'SECRET',def:'KEY'}],
-    _k(k){return(k||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key'},
-    encode(t,o){const k=this._k(o.key);let i=0;return t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,s=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b+s)%26)+b)})},
-    decode(t,o){const k=this._k(o.key);let i=0;return t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,s=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-s+26)%26)+b)})}
+
+  {id:'bacon', name:"Bacon's", cat:'Cipher',
+   detect(s){return/^[abAB\s]+$/i.test(s.trim())&&s.trim().replace(/\s/g,'').length%5===0&&s.length>=10},
+   decode(s){
+     const M={AAAAA:'A',AAAAB:'B',AAABA:'C',AAABB:'D',AABAA:'E',AABAB:'F',AABBA:'G',AABBB:'H',ABAAA:'I',ABAAB:'J',ABABA:'K',ABABB:'L',ABBAA:'M',ABBAB:'N',ABBBA:'O',ABBBB:'P',BAAAA:'Q',BAAAB:'R',BAABA:'S',BAABB:'T',BABAA:'U',BABAB:'V',BABBA:'W',BABBB:'X',BBAAA:'Y',BBAAB:'Z'};
+     const c=s.trim().toUpperCase().replace(/\s/g,'');
+     let o='';for(let i=0;i+5<=c.length;i+=5)o+=M[c.slice(i,i+5)]||'?';
+     return o&&!/^\?+$/.test(o)?o:null;
+   }
   },
-  {id:'xor',name:'XOR',cat:'Cipher',desc:'XOR each byte with a key byte.',encLabel:'→ XOR (hex)',decLabel:'XOR (hex) →',
-    opts:[{id:'key',label:'Key (0-255)',type:'number',min:0,max:255,def:'42'},{id:'fmt',label:'Output',type:'select',choices:['hex','decimal'],def:'hex'}],
-    encode(t,o){
-      const k=+o.key||42,fmt=o.fmt||'hex';
-      const bytes=Array.from(t).map(c=>c.charCodeAt(0)^k);
-      return fmt==='hex'?bytes.map(b=>b.toString(16).padStart(2,'0')).join(' '):bytes.join(' ');
-    },
-    decode(t,o){
-      const k=+o.key||42,fmt=o.fmt||'hex';
-      try{
-        let bytes=[];
-        if(fmt==='hex'){const c=t.trim().replace(/\s/g,'');if(c.length%2!==0)return null;for(let i=0;i<c.length;i+=2)bytes.push(parseInt(c.slice(i,i+2),16));}
-        else bytes=t.trim().split(/[\s,]+/).map(Number);
-        const o2=bytes.map(b=>String.fromCharCode(b^k)).join('');
-        return isPrintable(o2)?o2:null;
-      }catch{return null}
-    }
+
+  {id:'jwt', name:'JWT', cat:'Token',
+   detect(s){return/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s.trim())},
+   decode(s){
+     try{
+       const p=s.trim().split('.');
+       const d=x=>{let t=x.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return JSON.stringify(JSON.parse(atob(t)),null,2)};
+       return`HEADER:\n${d(p[0])}\n\nPAYLOAD:\n${d(p[1])}\n\nSIGNATURE:\n${p[2]}\n(not verified)`;
+     }catch{return null}
+   }
   },
-  {id:'morse',name:'Morse',cat:'Cipher',desc:'International Morse code.',encLabel:'→ Morse',decLabel:'Morse →',opts:[],
-    _e:{A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.','.':'.-.-.-',',':'--..--','?':'..--..','!':'-.-.--',' ':'/'},
-    encode(t){return t.toUpperCase().split('').map(c=>this._e[c]||'').filter(Boolean).join(' ')},
-    decode(t){
-      const rev={};for(const[k,v]of Object.entries(this._e))rev[v]=k;
-      return t.trim().split(/\s+/).map(s=>s==='/'?' ':rev[s]||'?').join('');
-    }
-  },
-  {id:'bacon',name:"Bacon's",cat:'Cipher',desc:'5-char A/B sequences per letter.',encLabel:"→ Bacon's",decLabel:"Bacon's →",opts:[],
-    _m:{A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'},
-    encode(t){return t.toUpperCase().split('').map(c=>this._m[c]||c).join(' ')},
-    decode(t){
-      const rev={};for(const[k,v]of Object.entries(this._m))rev[v]=k;
-      const c=t.trim().toUpperCase().replace(/\s+/g,'');
-      let o='';for(let i=0;i+5<=c.length;i+=5)o+=rev[c.slice(i,i+5)]||'?';
-      return hasLetters(o)?o:null;
-    }
-  },
-  {id:'railfence',name:'Rail Fence',cat:'Cipher',desc:'Zigzag transposition cipher.',encLabel:'→ Rail Fence',decLabel:'Rail Fence →',
-    opts:[{id:'rails',label:'Rails',type:'range',min:2,max:8,def:'3'}],
-    encode(t,o){
-      const rails=Math.max(2,Math.min(8,+o.rails||3));
-      const fence=Array.from({length:rails},()=>[]);let r=0,d=1;
-      for(const c of t){fence[r].push(c);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
-      return fence.map(row=>row.join('')).join('');
-    },
-    decode(t,o){
-      const rails=Math.max(2,Math.min(8,+o.rails||3)),len=t.length;
-      if(!len)return'';
-      const pat=[];let r=0,d=1;
-      for(let i=0;i<len;i++){pat.push(r);if(r===0)d=1;if(r===rails-1)d=-1;r+=d;}
-      const rlen=Array.from({length:rails},(_,ri)=>pat.filter(x=>x===ri).length);
-      let pos=0;const rs=[];
-      for(const l of rlen){rs.push(pos);pos+=l;}
-      const ri2=Array(rails).fill(0),res=new Array(len);
-      for(let i=0;i<len;i++){const ri=pat[i];res[i]=t[rs[ri]+ri2[ri]];ri2[ri]++;}
-      return res.join('');
-    }
-  },
-  {id:'affine',name:'Affine',cat:'Cipher',desc:'E(x)=(ax+b) mod 26. a must be coprime to 26.',encLabel:'→ Affine',decLabel:'Affine →',
-    opts:[{id:'a',label:'a',type:'number',min:1,max:25,def:'5'},{id:'b',label:'b',type:'number',min:0,max:25,def:'8'}],
-    _inv(a,m){for(let x=1;x<m;x++)if((a*x)%m===1)return x;return null},
-    encode(t,o){
-      const a=+o.a||5,b=+o.b||8,inv=this._inv(a,26);
-      if(!inv)return`[a=${a} not coprime to 26]`;
-      return t.replace(/[a-z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-97)+b)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((a*(c.charCodeAt(0)-65)+b)%26)+65));
-    },
-    decode(t,o){
-      const a=+o.a||5,b=+o.b||8,inv=this._inv(a,26);
-      if(!inv)return null;
-      return t.replace(/[a-z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-97-b+2600)))%26+26)%26+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((inv*((c.charCodeAt(0)-65-b+2600)))%26+26)%26+65));
-    }
-  },
-  {id:'beaufort',name:'Beaufort',cat:'Cipher',desc:'Variant of Vigenère — self-reciprocal.',encLabel:'→ Beaufort',decLabel:'Beaufort →',
-    opts:[{id:'key',label:'Keyword',type:'text',placeholder:'FORTIFY',def:'FORTIFY'}],
-    _k(k){return(k||'FORTIFY').toLowerCase().replace(/[^a-z]/g,'')||'fortify'},
-    encode(t,o){const k=this._k(o.key);let i=0;return t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((sh-(c.charCodeAt(0)-b)+26)%26)+b)})},
-    decode(t,o){return this.encode(t,o)}
-  },
+
 ];
 
-// ═══════════════════════════════════════════════════════════════ ENCODE STATE
-let encChain=[]; // [{methodId, opts:{}, label}]
-let selectedLayerIdx=-1;
-
-// ═══════════════════════════════════════════════════════════════ DECODE STATE
-let decMethod=METHODS[0];
-let decOpts={};
-let decIter=1;
-
-// ═══════════════════════════════════════════════════════════════ BUILD METHOD STRIPS
-function buildMethodStrip(containerId,clickFn,activeFn){
-  const el=$(containerId);
-  const cats=[...new Set(METHODS.map(m=>m.cat))];
-  let html='';
-  cats.forEach((cat,ci)=>{
-    if(ci>0)html+=`<span class="mb-sep">│</span>`;
-    METHODS.filter(m=>m.cat===cat).forEach(m=>{
-      const active=activeFn(m.id)?'active':'';
-      html+=`<button class="mbtn ${active}" id="${containerId}-${m.id}" onclick="${clickFn}('${m.id}')">${m.name}</button>`;
-    });
-  });
-  el.innerHTML=html;
+// Confidence scorer — determines which decoder to try first
+function confidence(dec, s){
+  const t=s.trim();
+  if(dec.id==='jwt'&&/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(t))return 0.98;
+  if(dec.id==='morse'&&/^[\s.\-/]+$/.test(t)&&/[.\-]/.test(t))return 0.97;
+  if(dec.id==='binary'){const c=t.replace(/\s/g,'');if(/^[01]+$/.test(c)&&c.length%8===0)return 0.95;}
+  if(dec.id==='base64'){if(/^[A-Za-z0-9+/]+=*$/.test(t.replace(/\s/g,''))&&t.length%4===0)return 0.90;}
+  if(dec.id==='base64url'){if(/^[A-Za-z0-9_-]{4,}$/.test(t.replace(/\s/g,'')))return 0.88;}
+  if(dec.id==='hex'){const c=t.replace(/0x/gi,'').replace(/[\s:]/g,'');if(/^[0-9a-fA-F]+$/.test(c)&&c.length%2===0)return 0.90;}
+  if(dec.id==='url'&&/%[0-9a-fA-F]{2}/.test(t))return 0.92;
+  if(dec.id==='decimal'){const parts=t.split(/[\s,]+/);if(parts.length>=3&&parts.every(p=>/^\d+$/.test(p)&&+p>=32&&+p<=126))return 0.85;}
+  if(dec.id==='octal'){const parts=t.trim().split(/\s+/);if(parts.length>=2&&parts.every(p=>/^[0-7]{3}$/.test(p)))return 0.88;}
+  if(dec.id==='base32'&&/^[A-Z2-7]+=*$/.test(t))return 0.85;
+  if(dec.id==='html'&&/&[#a-zA-Z]/.test(t))return 0.93;
+  if(dec.id==='unicode'&&/\\u[0-9a-fA-F]{4}/.test(t))return 0.92;
+  if(dec.id==='bacon'&&/^[abAB\s]+$/i.test(t))return 0.82;
+  // Ambiguous ciphers — lower confidence, try last
+  if(dec.id==='rot13')return 0.20;
+  if(dec.id==='rot47')return 0.15;
+  if(dec.id==='atbash')return 0.10;
+  return 0.01;
 }
 
-function buildDecMethodStrip(){
-  buildMethodStrip('dec-method-strip','selectDecMethod',id=>id===decMethod.id);
-}
-
-function buildEncMethodStrip(){
-  // for encode strip, click adds to chain
-  const el=$('enc-method-strip');
-  const cats=[...new Set(METHODS.map(m=>m.cat))];
-  let html='';
-  cats.forEach((cat,ci)=>{
-    if(ci>0)html+=`<span class="mb-sep">│</span>`;
-    METHODS.filter(m=>m.cat===cat).forEach(m=>{
-      html+=`<button class="mbtn" id="enc-strip-${m.id}" onclick="addLayer('${m.id}')">${m.name}</button>`;
-    });
-  });
-  el.innerHTML=html;
-  // also build quick-add select
-  const sel=$('quick-add-select');
-  sel.innerHTML='<option value="">— pick method —</option>';
-  METHODS.forEach(m=>sel.innerHTML+=`<option value="${m.id}">${m.name} (${m.cat})</option>`);
-}
-
-function quickAdd(){
-  const sel=$('quick-add-select');
-  if(sel.value)addLayer(sel.value);
-  sel.value='';
-}
-
-// ═══════════════════════════════════════════════════════════════ CHAIN MANAGEMENT
-function defaultOpts(m){
-  const o={};(m.opts||[]).forEach(opt=>o[opt.id]=opt.def||'');return o;
-}
-
-function addLayer(methodId){
-  const m=METHODS.find(x=>x.id===methodId);if(!m)return;
-  encChain.push({methodId,opts:defaultOpts(m)});
-  selectedLayerIdx=encChain.length-1;
-  renderChain();
-  runEnc();
-}
-
-function removeLayer(i){
-  encChain.splice(i,1);
-  if(selectedLayerIdx>=encChain.length)selectedLayerIdx=encChain.length-1;
-  renderChain();
-  runEnc();
-}
-
-function clearChain(){encChain=[];selectedLayerIdx=-1;renderChain();runEnc();}
-
-function selectLayer(i){
-  selectedLayerIdx=i;
-  renderChain();
-  renderLayerOpts();
-}
-
-// Drag-and-drop reorder
-let dragIdx=-1;
-function onDragStart(i){dragIdx=i;setTimeout(()=>{const items=document.querySelectorAll('.chain-item');if(items[i])items[i].classList.add('dragging')},0)}
-function onDragOver(e,i){e.preventDefault();document.querySelectorAll('.chain-item').forEach((el,j)=>{el.classList.toggle('drag-over',j===i&&j!==dragIdx)})}
-function onDrop(e,i){
-  e.preventDefault();
-  if(dragIdx<0||dragIdx===i)return;
-  const moved=encChain.splice(dragIdx,1)[0];
-  encChain.splice(i,0,moved);
-  dragIdx=-1;
-  selectedLayerIdx=i;
-  document.querySelectorAll('.chain-item').forEach(el=>el.classList.remove('drag-over','dragging'));
-  renderChain();runEnc();
-}
-function onDragEnd(){
-  dragIdx=-1;
-  document.querySelectorAll('.chain-item').forEach(el=>el.classList.remove('dragging','drag-over'));
-}
-
-function renderChain(){
-  const list=$('chain-list');
-  const empty=$('chain-empty');
-  $('enc-chain-count').textContent=encChain.length+(encChain.length===1?' layer':' layers');
-  if(!encChain.length){
-    list.innerHTML='<div class="chain-empty" id="chain-empty">No layers yet — click a method above to add one</div>';
-    $('layer-opts-panel').style.display='none';
-    return;
-  }
-  list.innerHTML=encChain.map((layer,i)=>{
-    const m=METHODS.find(x=>x.id===layer.methodId);
-    const col=layerColor(i);
-    const optsStr=Object.entries(layer.opts).map(([k,v])=>`${k}:${v}`).join(', ');
-    const sel=selectedLayerIdx===i?'border-color:'+col+';box-shadow:0 0 0 1px '+col:'';
-    return `<div class="chain-item" style="${sel}" draggable="true"
-      onclick="selectLayer(${i})"
-      ondragstart="onDragStart(${i})" ondragover="onDragOver(event,${i})" ondrop="onDrop(event,${i})" ondragend="onDragEnd()">
-      <span class="ci-drag">⠿</span>
-      <span class="ci-num">${i+1}</span>
-      <span class="ci-color" style="background:${col}"></span>
-      <span class="ci-name" style="color:${col}">${m?m.name:'?'}</span>
-      ${optsStr?`<span class="ci-opts">[${esc(optsStr)}]</span>`:''}
-      <button class="ci-del" onclick="event.stopPropagation();removeLayer(${i})">✕</button>
-    </div>`;
-  }).join('');
-  renderLayerOpts();
-}
-
-function renderLayerOpts(){
-  const panel=$('layer-opts-panel');
-  if(selectedLayerIdx<0||selectedLayerIdx>=encChain.length){panel.style.display='none';return;}
-  const layer=encChain[selectedLayerIdx];
-  const m=METHODS.find(x=>x.id===layer.methodId);
-  if(!m||!m.opts||!m.opts.length){panel.style.display='none';return;}
-  panel.style.display='block';
-  $('lo-title').textContent=`Layer ${selectedLayerIdx+1}: ${m.name} — options`;
-  let html='';
-  m.opts.forEach(opt=>{
-    html+=`<label>${opt.label}</label>`;
-    if(opt.type==='select'){
-      html+=`<select onchange="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value)">`;
-      opt.choices.forEach(c=>html+=`<option value="${c}"${c===layer.opts[opt.id]?' selected':''}>${c}</option>`);
-      html+=`</select>`;
-    }else if(opt.type==='range'){
-      html+=`<input type="range" min="${opt.min}" max="${opt.max}" value="${layer.opts[opt.id]||opt.def}"
-        oninput="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value);this.nextElementSibling.textContent=this.value">`;
-      html+=`<span class="lo-rv">${layer.opts[opt.id]||opt.def}</span>`;
-    }else if(opt.type==='number'){
-      html+=`<input type="number" min="${opt.min}" max="${opt.max}" value="${layer.opts[opt.id]||opt.def}"
-        oninput="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value)">`;
-    }else{
-      html+=`<input type="text" value="${layer.opts[opt.id]||''}" placeholder="${opt.placeholder||''}"
-        oninput="setLayerOpt(${selectedLayerIdx},'${opt.id}',this.value)">`;
-    }
-  });
-  $('lo-fields').innerHTML=html;
-}
-
-function setLayerOpt(i,key,val){
-  if(i<0||i>=encChain.length)return;
-  encChain[i].opts[key]=val;
-  renderChain();
-  runEnc();
-}
-
-// ═══════════════════════════════════════════════════════════════ RUN ENCODE
-function runEnc(){
-  const input=$('enc-input').value;
-  $('enc-incount').textContent=input.length+' chars';
-  const results=$('enc-results');
-  if(!input.trim()||!encChain.length){
-    results.innerHTML='<div class="placeholder">Build a chain on the left → results cascade here layer by layer</div>';
-    return;
-  }
-  let current=input;
-  let html='';
-  // Show original
-  html+=makeEncCard(0,'Input (plain text)',input,'var(--sky)',null);
-  encChain.forEach((layer,i)=>{
-    const m=METHODS.find(x=>x.id===layer.methodId);
-    if(!m){current='[unknown method]';return;}
-    try{
-      const result=m.encode(current,layer.opts);
-      const col=layerColor(i);
-      html+=makeEncCard(i+1,`Layer ${i+1}: ${m.name}`,result,col,result);
-      current=result;
-    }catch(e){
-      html+=makeEncCard(i+1,`Layer ${i+1}: ${m.name} — ERROR`,'['+e.message+']','var(--dec)',null);
-    }
-  });
-  // Final output highlighted
-  html+=makeEncFinalCard(current);
-  results.innerHTML=html;
-}
-
-function makeEncCard(step,label,text,color,copyText2){
-  return `<div class="enc-result-card">
-    <div class="erc-header">
-      <span class="erc-step" style="color:${color}">step ${step}</span>
-      <span class="erc-name" style="color:${color}">${esc(label)}</span>
-      <span class="erc-len">${text.length} chars</span>
-    </div>
-    <div class="erc-body">${esc(text)}</div>
-    ${copyText2?`<div class="erc-footer"><button class="btn btn-enc" style="font-size:.55rem;padding:3px 8px" onclick="copyText(${JSON.stringify(copyText2)},this)">Copy</button></div>`:''}
-  </div>`;
-}
-function makeEncFinalCard(text){
-  return `<div class="enc-result-card" style="border-color:rgba(0,255,179,.3);box-shadow:0 0 12px rgba(0,255,179,.06)">
-    <div class="erc-header" style="background:rgba(0,255,179,.06)">
-      <span class="erc-step" style="color:var(--enc)">✓ FINAL</span>
-      <span class="erc-name" style="color:var(--enc)">Final encoded output</span>
-      <span class="erc-len">${text.length} chars</span>
-    </div>
-    <div class="erc-body" style="color:#a8ffd8;max-height:160px">${esc(text)}</div>
-    <div class="erc-footer">
-      <button class="btn btn-solid-enc" style="font-size:.6rem;padding:5px 14px" onclick="copyText(${JSON.stringify(text)},this)">Copy final</button>
-    </div>
-  </div>`;
-}
-
-// ═══════════════════════════════════════════════════════════════ DECODE METHOD + OPTIONS
-function selectDecMethod(id){
-  decMethod=METHODS.find(m=>m.id===id)||METHODS[0];
-  decOpts=defaultOpts(decMethod);
-  buildDecMethodStrip();
-  buildDecOptsBar();
-  runDec();
-}
-
-function buildDecOptsBar(){
-  const bar=$('dec-opts-bar');
-  const m=decMethod;
-  if(!m.opts||!m.opts.length){bar.className='opt-bar';bar.innerHTML='';return;}
-  let html='';
-  m.opts.forEach(o=>{
-    if(decOpts[o.id]===undefined)decOpts[o.id]=o.def||'';
-    html+=`<div class="og"><label>${o.label}</label>`;
-    if(o.type==='select'){
-      html+=`<select onchange="setDecOpt('${o.id}',this.value)">`;
-      o.choices.forEach(c=>html+=`<option value="${c}"${c===decOpts[o.id]?' selected':''}>${c}</option>`);
-      html+=`</select>`;
-    }else if(o.type==='range'){
-      html+=`<input type="range" min="${o.min}" max="${o.max}" value="${decOpts[o.id]||o.def}" oninput="setDecOpt('${o.id}',this.value);$('dov-${o.id}').textContent=this.value">`;
-      html+=`<span class="ov" id="dov-${o.id}">${decOpts[o.id]||o.def}</span>`;
-    }else if(o.type==='number'){
-      html+=`<input type="number" min="${o.min}" max="${o.max}" value="${decOpts[o.id]||o.def}" oninput="setDecOpt('${o.id}',this.value)">`;
-    }else{
-      html+=`<input type="text" value="${decOpts[o.id]||''}" placeholder="${o.placeholder||''}" oninput="setDecOpt('${o.id}',this.value)">`;
-    }
-    html+=`</div>`;
-  });
-  bar.innerHTML=html;bar.className='opt-bar show';
-}
-
-function setDecOpt(id,val){decOpts[id]=val;runDec();}
-
-// ═══════════════════════════════════════════════════════════════ ITERATION BUTTONS
-function buildIterBtns(){
-  const wrap=$('dec-iter-btns');
-  wrap.innerHTML='';
-  [1,2,3,4,5,6,7,8].forEach(n=>{
-    const btn=document.createElement('button');
-    btn.className='iter-btn'+(n===decIter?' active':'');
-    btn.textContent=n+'×';
-    btn.onclick=()=>{decIter=n;buildIterBtns();runDec();};
-    wrap.appendChild(btn);
-  });
-  $('dec-iter-chip').textContent=decIter+'×';
-  $('dec-iter-info').textContent=`${decIter} layer${decIter>1?'s':''} → ${decIter} decode pass${decIter>1?'es':''}`;
-}
-
-// ═══════════════════════════════════════════════════════════════ RUN DECODE
-function runDec(){
-  const input=$('dec-input').value;
-  $('dec-incount').textContent=input.length+' chars';
-  const chainOut=$('dec-chain-out');
-  const statusChip=$('dec-status-chip');
-
-  if(!input.trim()){
-    chainOut.innerHTML='<div class="placeholder">Decoded layers will appear here…</div>';
-    statusChip.textContent='—';statusChip.className='chip';
-    return;
-  }
-
-  let current=input;
-  let html='';
-  let allOk=true;
-
-  for(let i=0;i<decIter;i++){
-    let result;
-    try{result=decMethod.decode(current,decOpts);}catch(e){result=null;}
-    const ok=result!==null&&result!==undefined;
-    const out=ok?result:'[could not decode — check method/key/format]';
-    const col=layerColor(i);
-    html+=`<div class="dc-layer">
-      <div class="dc-hdr">
-        <span style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text3);min-width:52px">pass ${i+1}</span>
-        <span class="dc-arrow" style="color:${col}">↓</span>
-        <span class="dc-name" style="color:${col}">${esc(decMethod.name)} decode</span>
-        <span class="chip ${ok?'chip-ok':'chip-err'} dc-chip">${ok?'✓ decoded':'✗ failed'}</span>
-      </div>
-      <div class="dc-body">${esc(out)}</div>
-    </div>`;
-    if(!ok){allOk=false;break;}
-    current=result;
-  }
-
-  // Final result box
-  html+=`<div class="dc-final">
-    <div class="dc-hdr">
-      <span class="dc-name" style="color:var(--enc)">✓ Final plain text (after ${decIter} layer${decIter>1?'s':''})</span>
-      <button class="btn btn-dec" style="font-size:.55rem;padding:3px 9px;margin-left:auto" onclick="copyText(${JSON.stringify(current)},this)">Copy</button>
-    </div>
-    <div class="dc-body" style="max-height:200px;color:#a8ffd8;font-size:.8rem">${esc(current)}</div>
-  </div>`;
-
-  chainOut.innerHTML=html;
-  statusChip.textContent=allOk?`✓ ${decIter} layer${decIter>1?'s':''}`:' failed';
-  statusChip.className='chip '+(allOk?'chip-ok':'chip-err');
-}
-
-function copyDecOut(){
-  const layers=document.querySelectorAll('.dc-final .dc-body');
-  if(layers.length)copyText(layers[layers.length-1].textContent,null);
-  navigator.clipboard.writeText(layers[layers.length-1]?.textContent||'').catch(()=>{});
-}
-
-// ═══════════════════════════════════════════════════════════════ AUTO-DETECT ENGINE
-// Priority-ordered list of detectors — returns decoded text or null
-const AUTO_DETECTORS=[
-  {name:'Base64',     try(s){if(!/^[A-Za-z0-9+/]{4,}={0,2}$/.test(s.trim())||s.trim().length%4!==0)return null;const r=METHODS.find(m=>m.id==='base64').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
-  {name:'Base64URL',  try(s){if(!/^[A-Za-z0-9_-]{4,}$/.test(s.trim()))return null;const r=METHODS.find(m=>m.id==='base64url').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
-  {name:'Base32',     try(s){if(!/^[A-Z2-7]+=*$/i.test(s.trim())||s.trim().length<8)return null;const r=METHODS.find(m=>m.id==='base32').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
-  {name:'Hex',        try(s){const c=s.trim().replace(/0x/gi,'').replace(/[\s:]/g,'');if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2!==0||c.length<4)return null;const r=METHODS.find(m=>m.id==='hex').decode(s);return r&&isPrintable(r)&&r!==s?r:null}},
-  {name:'Binary',     try(s){const c=s.trim().replace(/\s/g,'');if(!/^[01]+$/.test(c)||c.length%8!==0||c.length<8)return null;const r=METHODS.find(m=>m.id==='binary').decode(s);return r&&isPrintable(r)?r:null}},
-  {name:'Octal',      try(s){if(!/^(\s*[0-3][0-7]{2}\s*)+$/.test(s.trim()))return null;const r=METHODS.find(m=>m.id==='octal').decode(s);return r&&isPrintable(r)?r:null}},
-  {name:'URL %enc',   try(s){if(!/%[0-9a-fA-F]{2}/.test(s))return null;const r=METHODS.find(m=>m.id==='url').decode(s);return r&&r!==s?r:null}},
-  {name:'HTML Ents',  try(s){if(!/&[#a-zA-Z]/.test(s))return null;const r=METHODS.find(m=>m.id==='html').decode(s);return r&&r!==s?r:null}},
-  {name:'Unicode Esc',try(s){if(!/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}/.test(s))return null;const r=METHODS.find(m=>m.id==='unicode').decode(s);return r&&r!==s?r:null}},
-  {name:'ROT13',      try(s){if(!/[a-zA-Z]/.test(s))return null;const r=METHODS.find(m=>m.id==='rot13').decode(s);return r&&r!==s&&hasLetters(r)?r:null}},
-];
-
-function autoDetectLayers(input){
+// ═══════════════════════════════════════════════════════ AUTO-PEEL ENGINE
+// Tries up to 20 layers, returns [{name, input, output}] + final string
+function autoPeel(input){
   const layers=[];
   let current=input;
-  const MAX=16;
-  for(let i=0;i<MAX;i++){
+  const MAX=20;
+
+  for(let pass=0;pass<MAX;pass++){
+    // Sort decoders by confidence for this specific string
+    const sorted=[...DECODERS]
+      .filter(d=>d.detect(current))
+      .map(d=>({d,c:confidence(d,current)}))
+      .sort((a,b)=>b.c-a.c);
+
     let found=false;
-    for(const det of AUTO_DETECTORS){
-      const result=det.try(current);
-      if(result&&result!==current){
-        layers.push({name:det.name,input:current,output:result});
-        current=result;found=true;break;
+    for(const {d} of sorted){
+      let result;
+      try{result=d.decode(current);}catch{result=null;}
+      if(result!==null&&result!==undefined&&result!==current&&result.length>0){
+        layers.push({name:d.name,input:current,output:result,id:d.id});
+        current=result;
+        found=true;
+        break;
       }
     }
     if(!found)break;
   }
+
   return{layers,final:current};
 }
 
-function runAuto(){
-  const input=$('auto-input').value;
-  $('auto-incount').textContent=input.length+' chars';
-  const tagsEl=$('auto-detect-tags');
-  const chainOut=$('auto-chain-out');
-  const chip=$('auto-layer-chip');
+// Detect all formats that match (for the formats bar)
+function detectAll(s){
+  return DECODERS.filter(d=>{try{return d.detect(s)}catch{return false}})
+    .map(d=>({name:d.name,cat:d.cat,conf:confidence(d,s)}))
+    .sort((a,b)=>b.conf-a.conf);
+}
+
+// ═══════════════════════════════════════════════════════ MAIN INPUT HANDLER
+let _debounce=null;
+function onInput(){
+  clearTimeout(_debounce);
+  _debounce=setTimeout(decode,80);
+}
+
+function decode(){
+  const input=$('main-input').value;
+  $('in-count').textContent=input.length+' chars';
 
   if(!input.trim()){
-    tagsEl.innerHTML='<div class="placeholder" style="padding:0">Paste input to detect formats…</div>';
-    chainOut.innerHTML='<div class="placeholder">Auto-detected layers will be peeled here…</div>';
-    chip.textContent='0 layers found';chip.className='chip chip-gold';
+    $('result-section').style.display='none';
+    $('no-result').style.display='none';
+    $('in-entropy').style.display='none';
+    setLoading(false);
     return;
   }
 
-  const{layers,final}=autoDetectLayers(input);
+  // entropy
+  const ent=entropy(input);
+  $('in-entropy').style.display='';
+  $('entropy-val').textContent=ent;
 
-  // update chip
-  chip.textContent=layers.length+(layers.length===1?' layer':' layers')+' found';
-  chip.className='chip '+(layers.length?'chip-ok':'chip-gold');
+  setLoading(true);
+  setTimeout(()=>{
+    const{layers,final}=autoPeel(input);
+    setLoading(false);
+    renderResult(input,layers,final);
+  },30);
+}
 
-  // detected tags
-  if(!layers.length){
-    tagsEl.innerHTML='<span class="detect-badge db-l"><span class="detect-dot"></span>No encoding pattern detected — may be plain text or an unsupported cipher</span>';
+function setLoading(on){
+  $('loading-bar').classList.toggle('active',on);
+}
+
+function renderResult(input,layers,final){
+  const rs=$('result-section');
+  const nr=$('no-result');
+
+  // formats bar
+  const detected=detectAll(input);
+  const tagsEl=$('formats-tags');
+  if(detected.length){
+    tagsEl.innerHTML=detected.slice(0,6).map((d,i)=>{
+      const cls=d.conf>0.7?'chip-green':d.conf>0.4?'chip-gold':'chip-dim';
+      return`<span class="chip ${cls}">${esc(d.name)}</span>`;
+    }).join(' ');
+    $('formats-bar').style.display='flex';
   }else{
-    tagsEl.innerHTML=layers.map((l,i)=>`<span class="detect-badge db-h" style="border-color:${layerColor(i)};color:${layerColor(i)};background:rgba(0,0,0,.2)"><span class="detect-dot" style="background:${layerColor(i)}"></span>Layer ${i+1}: ${esc(l.name)}</span>`).join('');
+    $('formats-bar').style.display='none';
   }
 
-  // chain output
-  if(!layers.length){
-    chainOut.innerHTML=`<div class="al-final">
-      <div class="al-hdr"><span class="al-num" style="color:var(--enc)">plain text</span><span class="al-name" style="color:var(--enc)">No encoding detected</span></div>
-      <div class="al-body">${esc(input)}</div>
-    </div>`;
+  if(!layers.length&&final===input){
+    // nothing decoded
+    rs.style.display='none';
+    nr.style.display='block';
     return;
   }
+
+  rs.style.display='block';
+  nr.style.display='none';
+
+  // Final output box
+  const layerCount=layers.length;
+  const isMulti=layerCount>1;
+  const wasDecoded=final!==input;
+
+  let dotClass='r-dot-green';
+  let chipHtml=`<span class="chip chip-green">✓ decoded</span>`;
+  if(isMulti)chipHtml+=` <span class="chip chip-gold">${layerCount} layers peeled</span>`;
+
+  $('final-output').innerHTML=`
+    <div class="result-header">
+      <div class="result-title">
+        <span class="r-dot ${dotClass}"></span>
+        ${isMulti?`Decoded — ${layerCount} encoding layers detected &amp; removed`:'Decoded output'}
+      </div>
+      ${chipHtml}
+    </div>
+    <div class="final-box">
+      <div class="fb-header">
+        <div class="fb-title">
+          ✓ plain text result
+          ${isMulti?`<span class="chip chip-gold" style="font-size:.52rem">${layerCount}× decoded</span>`:''}
+        </div>
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <span class="chip chip-dim" style="font-size:.52rem">${final.length} chars</span>
+          <button class="btn btn-primary" style="font-size:.58rem;padding:5px 12px" onclick="copyText(${JSON.stringify(final)},this)">Copy</button>
+        </div>
+      </div>
+      <div class="fb-body">${esc(final)}</div>
+      <div class="fb-footer">
+        <span class="fb-stat">entropy: ${entropy(final)} · ${final.length} chars</span>
+        <button class="btn btn-ghost" style="font-size:.55rem;padding:3px 9px" onclick="useAsInput(${JSON.stringify(final)})">Use as input →</button>
+      </div>
+    </div>`;
+
+  // Chain section
+  if(isMulti){
+    $('chain-section').style.display='block';
+    $('chain-toggle-label').textContent=`Show decode chain (${layerCount} layers)`;
+    renderChain(input,layers);
+  }else if(layerCount===1){
+    $('chain-section').style.display='none';
+  }else{
+    $('chain-section').style.display='none';
+  }
+
+  // Run encode if encode section open
+  runEncode();
+}
+
+function renderChain(input,layers){
+  const body=$('chain-body');
+  let html='';
+  // original
+  html+=layerRowHtml(-1,'original input','—',input,'var(--dim)',false);
+  layers.forEach((l,i)=>{
+    const col=lc(i);
+    html+=`<div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:${col};padding:.15rem 0 .15rem 14px">↓ ${esc(l.name)}</div>`;
+    html+=layerRowHtml(i,l.name,`layer ${i+1}`,l.output,col,i===layers.length-1);
+  });
+  body.innerHTML=html;
+}
+
+function layerRowHtml(i,name,label,text,col,isFinal){
+  const finalStyle=isFinal?`border-color:${col};box-shadow:0 0 12px rgba(0,245,160,.06)`:'';
+  return`<div class="layer-row">
+    <div class="layer-connector">
+      <div class="lc-dot" style="border-color:${col};background:${isFinal?col:'transparent'}"></div>
+      ${!isFinal?`<div class="lc-line"></div>`:''}
+    </div>
+    <div class="layer-card" style="${finalStyle}">
+      <div class="lc-header">
+        <span class="lc-num" style="color:${col}">${esc(label)}</span>
+        <span class="lc-name" style="color:${col}">${esc(name)}</span>
+        <span class="lc-len">${text.length} chars</span>
+        <button class="btn btn-ghost" style="font-size:.52rem;padding:2px 7px;margin-left:4px" onclick="copyText(${JSON.stringify(text)},this)">Copy</button>
+      </div>
+      <div class="lc-body">${esc(text)}</div>
+    </div>
+  </div>`;
+}
+
+function toggleChain(){
+  const body=$('chain-body');
+  const btn=$('chain-toggle');
+  const label=$('chain-toggle-label');
+  body.classList.toggle('open');
+  btn.classList.toggle('open');
+  const isOpen=body.classList.contains('open');
+  const n=body.querySelectorAll('.layer-card').length-1;
+  label.textContent=isOpen?`Hide decode chain`:`Show decode chain (${n} layers)`;
+}
+
+function useAsInput(text){
+  $('main-input').value=text;
+  decode();
+}
+
+// ═══════════════════════════════════════════════════════ ENCODER
+const ENC_METHODS=[
+  {id:'base64',name:'Base64',cat:'Encoding',opts:[],
+   encode(t){try{return btoa(unescape(encodeURIComponent(t)))}catch{return'[error]'}}},
+  {id:'base64url',name:'Base64URL',cat:'Encoding',opts:[],
+   encode(t){try{return btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}catch{return'[error]'}}},
+  {id:'base32',name:'Base32',cat:'Encoding',opts:[],
+   encode(t){
+     const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+     let bits='',o='';
+     for(let i=0;i<t.length;i++)bits+=t.charCodeAt(i).toString(2).padStart(8,'0');
+     while(bits.length%5)bits+='0';
+     for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];
+     while(o.length%8)o+='=';return o;
+   }},
+  {id:'hex',name:'Hex',cat:'Encoding',
+   opts:[{id:'sep',label:'Sep',type:'select',choices:['space','none','colon'],def:'space'}],
+   encode(t,o){const sep={'space':' ','none':'','colon':':'}[o.sep||'space'];return Array.from(t).map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep)}},
+  {id:'binary',name:'Binary',cat:'Encoding',opts:[],
+   encode(t){return Array.from(t).map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ')}},
+  {id:'octal',name:'Octal',cat:'Encoding',opts:[],
+   encode(t){return Array.from(t).map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' ')}},
+  {id:'decimal',name:'Decimal',cat:'Encoding',opts:[],
+   encode(t){return Array.from(t).map(c=>c.charCodeAt(0)).join(' ')}},
+  {id:'url',name:'URL %enc',cat:'Encoding',opts:[],
+   encode(t){return encodeURIComponent(t)}},
+  {id:'html',name:'HTML Ents',cat:'Encoding',
+   opts:[{id:'mode',label:'Mode',type:'select',choices:['named','decimal','hex'],def:'named'}],
+   encode(t,o){
+     const nm={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+     if((o.mode||'named')==='named')return t.replace(/[&<>"']/g,c=>nm[c]||c);
+     if(o.mode==='decimal')return Array.from(t).map(c=>`&#${c.charCodeAt(0)};`).join('');
+     return Array.from(t).map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('');
+   }},
+  {id:'unicode',name:'Unicode',cat:'Encoding',
+   opts:[{id:'fmt',label:'Format',type:'select',choices:['\\uXXXX','\\xXX'],def:'\\uXXXX'}],
+   encode(t,o){
+     const f=o.fmt||'\\uXXXX';
+     if(f==='\\xXX')return Array.from(t).map(c=>'\\x'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
+     return Array.from(t).map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join('');
+   }},
+  {id:'rot13',name:'ROT13',cat:'Cipher',opts:[],
+   encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))}},
+  {id:'rot47',name:'ROT47',cat:'Cipher',opts:[],
+   encode(t){return t.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))}},
+  {id:'atbash',name:'Atbash',cat:'Cipher',opts:[],
+   encode(t){return t.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))}},
+  {id:'caesar',name:'Caesar',cat:'Cipher',
+   opts:[{id:'shift',label:'Shift',type:'range',min:1,max:25,def:'3'}],
+   encode(t,o){const n=+o.shift||3;return t.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65))}},
+  {id:'vigenere',name:'Vigenère',cat:'Cipher',
+   opts:[{id:'key',label:'Key',type:'text',placeholder:'SECRET',def:'KEY'}],
+   encode(t,o){
+     const k=((o.key||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key');
+     let i=0;return t.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,s=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b+s)%26)+b)});
+   }},
+  {id:'xor',name:'XOR',cat:'Cipher',
+   opts:[{id:'key',label:'Key (0-255)',type:'number',min:0,max:255,def:'42'}],
+   encode(t,o){const k=+o.key||42;return Array.from(t).map(c=>(c.charCodeAt(0)^k).toString(16).padStart(2,'0')).join(' ')}},
+  {id:'morse',name:'Morse',cat:'Cipher',opts:[],
+   encode(t){
+     const M={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};
+     return t.toUpperCase().split('').map(c=>M[c]||'').filter(Boolean).join(' ');
+   }},
+  {id:'bacon',name:"Bacon's",cat:'Cipher',opts:[],
+   encode(t){
+     const M={A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'};
+     return t.toUpperCase().split('').map(c=>M[c]||c).join(' ');
+   }},
+];
+
+let curEncMethod=ENC_METHODS[0];
+let encOpts={};
+let encIter=1;
+
+function buildMethodGrid(){
+  const grid=$('method-grid');
+  const cats=[...new Set(ENC_METHODS.map(m=>m.cat))];
+  let html='';
+  cats.forEach(cat=>{
+    html+=`<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--mute);align-self:center;padding:0 .3rem">${cat}</span>`;
+    ENC_METHODS.filter(m=>m.cat===cat).forEach(m=>{
+      html+=`<button class="mchip${m.id===curEncMethod.id?' active':''}" id="mc-${m.id}" onclick="selectEncMethod('${m.id}')">${m.name}</button>`;
+    });
+  });
+  grid.innerHTML=html;
+}
+
+function buildIterBtns(){
+  const wrap=$('iter-btns');
+  wrap.innerHTML='';
+  [1,2,3,4,5].forEach(n=>{
+    const b=document.createElement('button');
+    b.className='iter-btn'+(n===encIter?' active':'');
+    b.textContent=n+'×';
+    b.onclick=()=>{encIter=n;buildIterBtns();runEncode();};
+    wrap.appendChild(b);
+  });
+  $('iter-info').textContent=encIter>1?`will encode ${encIter} times in a row`:'single encode pass';
+}
+
+function selectEncMethod(id){
+  curEncMethod=ENC_METHODS.find(m=>m.id===id)||ENC_METHODS[0];
+  encOpts={};
+  (curEncMethod.opts||[]).forEach(o=>encOpts[o.id]=o.def||'');
+  document.querySelectorAll('.mchip').forEach(b=>b.classList.remove('active'));
+  const btn=$('mc-'+id);if(btn)btn.classList.add('active');
+  buildEncOpts();
+  runEncode();
+}
+
+function buildEncOpts(){
+  const wrap=$('enc-opts');
+  const m=curEncMethod;
+  if(!m.opts||!m.opts.length){wrap.innerHTML='';return;}
+  let html='';
+  m.opts.forEach(o=>{
+    html+=`<div class="eo-group"><span class="eo-label">${o.label}</span>`;
+    if(o.type==='select'){
+      html+=`<select onchange="setEO('${o.id}',this.value)">`;
+      o.choices.forEach(c=>html+=`<option value="${c}"${c===encOpts[o.id]?' selected':''}>${c}</option>`);
+      html+=`</select>`;
+    }else if(o.type==='range'){
+      html+=`<input type="range" min="${o.min}" max="${o.max}" value="${encOpts[o.id]||o.def}" oninput="setEO('${o.id}',this.value);$('eov-${o.id}').textContent=this.value">`;
+      html+=`<span class="eo-val" id="eov-${o.id}">${encOpts[o.id]||o.def}</span>`;
+    }else if(o.type==='number'){
+      html+=`<input type="number" min="${o.min}" max="${o.max}" value="${encOpts[o.id]||o.def}" oninput="setEO('${o.id}',this.value)">`;
+    }else{
+      html+=`<input type="text" value="${encOpts[o.id]||''}" placeholder="${o.placeholder||''}" oninput="setEO('${o.id}',this.value)">`;
+    }
+    html+=`</div>`;
+  });
+  wrap.innerHTML=html;
+}
+
+function setEO(id,val){encOpts[id]=val;runEncode();}
+
+function runEncode(){
+  const text=$('enc-input').value;
+  const outBox=$('enc-output');
+  if(!text.trim()){outBox.style.display='none';return;}
+
+  const m=curEncMethod;
+  let current=text;
+  const layers=[];
+
+  for(let i=0;i<encIter;i++){
+    try{
+      const r=m.encode(current,encOpts);
+      layers.push({pass:i+1,input:current,output:r});
+      current=r;
+    }catch(e){
+      layers.push({pass:i+1,input:current,output:'[error: '+e.message+']'});
+      break;
+    }
+  }
+
+  outBox.style.display='block';
+  $('eob-title').textContent=`${m.name} × ${encIter} — encoded output`;
 
   let html='';
-  // show original
-  html+=`<div class="auto-layer">
-    <div class="al-hdr" style="background:var(--ink3)">
-      <span class="al-num">input</span>
-      <span class="al-name" style="color:var(--sky)">Original input</span>
-      <span class="chip chip-info" style="margin-left:auto">${input.length} chars</span>
-    </div>
-    <div class="al-body" style="color:var(--text2)">${esc(input)}</div>
-  </div>`;
-
-  layers.forEach((l,i)=>{
-    const col=layerColor(i);
-    html+=`<div style="text-align:center;padding:.2rem 0;font-family:'Space Mono',monospace;font-size:.6rem;color:${col}">↓ decode ${esc(l.name)}</div>
-    <div class="auto-layer">
-      <div class="al-hdr">
-        <span class="al-num" style="color:${col}">layer ${i+1}</span>
-        <span class="al-name" style="color:${col}">${esc(l.name)}</span>
-        <span class="chip chip-ok" style="margin-left:auto">✓ decoded</span>
-      </div>
-      <div class="al-body">${esc(l.output)}</div>
-    </div>`;
-  });
-
-  // final
-  html+=`<div style="text-align:center;padding:.3rem 0;font-family:'Space Mono',monospace;font-size:.65rem;color:var(--enc)">✓ plain text reached</div>
-  <div class="al-final">
-    <div class="al-hdr">
-      <span class="al-num" style="color:var(--enc)">final</span>
-      <span class="al-name" style="color:var(--enc)">Plain text (after ${layers.length} layer${layers.length>1?'s':''})</span>
-      <button class="btn btn-enc" style="font-size:.55rem;padding:3px 9px;margin-left:auto" onclick="copyText(${JSON.stringify(final)},this)">Copy</button>
-    </div>
-    <div class="al-body">${esc(final)}</div>
-  </div>`;
-
-  chainOut.innerHTML=html;
+  if(encIter>1){
+    layers.forEach((l,i)=>{
+      const col=lc(i);
+      const isFinal=i===layers.length-1;
+      html+=`<div class="eob-layer" style="${isFinal?'background:rgba(255,77,141,.04);border-top:1px solid rgba(255,77,141,.2)':''}">
+        <b style="color:${col}">Pass ${l.pass}</b>${esc(l.output)}
+        <button class="btn btn-ghost" style="font-size:.5rem;padding:2px 7px;margin-left:6px;vertical-align:middle" onclick="copyText(${JSON.stringify(l.output)},this)">Copy</button>
+      </div>`;
+    });
+  }else{
+    html+=`<div class="eob-layer">${esc(current)}</div>`;
+  }
+  $('eob-layers').innerHTML=html;
 }
 
-// ═══════════════════════════════════════════════════════════════ TAB SWITCHING
-function switchTab(name,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  $('pane-'+name).classList.add('active');
+function copyEncOut(){
+  const layers=document.querySelectorAll('.eob-layer');
+  if(!layers.length)return;
+  const last=layers[layers.length-1];
+  // strip button text
+  const clone=last.cloneNode(true);
+  clone.querySelectorAll('button').forEach(b=>b.remove());
+  copyText(clone.textContent.trim(),null);
 }
 
-// ═══════════════════════════════════════════════════════════════ CLEAR HELPERS
-function clearEnc(){$('enc-input').value='';$('enc-incount').textContent='0 chars';runEnc();}
-function clearDec(){$('dec-input').value='';$('dec-incount').textContent='0 chars';runDec();}
-function clearAuto(){$('auto-input').value='';runAuto();}
-
-// ═══════════════════════════════════════════════════════════════ SAMPLES
-const ENC_SAMPLES=['Hello, Security Researcher!','The quick brown fox jumps over the lazy dog','Attack at dawn','CipherSense v3 multi-layer tool'];
-let _esi=0;
-function encLoadSample(){
-  $('enc-input').value=ENC_SAMPLES[_esi++%ENC_SAMPLES.length];
-  $('enc-incount').textContent=$('enc-input').value.length+' chars';
-  runEnc();
+// ═══════════════════════════════════════════════════════ ENCODER TOGGLE
+let encOpen=false;
+function toggleEncoder(){
+  encOpen=!encOpen;
+  $('encode-body').classList.toggle('open',encOpen);
+  $('enc-arrow').classList.toggle('open',encOpen);
 }
 
-const DEC_SAMPLES=[
-  {text:'SGVsbG8sIFNlY3VyaXR5IFJlc2VhcmNoZXIh',method:'base64',iter:1},
-  {text:'48 65 6c 6c 6f 20 57 6f 72 6c 64',method:'hex',iter:1},
-  {text:'01001000 01100101 01101100 01101100 01101111',method:'binary',iter:1},
-  {text:'Cvvcmo cv nczb',method:'caesar',iter:1,opts:{shift:'2'}},
-  {text:'.... . .-.. .-.. ---  .-- --- .-. .-.. -..',method:'morse',iter:1},
+// ═══════════════════════════════════════════════════════ SAMPLES
+const SAMPLES=[
+  // single layer
+  'SGVsbG8sIFNlY3VyaXR5IFJlc2VhcmNoZXIh',
+  // double layer: hex of base64
+  '53 47 56 73 62 47 38 73 49 46 4e 6c 59 33 56 73 64 58 6b 67 55 6d 56 6e 59 58 6b 68',
+  // triple layer: base64 of hex of base64
+  'NTMgNDcgNTYgNzMgNjIgNDcgMzggNzMgNDkgNDYgNGUgNjcgNTkgNTMgNTkgNTYgNjQgNTggNmIgNTkgNjcgNTggNTkgNTcgNTkgNTggNTkgNTIgNTkgNTkgNTkgNTggNjIgNTYgNTYgNTMgNjcgNjEgNTQgNjkgNjkgNjIgNTcgNjkgNjYgNTcgNTIgNjMgNTkgNTkgNTcgNTggNTkgNTcgNTkgNTggNTMgNTkgNTMgNTQgNTkgNTYgNjQgNTggNTYgNDMgNTkgNGUgNTcgNDEgNTkgNTYgNTQgNTkgNTUgNTEgNTcgNTcgNTUgNDcgNTkgNTMgNTMgNTggNTYgNTkgNTggNTYgNTUgNjIgNTYgNTYgNTMgNjcgNjEgNTMgNDkgNjIgNTMgNGUgNTYgNTYgNTMgNjQgNTkgNTEgNTkgNTYgNjEgNTMgNDcgNTkgNTggNTkgNTggNTYgNDcgNTggNTQgNjMgNTkgNTUgNTYgNTYgNTQgNTIgNTggNTYgNTYgNTkgNTYgNjQgNTggNTYgNTkgNTQgNTIgNTkgNTkgNTIgNjMgNTkgNTggNTYgNTcgNTEgNTc=',
+  // Morse
+  '.... . .-.. .-.. ---  .-- --- .-. .-.. -..',
+  // binary
+  '01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 01110010 01101100 01100100',
 ];
-let _dsi=0;
-function decLoadSample(){
-  const s=DEC_SAMPLES[_dsi++%DEC_SAMPLES.length];
-  selectDecMethod(s.method);
-  if(s.opts){Object.assign(decOpts,s.opts);buildDecOptsBar();}
-  decIter=s.iter||1;buildIterBtns();
-  $('dec-input').value=s.text;
-  $('dec-incount').textContent=s.text.length+' chars';
-  runDec();
+let _si=0;
+function loadSample(){
+  $('main-input').value=SAMPLES[_si++%SAMPLES.length];
+  decode();
 }
 
-const AUTO_SAMPLES=[
-  'VFRHZXJ3b3JsZA==', // Base64 of hex of "CipherWorld"
-  'SGVsbG8gV29ybGQ=', // Hello World base64
-  '53 47 56 73 62 47 38 67 56 32 39 79 62 47 51 3d', // hex of base64 of "Hello World"
-  'IFBEG VKBEG SVKEH BEGFL', // some cipher text
-];
-let _asi=0;
-function autoLoadSample(){
-  $('auto-input').value=AUTO_SAMPLES[_asi++%AUTO_SAMPLES.length];
-  runAuto();
+function clearAll(){
+  $('main-input').value='';
+  $('result-section').style.display='none';
+  $('no-result').style.display='none';
+  $('in-count').textContent='0 chars';
+  $('in-entropy').style.display='none';
+  setLoading(false);
 }
 
-// ═══════════════════════════════════════════════════════════════ INIT
-buildEncMethodStrip();
-buildDecMethodStrip();
-buildDecOptsBar();
+// ═══════════════════════════════════════════════════════ INIT
+buildMethodGrid();
+buildEncOpts();
 buildIterBtns();
 
-// Add a default 2-layer sample chain to show the feature
-addLayer('base64');
-addLayer('url');
-$('enc-input').value='Hello, Security Researcher!';
-runEnc();
+// Seed encode input with placeholder
+$('enc-input').value='';
 </script>
 </body>
 </html>
