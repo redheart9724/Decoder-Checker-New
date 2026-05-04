@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherSense Ultimate — 40+ Decoder</title>
+<title>CipherSense Ultimate — 40+ Decoder (Fixed)</title>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -169,7 +169,7 @@ textarea::placeholder{color:var(--mute);font-style:italic}
 <header>
   <div class="brand">
     <div class="brand-name">Cipher<em>Sense</em> <span style="font-size:.9rem;font-weight:400;color:var(--dim)">Ultimate</span></div>
-    <div class="brand-tag">40+ Encodings · Auto Detect · Multi-Layer Peeling · Smart Decode</div>
+    <div class="brand-tag">40+ Encodings · Auto Detect · Multi-Layer Peeling · Loop-Safe · Vigenère Auto-Crack</div>
   </div>
   <div class="hbadges">
     <span class="hb hb-g">⚡ AUTO DECODE</span>
@@ -475,28 +475,37 @@ const DEC=[
   // ── CIPHERS ──────────────────────────────────────
   {id:'rot13',name:'ROT13',cat:'Cipher',
    det:s=>hasAlpha(s)&&s.length>=4,
-   dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))},
-   conf:s=>hasAlpha(s)?0.22:0},
+   dec(s){
+     const r=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65));
+     // ROT13 is only useful if result differs AND looks more English-like than input
+     if(r===s)return null;
+     // Simple English score: count common words
+     const COMMON=/\b(the|and|is|in|it|of|to|a|that|was|for|on|are|with|he|as|at|be|by|from|or|an|but|not|what|all|were|when|we|there|can|said|each|she|do|how|their|if|will|up|other|about|out|many|then|them|these|so|some|her|would|make|like|him|into|time|has|look|two|more|go|see|no|way|could|my|than|first|been|its|who|now|people|my|made|over|did|down|only|way|find|use|may|water|long|little|very|after|word|called|just|where|most|know)\b/gi;
+     const inputHits=(s.match(COMMON)||[]).length;
+     const resultHits=(r.match(COMMON)||[]).length;
+     return resultHits>inputHits?r:null;
+   },
+   conf:s=>hasAlpha(s)?0.10:0},
 
   {id:'rot5',name:'ROT5 (digits)',cat:'Cipher',
    det:s=>/\d/.test(s),
-   dec(s){return s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48))},
-   conf:s=>/^\d[\d\s]+$/.test(s.trim())?0.25:0},
+   dec(s){const r=s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48));return r!==s?r:null},
+   conf:s=>/^\d[\d\s]+$/.test(s.trim())?0.20:0},
 
   {id:'rot18',name:'ROT18',cat:'Cipher',
    det:s=>/[a-zA-Z0-9]/.test(s),
-   dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65)).replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48))},
-   conf:s=>/[a-zA-Z0-9]/.test(s)?0.18:0},
+   dec(s){const r=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65)).replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48));return r!==s?r:null},
+   conf:s=>/[a-zA-Z0-9]/.test(s)?0.08:0},
 
   {id:'rot47',name:'ROT47',cat:'Cipher',
    det:s=>/[\x21-\x7E]/.test(s),
    dec(s){const r=s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)));return r!==s&&printable(r)?r:null},
-   conf:s=>/[\x21-\x7E]/.test(s)?0.15:0},
+   conf:s=>/[\x21-\x7E]/.test(s)?0.08:0},
 
   {id:'atbash',name:'Atbash',cat:'Cipher',
    det:s=>hasAlpha(s),
-   dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))},
-   conf:s=>hasAlpha(s)?0.12:0},
+   dec(s){const r=s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)));return r!==s?r:null},
+   conf:s=>hasAlpha(s)?0.06:0},
 
   {id:'morse',name:'Morse Code',cat:'Cipher',
    det:s=>/^[\s.\-/]+$/.test(s)&&/[.\-]/.test(s)&&s.trim().length>=2,
@@ -550,8 +559,16 @@ const DEC=[
 
   {id:'rev',name:'Reversed',cat:'Cipher',
    det:s=>s.trim().length>=4,
-   dec(s){const r=s.split('').reverse().join('');return r!==s&&printable(r)?r:null},
-   conf:s=>0.08},
+   dec(s){
+     const r=s.split('').reverse().join('');
+     if(r===s||!printable(r))return null;
+     // Only accept if reversed text looks more like English (more real words)
+     const COMMON=/\b(the|and|is|in|it|of|to|a|that|was|for|on|are|with|he|she|as|at|be|by|from|or|an|but|not|what|were|when|we|there|can|said|each|do|how|their|if|will|up|other|about|out|then|them|these|so|some|her|would|make|like|him|into|time|has|look|two|more|go|see|no|way|could|my|than|first|been|its|who|now|people|over|did|down|only)\b/gi;
+     const fwd=(s.match(COMMON)||[]).length;
+     const rev2=(r.match(COMMON)||[]).length;
+     return rev2>fwd?r:null;
+   },
+   conf:s=>0.05},
 
   {id:'caesar',name:'Caesar (best fit)',cat:'Cipher',
    det:s=>hasAlpha(s)&&s.trim().length>=4,
@@ -572,18 +589,108 @@ const DEC=[
    conf:s=>hasAlpha(s)?0.30:0},
 ];
 
+// ════════════════════════════════════════ VIGENÈRE AUTO-CRACKER (Kasiski + IC)
+function vigIC(text){
+  if(text.length<2)return 0;
+  const f={};for(const c of text)f[c]=(f[c]||0)+1;
+  let s=0;for(const k in f)s+=f[k]*(f[k]-1);
+  return s/(text.length*(text.length-1));
+}
+function vigGuessKeyLen(text){
+  // try lengths 1-20, pick highest avg IC across streams
+  let best=1,bestIC=0;
+  for(let len=1;len<=20;len++){
+    const streams=Array.from({length:len},(_,i)=>text.split('').filter((_,j)=>j%len===i).join(''));
+    const avg=streams.reduce((s,st)=>s+vigIC(st),0)/len;
+    if(avg>bestIC){bestIC=avg;best=len;}
+  }
+  return best;
+}
+function vigGuessKey(text,len){
+  const FREQ={A:.082,B:.015,C:.028,D:.043,E:.127,F:.022,G:.020,H:.061,I:.070,J:.002,K:.008,L:.040,M:.024,N:.067,O:.075,P:.019,Q:.001,R:.060,S:.063,T:.091,U:.028,V:.010,W:.023,X:.001,Y:.020,Z:.001};
+  let key='';
+  for(let i=0;i<len;i++){
+    const stream=text.split('').filter((_,j)=>j%len===i).join('');
+    const f=Array(26).fill(0);
+    for(const c of stream)f[c.charCodeAt(0)-65]++;
+    const total=stream.length||1;
+    let bestShift=0,bestScore=-Infinity;
+    for(let sh=0;sh<26;sh++){
+      let score=0;
+      for(let j=0;j<26;j++)score+=FREQ[String.fromCharCode(65+j)]*(f[(j+sh)%26]/total);
+      if(score>bestScore){bestScore=score;bestShift=sh;}
+    }
+    key+=String.fromCharCode(65+bestShift);
+  }
+  return key;
+}
+function vigDecryptWith(text,key){
+  const k=key.toLowerCase();let ki=0;
+  return text.replace(/[a-zA-Z]/g,c=>{
+    const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;
+    return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b);
+  });
+}
+function tryAutoVigenere(s){
+  // Only attempt if text is mostly letters and IC suggests polyalphabetic
+  const letters=s.toUpperCase().replace(/[^A-Z]/g,'');
+  if(letters.length<20)return null;
+  const ic=vigIC(letters);
+  // English IC ~0.067, random ~0.038, Vigenère ~0.04-0.06
+  if(ic>0.062)return null; // already looks like natural language or mono-sub
+  if(ic<0.033)return null; // too random, likely not Vigenère
+  const keyLen=vigGuessKeyLen(letters);
+  if(keyLen<2)return null;
+  const key=vigGuessKey(letters,keyLen);
+  const decrypted=vigDecryptWith(s,key);
+  // Score decrypted text for English-likeness
+  const FREQ={A:.082,B:.015,C:.028,D:.043,E:.127,F:.022,G:.020,H:.061,I:.070,J:.002,K:.008,L:.040,M:.024,N:.067,O:.075,P:.019,Q:.001,R:.060,S:.063,T:.091,U:.028,V:.010,W:.023,X:.001,Y:.020,Z:.001};
+  const decL=decrypted.toUpperCase().replace(/[^A-Z]/g,'');
+  const f={};for(const c of decL)f[c]=(f[c]||0)+1;
+  let score=0;for(const c in f)score+=(FREQ[c]||0)*(f[c]/decL.length);
+  if(score<0.055)return null; // doesn't look like English after decryption
+  return{result:decrypted,key,keyLen};
+}
+
+// ════════════════════════════════════════ SYMMETRIC CIPHER LOOP GUARD
+// ROT13, Atbash, ROT47 etc. are self-inverse — applying twice returns original.
+// Track seen states to prevent infinite cycling.
+const SYMMETRIC_IDS=new Set(['rot13','rot5','rot18','rot47','atbash','rev']);
+
 // Confidence-sorted decode attempt
 function autoPeel(input){
-  const layers=[];let current=input;const MAX=20;
+  const layers=[];
+  let current=input;
+  const MAX=20;
+  const seen=new Set([current]); // ← loop-break: track every seen state
+
   for(let pass=0;pass<MAX;pass++){
-    const candidates=DEC.filter(d=>{try{return d.det(current)}catch{return false}})
-      .map(d=>({d,c:d.conf(current)}))
-      .sort((a,b)=>b.c-a.c);
+    // First try Vigenère auto-crack (needs IC test, run before generic candidates)
+    if(hasAlpha(current)&&current.length>=20){
+      const vigResult=tryAutoVigenere(current);
+      if(vigResult&&vigResult.result!==current&&!seen.has(vigResult.result)){
+        layers.push({name:`Vigenère (key: "${vigResult.key}")`,input:current,output:vigResult.result,id:'vig-auto'});
+        seen.add(vigResult.result);
+        current=vigResult.result;
+        continue;
+      }
+    }
+
+    const candidates=DEC.filter(d=>{
+      try{return d.det(current)}catch{return false}
+    }).map(d=>({d,c:d.conf(current)})).sort((a,b)=>b.c-a.c);
+
     let found=false;
     for(const {d} of candidates){
+      // Skip symmetric ciphers after first pass to prevent oscillation
+      // unless we haven't used them yet at all
+      if(SYMMETRIC_IDS.has(d.id)&&layers.some(l=>l.id===d.id))continue;
+
       let r;try{r=d.dec(current)}catch{r=null}
-      if(ok(r)&&r!==current&&r.length>0){
+      // Key guard: result must be new, non-empty, printable, and not already seen
+      if(ok(r)&&r!==current&&r.length>0&&!seen.has(r)&&printable(r)){
         layers.push({name:d.name,input:current,output:r,id:d.id});
+        seen.add(r);
         current=r;found=true;break;
       }
     }
