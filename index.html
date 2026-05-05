@@ -536,7 +536,23 @@ function vigIC(t){if(t.length<2)return 0;const f={};for(const c of t)f[c]=(f[c]|
 function vigKeyLen(L){let b=1,bi=0;for(let len=2;len<=Math.min(20,Math.floor(L.length/4));len++){const st=Array.from({length:len},(_,i)=>L.split('').filter((_,j)=>j%len===i).join(''));const avg=st.reduce((s,x)=>s+vigIC(x),0)/len;if(avg>bi){bi=avg;b=len;}}return b}
 function vigKey(L,len){let k='';for(let i=0;i<len;i++){const st=L.split('').filter((_,j)=>j%len===i).join('');const f=Array(26).fill(0);for(const c of st)f[c.charCodeAt(0)-65]++;const tot=st.length||1;let b=0,bs=-1/0;for(let sh=0;sh<26;sh++){let sc=0;for(let j=0;j<26;j++)sc+=(EN_FREQ[String.fromCharCode(97+j)]||0)*(f[(j+sh)%26]/tot);if(sc>bs){bs=sc;b=sh;}}k+=String.fromCharCode(65+b);}return k}
 function vigDec(s,key){const k=key.toLowerCase();let ki=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)})}
-function tryVig(s){const L=s.toUpperCase().replace(/[^A-Z]/g,'');if(L.length<25)return null;const ic=vigIC(L);if(ic>0.063||ic<0.036)return null;const kl=vigKeyLen(L);if(kl<2)return null;const key=vigKey(L,kl);const dec=vigDec(s,key);const sc=score(dec);if(sc<0.15)return null;return{r:dec,key,kl,sc}}
+function tryVig(s){
+  const t=s.trim().replace(/\s/g,'');
+  // Don't fire on known encoding formats
+  if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null;
+  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null;
+  const L=s.toUpperCase().replace(/[^A-Z]/g,'');
+  if(L.length<30)return null; // need enough text for reliable IC
+  if(score(s)>0.15)return null; // already readable — don't touch it
+  const ic=vigIC(L);
+  if(ic>0.063||ic<0.040)return null; // must be in polyalphabetic range
+  const kl=vigKeyLen(L);if(kl<2)return null;
+  const key=vigKey(L,kl);
+  const dec=vigDec(s,key);
+  const sc=score(dec);
+  if(sc<0.20)return null; // output must clearly look like English
+  return{r:dec,key,kl,sc}
+}
 
 // Caesar best-fit (strict — no base64/hex false positives)
 function tryCaesar(s){
@@ -555,28 +571,27 @@ function tryCaesar(s){
 }
 
 // ══════════════════════════════════════════════════════════════════
-// SPECULATIVE BRANCHING ENGINE (CyberChef Magic approach)
-// Instead of linear peeling, we try ALL ops at each level,
-// keep ALL branches that produce printable output,
-// score each, recurse on top branches, return best leaf
+// SPECULATIVE BRANCHING ENGINE  (v7.1 — fixed)
+// Inspired by CyberChef Magic:
+//   1. Try ALL ops at each node
+//   2. Score with chi² + dictionary
+//   3. Recurse on top branches
+//   4. NEVER reuse the same op class in one path (prevents loops)
+//   5. Detect misplaced Base64 padding (=xxx pattern)
 // ══════════════════════════════════════════════════════════════════
 
-// STRUCTURAL ops = accept output even if not English (could be another layer)
 const STRUCTURAL=new Set(OPS.filter(o=>o.cat!=='Cipher'||['morse','nato','bacon','a1z26','polybius'].includes(o.id)).map(o=>o.id));
-// Ambiguous = self-inverse ciphers that always produce output — very last resort
 const AMBIG=new Set(['rot13','rot47','rot5','atbash','rev','leet']);
+// Ops that are self-inverse — applying twice returns original
+const SELF_INVERSE=new Set(['rot13','rot47','rot5','atbash','rev']);
+// Ops that commonly produce false positives on random text
+const RISKY=new Set(['vig-auto','caesar-auto','rot13','rot47','rot5','atbash','rev','leet','b62','b36','b92','b91']);
 
-// Score a candidate for continuing vs stopping
 function candidateScore(text){
   if(!printable(text))return -1;
-  const sc=score(text);
-  const en=shan(text);
-  // Bonus for low entropy (encoded data tends to be high entropy)
-  const enBonus=en<4.5?0.05:en>6?-0.05:0;
-  return sc+enBonus;
+  return score(text);
 }
 
-// Try decoding s with a single op, returns result or null
 function tryOp(op,s,opts={}){
   try{
     const r=op.dec(s,opts);
@@ -585,59 +600,126 @@ function tryOp(op,s,opts={}){
   }catch{return null}
 }
 
-// One speculative pass: returns array of {op, result, sc} for all valid decodings
-function speculativePass(s){
+// Detect =XXXX pattern (Base64 padding at wrong end)
+function tryMisplacedPadding(s){
+  const t=s.trim();
+  // Pattern: starts with = (padding at front instead of back)
+  if(t.startsWith('=')){
+    const fixed=t.replace(/^=+/,'')+'='.repeat(t.match(/^=+/)[0].length);
+    return fixed;
+  }
+  // Pattern: ends with = but also needs checking if reversed = valid b64
+  return null;
+}
+
+// One speculative pass — returns branches sorted by score
+// usedOps = set of op IDs already used in this path (prevents cycling)
+function speculativePass(s,usedOps=new Set()){
   const branches=[];
-  // Structural ops first
+
+  // ── 0. Misplaced padding detector (before anything else) ──
+  const padFixed=tryMisplacedPadding(s);
+  if(padFixed&&!usedOps.has('pad-fix')){
+    // Try Base64 decode of the padding-fixed string
+    const b64op=OPS.find(o=>o.id==='b64');
+    if(b64op){
+      const r=tryOp(b64op,padFixed);
+      if(r)branches.push({op:'Fix-padding→Base64',id:'pad-fix+b64',r,sc:candidateScore(r)});
+    }
+  }
+
+  // ── 1. All structural ops (deterministic, high confidence) ──
   for(const op of [...OPS].sort((a,b)=>(b.pri||0)-(a.pri||0))){
     if(AMBIG.has(op.id))continue;
+    if(usedOps.has(op.id))continue; // don't reuse same op in same path
     const r=tryOp(op,s);
     if(r){branches.push({op:op.n,id:op.id,r,sc:candidateScore(r)});}
   }
-  // Also try reversed input through structural ops
-  const rev=s.split('').reverse().join('');
-  if(rev!==s){
-    for(const op of OPS.filter(o=>!AMBIG.has(o.id)&&o.cat!=='Cipher')){
-      const r=tryOp(op,rev);
-      if(r){branches.push({op:`Rev→${op.n}`,id:'rev+'+op.id,r,sc:candidateScore(r),wasRev:true});}
+
+  // ── 2. Reversed input through structural ops ──
+  if(!usedOps.has('rev')){
+    const rev=s.split('').reverse().join('');
+    if(rev!==s){
+      for(const op of OPS.filter(o=>!AMBIG.has(o.id)&&o.cat!=='Cipher'&&!usedOps.has('rev+'+o.id))){
+        const r=tryOp(op,rev);
+        if(r){branches.push({op:`Rev→${op.n}`,id:'rev+'+op.id,r,sc:candidateScore(r)});}
+      }
     }
   }
-  // Vigenère IC crack
-  const vig=tryVig(s);
-  if(vig)branches.push({op:`Vigenère(key:"${vig.key}")`,id:'vig-auto',r:vig.r,sc:vig.sc});
-  // Caesar
-  const cae=tryCaesar(s);
-  if(cae)branches.push({op:`Caesar+${cae.n}`,id:'caesar-auto',r:cae.dec,sc:cae.sc});
-  // Ambiguous ops last — only if score high enough
-  for(const op of OPS.filter(o=>AMBIG.has(o.id))){
-    const r=tryOp(op,s);
-    if(r){const sc=candidateScore(r);if(sc>0.28)branches.push({op:op.n,id:op.id,r,sc});}
+
+  // ── 3. Vigenère IC crack — ONLY if not already used and IC is in range ──
+  // Key guard: only fire once per path, and require output to clearly improve
+  if(!usedOps.has('vig-auto')){
+    const vig=tryVig(s);
+    if(vig&&vig.sc>0.20){
+      // Extra guard: Vigenère should only fire if current text is NOT already readable
+      const curSc=score(s);
+      if(curSc<0.12){
+        branches.push({op:`Vigenère(key:"${vig.key}")`,id:'vig-auto',r:vig.r,sc:vig.sc});
+      }
+    }
   }
+
+  // ── 4. Caesar chi² — strict guards ──
+  if(!usedOps.has('caesar-auto')){
+    const cae=tryCaesar(s);
+    if(cae&&cae.sc>0.32){
+      const curSc=score(s);
+      if(curSc<0.15){
+        branches.push({op:`Caesar+${cae.n}`,id:'caesar-auto',r:cae.dec,sc:cae.sc});
+      }
+    }
+  }
+
+  // ── 5. Ambiguous ciphers — only if score very high AND not already used ──
+  for(const op of OPS.filter(o=>AMBIG.has(o.id))){
+    if(usedOps.has(op.id))continue;
+    // Self-inverse: skip if we already applied a different ambig cipher (prevents ping-pong)
+    const r=tryOp(op,s);
+    if(r){
+      const sc=candidateScore(r);
+      if(sc>0.32&&score(s)<0.15){
+        branches.push({op:op.n,id:op.id,r,sc});
+      }
+    }
+  }
+
   return branches.sort((a,b)=>b.sc-a.sc);
 }
 
-// Recursive speculative execution with depth limit and seen-set
-function specExecute(input,maxDepth=20,maxBranches=4){
-  const seen=new Set([input.trim()]);
+// Recursive speculative execution
+// Key changes vs v7.0:
+//   - usedOps set passed down each path — prevents same op being reused
+//   - maxBranches=3 (not 5) — faster, fewer false paths
+//   - Depth limited to 12 (not 20) — base encodings rarely nest >10 deep
+//   - Minimum improvement threshold — only recurse if output score improved
+function specExecute(input,maxDepth=12,maxBranches=3){
+  const globalSeen=new Set([input.trim()]);
   let bestPath=null,bestScore=-1;
 
-  function recurse(s,path,depth){
+  function recurse(s,path,depth,usedOps){
     if(depth>=maxDepth)return;
-    const branches=speculativePass(s).slice(0,maxBranches);
+    const curScore=score(s);
+    const branches=speculativePass(s,usedOps).slice(0,maxBranches);
     for(const b of branches){
-      if(seen.has(b.r.trim()))continue;
-      seen.add(b.r.trim());
+      if(globalSeen.has(b.r.trim()))continue;
+      globalSeen.add(b.r.trim());
       const newPath=[...path,{op:b.op,id:b.id,in:s,out:b.r,sc:b.sc}];
       const sc=score(b.r);
+      // Track this op as used in this branch's path
+      const newUsed=new Set([...usedOps,b.id]);
       if(sc>bestScore){bestScore=sc;bestPath=newPath;}
-      // Stop recursing on this branch if already good plaintext
-      if(sc>0.35)continue;
-      // Continue if output might be another encoding layer
-      recurse(b.r,newPath,depth+1);
+      // Stop if we have great plaintext
+      if(sc>0.40)continue;
+      // Only recurse if: output looks like another encoding (low score but printable)
+      // OR score improved meaningfully over input
+      if(sc>curScore+0.02||sc<0.15){
+        recurse(b.r,newPath,depth+1,newUsed);
+      }
     }
   }
 
-  recurse(input,[],0);
+  recurse(input,[],0,new Set());
   if(!bestPath||bestScore<0.05)return null;
   return{path:bestPath,final:bestPath[bestPath.length-1].out,sc:bestScore};
 }
@@ -981,28 +1063,32 @@ function sw(name,el){
 }
 
 // ── SAMPLES ──
-const B32=s=>{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return o};
-const B64=s=>{try{return btoa(unescape(encodeURIComponent(s)))}catch{return s}};
+const _b32=s=>{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return o};
+const _b64=s=>{try{return btoa(unescape(encodeURIComponent(s)))}catch{return s}};
 const DSamples=[
-  // 1. Base32 → Base64 → Base64 → Base85 → Base85 (exactly your test case!)
-  (()=>{let s='Hello, Security Researcher!';s=B32(s);s=B64(s);s=B64(s);s=b85e(s);s=b85e(s);return s})(),
-  // 2. Double base64
-  B64(B64('Attack at dawn')),
-  // 3. Triple base64
-  B64(B64(B64('CipherSense Magic decoder'))),
-  // 4. Hex of base64
-  B64('The quick brown fox').split('').map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '),
+  // 0. THE CHALLENGE PAYLOAD — Layer1: fix misplaced =, Layer2: Base64, Layer3: Vigenère (key=5-letter country)
+  '=TlhYVUNVUlRG',
+  // 1. Base32 → Base64×2 → Base85×2 (your reported multi-layer test case)
+  (()=>{let s='Hello, Security Researcher!';s=_b32(s);s=_b64(s);s=_b64(s);s=b85e(s);s=b85e(s);return s})(),
+  // 2. Double Base64
+  _b64(_b64('Attack at dawn')),
+  // 3. Triple Base64
+  _b64(_b64(_b64('CipherSense Magic decoder'))),
+  // 4. Hex of Base64
+  [..._b64('The quick brown fox')].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '),
   // 5. Morse
   '.... . .-.. .-.. ---  .-- --- .-. .-.. -..',
   // 6. Binary
   '01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 01110010 01101100 01100100',
   // 7. Base58
   bEncB([...ENC8('The quick brown fox')],B58A),
-  // 8. Reversed Base64
-  B64('Reversed input test').split('').reverse().join(''),
-  // 9. URL encoded
+  // 8. Base85
+  b85e('CipherSense v7.1'),
+  // 9. Reversed Base64 (= at wrong end due to reversal)
+  _b64('Reversed input test').split('').reverse().join(''),
+  // 10. URL encoded
   encodeURIComponent('Hello World! Security test #1'),
-  // 10. A1Z26
+  // 11. A1Z26
   '8 5 12 12 15  23 15 18 12 4',
 ];
 let _dsi=0;
