@@ -208,7 +208,7 @@ textarea::placeholder{color:var(--mute);font-style:italic}
   <div>
     <div class="logo">
       <span class="logo-name">CipherSense</span>
-      <span class="logo-ver">v6</span>
+      <span class="logo-ver">v6.1</span>
     </div>
     <div class="logo-tag">Ultimate Encoder · Decoder · Brute-Force · 45+ Methods</div>
   </div>
@@ -424,8 +424,26 @@ function vigKey(L,len){let key='';for(let i=0;i<len;i++){const st=L.split('').fi
 function vigDec(text,key){const k=key.toLowerCase();let ki=0;return text.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)})}
 function tryVig(s){const L=s.toUpperCase().replace(/[^A-Z]/g,'');if(L.length<25)return null;const ic=vigIC(L);if(ic>0.063||ic<0.036)return null;const kl=vigKeyLen(L);if(kl<2)return null;const key=vigKey(L,kl);const dec=vigDec(s,key);const sc=langScore(dec);if(sc<0.14)return null;return{r:dec,key,kl,sc}}
 
-// Caesar best-fit
-function tryCaesar(s){const L=s.toUpperCase().replace(/[^A-Z]/g,'');if(L.length<8)return null;if(langScore(s)>0.2)return null;let best=null,bsc=-1/0;for(let n=1;n<=25;n++){const dec=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));const sc=langScore(dec);if(sc>bsc){bsc=sc;best={dec,n,sc};}}return best&&best.sc>0.13?best:null}
+// Caesar best-fit — only fires if input is mostly letters AND not a known encoding
+function tryCaesar(s){
+  // Don't try Caesar if the input looks like Base64 or other encodings
+  const t=s.trim().replace(/\s/g,'');
+  if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null; // looks like base64
+  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null; // looks like hex
+  if(/^[A-Z2-7]+=*$/.test(t))return null; // looks like base32
+  const L=s.toUpperCase().replace(/[^A-Z]/g,'');
+  if(L.length<8)return null;
+  if(langScore(s)>0.18)return null; // already looks like English — don't shift it
+  let best=null,bsc=-1/0;
+  for(let n=1;n<=25;n++){
+    const dec=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97))
+               .replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));
+    const sc=langScore(dec);
+    if(sc>bsc){bsc=sc;best={dec,n,sc};}
+  }
+  // Require a high score — 0.30 means clearly English words present
+  return best&&best.sc>0.30?best:null;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // DECODER DEFINITIONS (45 methods)
@@ -524,56 +542,147 @@ const DECODERS=[
 const STRUCTURAL=new Set(['b64','b64u','b32','b16','b85','b91','b92','b58','b62','b36','bin','oct','dec','url','html','uni','uu','jwt','morse','nato','bacon','a1z26','polybius']);
 
 // ═══════════════════════════════════════════════════════════════
-// AUTO-PEEL ENGINE
+// AUTO-PEEL ENGINE  (fixed v6.1)
+// Priority order each pass:
+//   1. Check if REVERSED input matches a high-confidence structural format
+//   2. Try all structural/encoding decoders ordered by priority
+//   3. Vigenère IC auto-crack (only if langScore still low after step 2)
+//   4. Caesar chi² (only if langScore still low, and raise threshold to 0.30)
+// Key fix: Caesar/Vigenère are LAST resort — they always "find something"
+//          so they must be gated behind a high score threshold.
 // ═══════════════════════════════════════════════════════════════
+
+// Returns the highest-priority structural decoder that matches s, or null
+function detectStructural(s){
+  const CIPHER_IDS=new Set(['rot13','rot47','rot5','atbash','rev','leet']);
+  const cands=[...DECODERS]
+    .filter(d=>!CIPHER_IDS.has(d.id))
+    .sort((a,b)=>(b.pri||50)-(a.pri||50));
+  for(const d of cands){
+    let det=false;try{det=d.det(s)}catch{}
+    if(det)return d;
+  }
+  return null;
+}
+
 function autoPeel(input){
-  const layers=[];let cur=input;const seen=new Set([cur.trim()]);const MAX=20;
+  const layers=[];
+  let cur=input;
+  const seen=new Set([cur.trim()]);
+  const MAX=20;
+  // Ambiguous cipher ids — always try last, only accept if score very high
+  const CIPHER_IDS=new Set(['rot13','rot47','rot5','atbash','rev','leet']);
+
   for(let pass=0;pass<MAX;pass++){
     let found=false;
-    // 1. Vigenère IC crack
-    const vig=tryVig(cur);
-    if(vig&&!seen.has(vig.r.trim())){
-      layers.push({n:`Vigenère (key:"${vig.key}",len:${vig.kl})`,in:cur,out:vig.r,id:'vig-auto',sc:vig.sc});
-      seen.add(vig.r.trim());cur=vig.r;found=true;if(isPlain(cur,.16))break;continue;
+
+    // ── STEP 1: Check if the REVERSED string matches a structural format ──
+    // e.g. user gives us reversed-Base64 which starts with == and ends normally
+    const rev=cur.split('').reverse().join('');
+    if(!seen.has(rev.trim())){
+      const revDet=detectStructural(rev);
+      if(revDet){
+        // Try decoding the reversed string
+        let revDecoded=null;
+        try{revDecoded=revDet.dec(rev)}catch{}
+        if(revDecoded&&revDecoded!==rev&&revDecoded!==cur&&printable(revDecoded)&&!seen.has(revDecoded.trim())){
+          // Accept: first add the "reverse" step, then the decode step
+          layers.push({n:'Reversed input',in:cur,out:rev,id:'rev-step',sc:0});
+          seen.add(rev.trim());
+          layers.push({n:revDet.n,in:rev,out:revDecoded,id:revDet.id,sc:langScore(revDecoded)});
+          seen.add(revDecoded.trim());
+          cur=revDecoded;found=true;
+          if(isPlain(cur,.14))break;
+          continue;
+        }
+      }
     }
-    // 2. Caesar chi²
-    const cae=tryCaesar(cur);
-    if(cae&&!seen.has(cae.dec.trim())){
-      layers.push({n:`Caesar shift-${cae.n}`,in:cur,out:cae.dec,id:'caesar',sc:cae.sc});
-      seen.add(cae.dec.trim());cur=cae.dec;found=true;if(isPlain(cur,.16))break;continue;
-    }
-    // 3. All structural decoders by priority
+
+    // ── STEP 2: Try all structural/encoding decoders (no ambiguous ciphers) ──
     const cands=[...DECODERS].sort((a,b)=>(b.pri||50)-(a.pri||50));
     for(const d of cands){
+      if(CIPHER_IDS.has(d.id))continue; // skip ambiguous ciphers here
       let det=false;try{det=d.det(cur)}catch{}if(!det)continue;
       let r=null;try{r=d.dec(cur)}catch{}
       if(!r||r===cur||seen.has(r.trim())||!printable(r))continue;
       const sc=langScore(r);
-      const isStr=STRUCTURAL.has(d.id);
-      if(isStr&&!['rot13','rot47','rot5','atbash','rev','leet'].includes(d.id)){
+      // Accept structural encodings freely (they decode deterministically)
+      if(STRUCTURAL.has(d.id)){
         layers.push({n:d.n,in:cur,out:r,id:d.id,sc});
-        seen.add(r.trim());cur=r;found=true;if(isPlain(cur,.14))break;break;
-      } else if(sc>0.13){
+        seen.add(r.trim());cur=r;found=true;
+        if(isPlain(cur,.14))break;
+        break;
+      } else if(sc>0.25){
+        // Non-ambiguous cipher with a good score
         layers.push({n:d.n,in:cur,out:r,id:d.id,sc});
         seen.add(r.trim());cur=r;found=true;break;
       }
     }
+    if(found){if(isPlain(cur,.16))break;continue;}
+
+    // ── STEP 3: Vigenère auto-crack (only if current text isn't already readable) ──
+    if(langScore(cur)<0.18){
+      const vig=tryVig(cur);
+      if(vig&&!seen.has(vig.r.trim())){
+        layers.push({n:`Vigenère auto-crack (key:"${vig.key}", len:${vig.kl})`,in:cur,out:vig.r,id:'vig-auto',sc:vig.sc});
+        seen.add(vig.r.trim());cur=vig.r;found=true;if(isPlain(cur,.16))break;continue;
+      }
+    }
+
+    // ── STEP 4: Caesar chi² — LAST RESORT, high threshold ──
+    // Only fire if: text is mostly letters, not already English, and best shift scores well
+    if(langScore(cur)<0.18&&/[a-zA-Z]/.test(cur)){
+      const cae=tryCaesar(cur);
+      // Require a MUCH higher score so we don't falsely decode base64 garbage
+      if(cae&&cae.sc>0.30&&!seen.has(cae.dec.trim())){
+        layers.push({n:`Caesar shift-${cae.n}`,in:cur,out:cae.dec,id:'caesar',sc:cae.sc});
+        seen.add(cae.dec.trim());cur=cae.dec;found=true;if(isPlain(cur,.16))break;continue;
+      }
+    }
+
+    // ── STEP 5: Ambiguous ciphers (rot13, atbash etc) — ONLY if score is high ──
+    if(!found&&langScore(cur)<0.18){
+      for(const d of cands.filter(x=>CIPHER_IDS.has(x.id))){
+        let det=false;try{det=d.det(cur)}catch{}if(!det)continue;
+        let r=null;try{r=d.dec(cur)}catch{}
+        if(!r||r===cur||seen.has(r.trim())||!printable(r))continue;
+        const sc=langScore(r);
+        if(sc>0.30){ // high bar for ambiguous ciphers
+          layers.push({n:d.n,in:cur,out:r,id:d.id,sc});
+          seen.add(r.trim());cur=r;found=true;break;
+        }
+      }
+    }
+
     if(!found)break;
     if(isPlain(cur,.16)&&layers.length>0)break;
   }
   return{layers,final:cur};
 }
 
-// AUTO-PEEL but tries reversed input as well
+// autoWithReverse: try input as-is AND reversed, pick better result
+// The autoPeel engine now handles reverse-detection internally per-pass,
+// but we also try a full reverse of the original input as a separate pipeline
 function autoWithReverse(input){
   const fwd=autoPeel(input);
-  const rev=input.split('').reverse().join('');
-  const revResult=autoPeel(rev);
-  // Pick whichever final scores higher
   const fwdSc=langScore(fwd.final);
-  const revSc=langScore(revResult.final);
-  if(revSc>fwdSc+0.05&&revResult.layers.length>0){
-    revResult.wasReversed=true;
+
+  // Also try peeling the fully-reversed input as a standalone pipeline
+  const revInput=input.split('').reverse().join('');
+  let revResult=null;
+  // Only bother if reversed input looks structurally promising
+  if(detectStructural(revInput)){
+    const revPeeled=autoPeel(revInput);
+    const revSc=langScore(revPeeled.final);
+    if(revSc>fwdSc+0.03&&revPeeled.layers.length>0){
+      // Prepend a "Reversed input" step
+      revPeeled.layers.unshift({n:'Reversed input',in:input,out:revInput,id:'rev-step',sc:0});
+      revPeeled.wasReversed=true;
+      revResult=revPeeled;
+    }
+  }
+
+  if(revResult&&langScore(revResult.final)>fwdSc){
     return revResult;
   }
   return fwd;
