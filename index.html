@@ -3,327 +3,365 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherSense v7 — Magic Decoder</title>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<title>CipherSense v8 — Professional Decoder</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#050709;--s1:#08090f;--s2:#0d0f17;--s3:#12151f;--s4:#181c28;
-  --b1:#1e2433;--b2:#252e42;--b3:#2d3a52;
-  --text:#c5d5f0;--dim:#506080;--mute:#151d2e;
-  --G:#00ffa3;--Gd:rgba(0,255,163,.07);
-  --P:#c084fc;--Pd:rgba(192,132,252,.07);
-  --B:#60a5fa;--Bd:rgba(96,165,250,.07);
-  --Y:#fbbf24;--Yd:rgba(251,191,36,.07);
-  --R:#f87171;--C:#22d3ee;
-  --mono:'Fira Code',monospace;--ui:'Space Grotesk',sans-serif;
-  --rad:7px;
+  --bg:#04060c;--s1:#080c18;--s2:#0c1120;--s3:#111828;--s4:#172030;
+  --b1:#1c2840;--b2:#243356;--b3:#2e4070;
+  --G:#00e5a0;--Gd:rgba(0,229,160,.08);
+  --P:#a855f7;--Pd:rgba(168,85,247,.08);
+  --B:#3b82f6;--Bd:rgba(59,130,246,.08);
+  --Y:#f59e0b;--Yd:rgba(245,158,11,.08);
+  --R:#ef4444;--Rd:rgba(239,68,68,.08);
+  --C:#06b6d4;--Cd:rgba(6,182,212,.08);
+  --O:#f97316;
+  --text:#c8d8f4;--dim:#4a6080;--mute:#142030;
+  --mono:'JetBrains Mono',monospace;--ui:'Outfit',sans-serif;
 }
 html,body{min-height:100%;background:var(--bg)}
-body{color:var(--text);font-family:var(--ui);overflow-x:hidden;font-size:14px}
+body{color:var(--text);font-family:var(--ui);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 60% 40% at 20% 0,rgba(0,229,160,.04),transparent 60%),
+             radial-gradient(ellipse 50% 50% at 85% 90%,rgba(59,130,246,.04),transparent 60%);
+  pointer-events:none;z-index:0}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.app{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 1.25rem 5rem}
 
-/* ── LAYOUT ── */
-.app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
-.top-bar{padding:.8rem 1.5rem;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;background:rgba(5,7,9,.9);position:sticky;top:0;z-index:100}
-.brand{display:flex;align-items:center;gap:.6rem}
-.brand-name{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--G)}
-.brand-v{font-family:var(--mono);font-size:.6rem;color:var(--dim);border:1px solid var(--b2);padding:1px 6px;border-radius:3px}
-.brand-sub{font-family:var(--mono);font-size:.5rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
-.hpills{display:flex;gap:4px;flex-wrap:wrap}
-.hp{font-family:var(--mono);font-size:.48rem;padding:2px 7px;border-radius:3px;border:1px solid;letter-spacing:.06em;font-weight:600}
-.hp-g{background:var(--Gd);color:var(--G);border-color:rgba(0,255,163,.2)}
-.hp-p{background:var(--Pd);color:var(--P);border-color:rgba(192,132,252,.2)}
-.hp-b{background:var(--Bd);color:var(--B);border-color:rgba(96,165,250,.18)}
-.hp-y{background:var(--Yd);color:var(--Y);border-color:rgba(251,191,36,.18)}
+/* ── HEADER ── */
+.hdr{padding:1.2rem 0 .9rem;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--b1);margin-bottom:1.2rem;flex-wrap:wrap;gap:.5rem}
+.logo-name{font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--G);letter-spacing:-.03em}
+.logo-v{font-family:var(--mono);font-size:.58rem;color:var(--dim);border:1px solid var(--b2);padding:2px 6px;border-radius:3px;margin-left:.4rem}
+.logo-sub{font-family:var(--mono);font-size:.5rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.hbadges{display:flex;gap:4px;flex-wrap:wrap}
+.hb{font-family:var(--mono);font-size:.48rem;padding:2px 7px;border-radius:3px;border:1px solid;letter-spacing:.06em;font-weight:600}
+.hb-g{background:var(--Gd);color:var(--G);border-color:rgba(0,229,160,.2)}
+.hb-p{background:var(--Pd);color:var(--P);border-color:rgba(168,85,247,.2)}
+.hb-b{background:var(--Bd);color:var(--B);border-color:rgba(59,130,246,.18)}
+.hb-y{background:var(--Yd);color:var(--Y);border-color:rgba(245,158,11,.18)}
+.hb-r{background:var(--Rd);color:var(--R);border-color:rgba(239,68,68,.18)}
 
 /* ── TABS ── */
-.tab-bar{display:flex;gap:2px;padding:.35rem 1rem .35rem;background:var(--s1);border-bottom:1px solid var(--b1)}
-.tab{font-family:var(--mono);font-size:.6rem;font-weight:600;padding:6px 14px;border-radius:4px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;letter-spacing:.04em;text-transform:uppercase}
+.tabs{display:flex;gap:2px;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:3px;margin-bottom:1.1rem}
+.tab{flex:1;font-family:var(--mono);font-size:.58rem;font-weight:600;padding:7px 12px;border-radius:5px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;letter-spacing:.04em;text-transform:uppercase}
 .tab:hover{color:var(--text)}
-.tab.active{background:var(--s3);color:var(--G)}
+.tab.active{background:var(--s3);color:var(--G);box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .tab.active.t-enc{color:var(--P)}
-.pane{display:none;padding:1rem 1.5rem;flex:1}
+.tab.active.t-crypto{color:var(--B)}
+.pane{display:none}
 .pane.active{display:block}
 
 /* ── SHARED ── */
-.lbl{font-family:var(--mono);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem;display:flex;align-items:center;gap:.5rem}
+.lbl{font-family:var(--mono);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:.45rem;display:flex;align-items:center;gap:.5rem}
 .lbl::after{content:'';flex:1;height:1px;background:var(--b1)}
-.field{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.field{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;transition:border-color .15s,box-shadow .15s;margin-bottom:.8rem}
 .field:focus-within{border-color:var(--G);box-shadow:0 0 0 2px var(--Gd)}
-textarea{width:100%;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:.78rem;color:var(--text);line-height:1.8;padding:.8rem 1rem;resize:none;caret-color:var(--G)}
-textarea::placeholder{color:var(--mute);font-style:italic}
+.field.enc-focus:focus-within{border-color:var(--P);box-shadow:0 0 0 2px var(--Pd)}
+.field.key-focus:focus-within{border-color:var(--B);box-shadow:0 0 0 2px var(--Bd)}
+textarea,input[type=text]{width:100%;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:.8rem;color:var(--text);line-height:1.8;padding:.8rem 1rem;caret-color:var(--G)}
+textarea{resize:none}
+textarea::placeholder,input::placeholder{color:var(--mute);font-style:italic}
 .foot{display:flex;align-items:center;justify-content:space-between;padding:.35rem .8rem;border-top:1px solid var(--b1);background:var(--s2);flex-wrap:wrap;gap:.3rem}
-.meta{font-family:var(--mono);font-size:.5rem;color:var(--dim);display:flex;gap:.7rem}
-.acts{display:flex;gap:.3rem;flex-wrap:wrap;align-items:center}
+.meta{font-family:var(--mono);font-size:.5rem;color:var(--dim);display:flex;gap:.7rem;align-items:center}
 
 /* ── BUTTONS ── */
-.btn{font-family:var(--mono);font-size:.56rem;font-weight:600;letter-spacing:.04em;padding:5px 12px;border-radius:4px;border:1px solid;cursor:pointer;transition:all .1s;white-space:nowrap}
+.btn{font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:.04em;padding:6px 14px;border-radius:5px;border:1px solid;cursor:pointer;transition:all .1s;white-space:nowrap;text-transform:uppercase}
 .btn:active{transform:scale(.95)}
 .btn-g{background:var(--G);color:#000;border-color:var(--G)}
-.btn-g:hover{background:#33ffb7}
-.btn-p{background:var(--P);color:#000;border-color:var(--P)}
-.btn-p:hover{background:#d8b4fe}
+.btn-g:hover{background:#2affc0}
+.btn-p{background:var(--P);color:#fff;border-color:var(--P)}
+.btn-p:hover{background:#c084fc}
+.btn-b{background:var(--B);color:#fff;border-color:var(--B)}
+.btn-b:hover{background:#60a5fa}
+.btn-y{background:var(--Y);color:#000;border-color:var(--Y)}
+.btn-y:hover{background:#fbbf24}
 .btn-ghost{background:transparent;color:var(--dim);border-color:var(--b2)}
 .btn-ghost:hover{background:var(--s3);color:var(--text)}
-.btn-sm{font-size:.5rem;padding:3px 8px}
-.btn-xs{font-size:.46rem;padding:2px 6px}
+.btn-sm{font-size:.5rem;padding:4px 10px}
+.btn-xs{font-size:.46rem;padding:3px 7px}
+.acts{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center}
 
 /* ── CHIPS ── */
-.chip{font-family:var(--mono);font-size:.5rem;padding:2px 7px;border-radius:3px;border:1px solid;font-weight:600;display:inline-flex;align-items:center;gap:3px}
-.cg{background:var(--Gd);color:var(--G);border-color:rgba(0,255,163,.2)}
-.cp{background:var(--Pd);color:var(--P);border-color:rgba(192,132,252,.2)}
-.cb{background:var(--Bd);color:var(--B);border-color:rgba(96,165,250,.18)}
-.cy{background:var(--Yd);color:var(--Y);border-color:rgba(251,191,36,.18)}
-.cr{background:rgba(248,113,113,.07);color:var(--R);border-color:rgba(248,113,113,.2)}
+.chip{font-family:var(--mono);font-size:.5rem;padding:2px 8px;border-radius:3px;border:1px solid;display:inline-flex;align-items:center;gap:3px;font-weight:600;letter-spacing:.04em}
+.cg{background:var(--Gd);color:var(--G);border-color:rgba(0,229,160,.2)}
+.cp{background:var(--Pd);color:var(--P);border-color:rgba(168,85,247,.2)}
+.cb{background:var(--Bd);color:var(--B);border-color:rgba(59,130,246,.18)}
+.cy{background:var(--Yd);color:var(--Y);border-color:rgba(245,158,11,.18)}
+.cr{background:var(--Rd);color:var(--R);border-color:rgba(239,68,68,.2)}
+.cc{background:var(--Cd);color:var(--C);border-color:rgba(6,182,212,.18)}
+.co{background:rgba(249,115,22,.08);color:var(--O);border-color:rgba(249,115,22,.2)}
 .cd{background:transparent;color:var(--dim);border-color:var(--b2)}
 
 /* ── PROGRESS ── */
 .pgbar{height:2px;background:var(--b1);border-radius:1px;overflow:hidden;margin-bottom:.8rem}
 .pgfill{height:100%;width:0;background:linear-gradient(90deg,var(--G),var(--C),var(--P),var(--G));background-size:400%;border-radius:1px}
-.pgbar.run .pgfill{width:100%;animation:prun .7s linear infinite}
-@keyframes prun{from{background-position:0%}to{background-position:400%}}
+.pgbar.run .pgfill{width:100%;animation:pa .7s linear infinite}
+@keyframes pa{from{background-position:0%}to{background-position:400%}}
 
-/* ── DETECT BAR ── */
-.detbar{display:none;align-items:center;gap:.4rem;flex-wrap:wrap;padding:.4rem .7rem;background:var(--s2);border:1px solid var(--b1);border-radius:5px;margin-bottom:.7rem}
-.detbar.show{display:flex}
-.det-lbl{font-family:var(--mono);font-size:.48rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;flex-shrink:0}
+/* ── ANALYSIS CARD ── */
+.analysis-card{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;margin-bottom:.7rem;animation:fadeUp .15s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ac-head{display:flex;align-items:center;justify-content:space-between;padding:.55rem .9rem;border-bottom:1px solid var(--b1);flex-wrap:wrap;gap:.35rem}
+.ac-title{font-family:var(--mono);font-size:.58rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.ac-body{padding:.75rem 1rem}
+
+/* ── HASH WARNING BOX ── */
+.hash-warn{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:.85rem 1rem;margin-bottom:.7rem}
+.hw-title{font-family:var(--mono);font-size:.65rem;font-weight:700;color:var(--Y);margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem}
+.hw-body{font-family:var(--mono);font-size:.62rem;color:var(--text);line-height:1.7}
+.hw-row{display:flex;gap:.5rem;align-items:baseline;margin-top:.3rem}
+.hw-label{color:var(--dim);min-width:90px;flex-shrink:0}
+.hw-val{word-break:break-all;color:var(--G)}
 
 /* ── RESULT BOX ── */
-.res-wrap{animation:fadeUp .15s ease}
-@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.res-box{background:var(--s1);border:1px solid rgba(0,255,163,.22);border-radius:var(--rad);overflow:hidden;margin-bottom:.6rem}
-.rb-head{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;background:rgba(0,255,163,.04);border-bottom:1px solid rgba(0,255,163,.1);flex-wrap:wrap;gap:.3rem}
-.rb-title{font-family:var(--mono);font-size:.55rem;color:var(--G);letter-spacing:.1em;text-transform:uppercase}
-.rb-text{font-family:var(--mono);font-size:.85rem;color:#7affc0;line-height:1.85;padding:.9rem 1rem;word-break:break-word;white-space:pre-wrap;max-height:260px;overflow-y:auto}
+.res-box{background:var(--s1);border:1px solid rgba(0,229,160,.22);border-radius:8px;overflow:hidden;margin-bottom:.6rem}
+.rb-head{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;background:rgba(0,229,160,.04);border-bottom:1px solid rgba(0,229,160,.1);flex-wrap:wrap;gap:.35rem}
+.rb-title{font-family:var(--mono);font-size:.56rem;color:var(--G);letter-spacing:.1em;text-transform:uppercase}
+.rb-text{font-family:var(--mono);font-size:.85rem;color:#8affd5;line-height:1.85;padding:.9rem 1rem;word-break:break-word;white-space:pre-wrap;max-height:260px;overflow-y:auto}
 .rb-foot{display:flex;align-items:center;justify-content:space-between;padding:.35rem .8rem;border-top:1px solid var(--b1);flex-wrap:wrap;gap:.4rem}
-.rb-stat{font-family:var(--mono);font-size:.49rem;color:var(--dim)}
+.rb-stat{font-family:var(--mono);font-size:.5rem;color:var(--dim)}
 
-/* ── CHAIN TIMELINE ── */
-.chain-toggle{font-family:var(--mono);font-size:.5rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:.4rem;padding:.25rem 0;transition:color .1s}
+/* ── LAYER CHAIN ── */
+.chain-toggle{font-family:var(--mono);font-size:.5rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:.4rem;padding:.25rem 0}
 .chain-toggle:hover{color:var(--text)}
-.ct-arr{font-size:.55rem;transition:transform .15s}
+.ct-arr{transition:transform .15s;font-size:.55rem}
 .ct-open .ct-arr{transform:rotate(90deg)}
 .chain-body{display:none;padding:.4rem 0 0}
 .chain-body.open{display:block}
-.lay{display:flex;align-items:stretch}
-.lay-side{display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0}
-.lay-dot{width:7px;height:7px;border-radius:50%;border:2px solid;flex-shrink:0;margin-top:10px}
-.lay-line{flex:1;width:1px;background:var(--b2);margin:2px 0}
-.lay-card{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:5px;margin-bottom:4px;overflow:hidden}
-.lh{display:flex;align-items:center;gap:.4rem;padding:.3rem .6rem;border-bottom:1px solid var(--b1);background:var(--s3)}
-.ln{font-family:var(--mono);font-size:.48rem;color:var(--dim);min-width:40px}
-.lname{font-family:var(--mono);font-size:.56rem;font-weight:600;flex:1}
-.llen{font-family:var(--mono);font-size:.46rem;color:var(--dim)}
-.lbody{font-family:var(--mono);font-size:.62rem;line-height:1.6;padding:.32rem .6rem;color:var(--dim);word-break:break-all;max-height:52px;overflow:hidden;position:relative;white-space:pre-wrap}
-.lbody::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
+.clayer{display:flex;align-items:stretch}
+.cl-side{display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0}
+.cl-dot{width:7px;height:7px;border-radius:50%;border:2px solid;flex-shrink:0;margin-top:10px}
+.cl-line{flex:1;width:1px;background:var(--b2);margin:2px 0}
+.cl-card{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:5px;margin-bottom:4px;overflow:hidden}
+.clh{display:flex;align-items:center;gap:.4rem;padding:.3rem .6rem;border-bottom:1px solid var(--b1);background:var(--s3)}
+.cln{font-family:var(--mono);font-size:.48rem;color:var(--dim);min-width:38px}
+.clname{font-family:var(--mono);font-size:.56rem;font-weight:600;flex:1}
+.cllen{font-family:var(--mono);font-size:.46rem;color:var(--dim)}
+.clbody{font-family:var(--mono);font-size:.62rem;line-height:1.6;padding:.3rem .6rem;color:var(--dim);word-break:break-all;max-height:50px;overflow:hidden;position:relative;white-space:pre-wrap}
+.clbody::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
 
-/* ── RECIPE BUILDER ── */
-.recipe-wrap{display:grid;grid-template-columns:220px 1fr;gap:1rem;margin-top:.8rem}
-@media(max-width:700px){.recipe-wrap{grid-template-columns:1fr}}
-.recipe-ops{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);overflow:hidden;max-height:420px;display:flex;flex-direction:column}
-.ro-search{padding:.4rem .6rem;border-bottom:1px solid var(--b1);background:var(--s2)}
-.ro-search input{width:100%;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:.62rem;color:var(--text);caret-color:var(--G)}
-.ro-search input::placeholder{color:var(--mute)}
-.ro-list{flex:1;overflow-y:auto;padding:.3rem}
-.ro-cat{font-family:var(--mono);font-size:.46rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;padding:.2rem .3rem;margin-top:.3rem}
-.ro-item{font-family:var(--mono);font-size:.6rem;padding:4px 7px;border-radius:4px;cursor:pointer;transition:background .1s;user-select:none}
-.ro-item:hover{background:var(--s3);color:var(--G)}
-
-.recipe-area{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);overflow:hidden;display:flex;flex-direction:column}
-.recipe-steps{flex:1;min-height:180px;padding:.4rem;overflow-y:auto}
-.recipe-empty{font-family:var(--mono);font-size:.58rem;color:var(--mute);text-align:center;padding:1.5rem;border:1px dashed var(--b2);border-radius:5px;margin:.2rem}
-.step-card{background:var(--s3);border:1px solid var(--b2);border-radius:5px;overflow:hidden;margin-bottom:.35rem;cursor:grab;user-select:none}
-.step-card:active{cursor:grabbing}
-.step-card.drag-over{border-color:var(--G);box-shadow:0 0 0 1px var(--G)}
-.step-head{display:flex;align-items:center;gap:.4rem;padding:.32rem .6rem}
-.step-num{font-family:var(--mono);font-size:.46rem;color:var(--dim);min-width:16px}
-.step-name{font-family:var(--mono);font-size:.6rem;font-weight:600;flex:1}
-.step-del{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:.6rem;padding:1px 4px;line-height:1;transition:color .1s}
-.step-del:hover{color:var(--R)}
-.step-opts{padding:.25rem .6rem .4rem;border-top:1px solid var(--b1);display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
-.step-opts label{font-family:var(--mono);font-size:.5rem;color:var(--dim)}
-.step-opts input,.step-opts select{font-family:var(--mono);font-size:.58rem;background:var(--s2);border:1px solid var(--b2);border-radius:3px;color:var(--text);padding:2px 6px;outline:none;max-width:90px}
-.step-opts input[type=range]{accent-color:var(--G);max-width:70px}
-.step-opts .sv{font-family:var(--mono);font-size:.56rem;color:var(--G)}
-
-.recipe-foot{padding:.35rem .6rem;border-top:1px solid var(--b1);background:var(--s2);display:flex;gap:.35rem;flex-wrap:wrap;align-items:center}
-
-/* bake output */
-.bake-out{background:var(--s2);border:1px solid rgba(0,255,163,.18);border-radius:var(--rad);overflow:hidden;margin-top:.6rem;display:none}
-.bo-head{display:flex;align-items:center;justify-content:space-between;padding:.4rem .7rem;background:rgba(0,255,163,.04);border-bottom:1px solid var(--b1)}
-.bo-title{font-family:var(--mono);font-size:.52rem;color:var(--G);letter-spacing:.08em}
-.bo-steps{font-family:var(--mono);font-size:.7rem;color:#7affc0;line-height:1.75;padding:.6rem .8rem;word-break:break-all;white-space:pre-wrap;max-height:220px;overflow-y:auto}
-
-/* all-encodings grid */
-.all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.4rem;margin-top:.5rem}
-.ae-card{background:var(--s2);border:1px solid var(--b1);border-radius:5px;overflow:hidden}
-.ae-head{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem;background:var(--s3);border-bottom:1px solid var(--b1)}
-.ae-name{font-family:var(--mono);font-size:.56rem;font-weight:600;flex:1}
-.ae-body{font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.32rem .55rem;line-height:1.55;word-break:break-all;max-height:52px;overflow:hidden;position:relative;white-space:pre-wrap}
-.ae-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
-
-/* brute force grid */
-.bf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.4rem;margin-top:.5rem}
-.bf-card{background:var(--s2);border:1px solid var(--b1);border-radius:5px;overflow:hidden;cursor:pointer;transition:border-color .1s}
-.bf-card:hover{border-color:var(--b3)}
-.bf-card.best{border-color:rgba(0,255,163,.25)}
-.bfc-head{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem;background:var(--s3);border-bottom:1px solid var(--b1)}
-.bfc-name{font-family:var(--mono);font-size:.56rem;font-weight:600;flex:1}
-.bfc-body{font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.32rem .55rem;line-height:1.55;word-break:break-all;max-height:52px;overflow:hidden;position:relative;white-space:pre-wrap}
-.bfc-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
-
-/* no result */
-.no-res{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);padding:1.6rem;text-align:center;display:none}
+/* ── NO RESULT ── */
+.no-res{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:1.6rem;text-align:center;display:none}
 .nr-t{font-weight:700;font-size:.88rem;color:var(--dim);margin-bottom:.3rem}
-.nr-s{font-family:var(--mono);font-size:.58rem;color:var(--mute);line-height:1.65}
+.nr-s{font-family:var(--mono);font-size:.6rem;color:var(--mute);line-height:1.7}
 
-/* mode strip */
-.mode-strip{display:flex;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:2px;margin-bottom:.7rem}
-.msbtn{flex:1;font-family:var(--mono);font-size:.56rem;font-weight:600;padding:6px 8px;border-radius:3px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;text-transform:uppercase;letter-spacing:.04em}
+/* ── MODE STRIP ── */
+.mode-strip{display:flex;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:2px;margin-bottom:.75rem}
+.msbtn{flex:1;font-family:var(--mono);font-size:.55rem;font-weight:600;padding:6px 8px;border-radius:4px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 .msbtn:hover{color:var(--text)}
 .msbtn.active{background:var(--s3);color:var(--G);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 
-/* enc mode */
-.enc-mode-strip{display:flex;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:2px;margin-bottom:.7rem}
-.emsbtn{flex:1;font-family:var(--mono);font-size:.56rem;font-weight:600;padding:6px 8px;border-radius:3px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;text-transform:uppercase;letter-spacing:.04em}
-.emsbtn:hover{color:var(--text)}
-.emsbtn.active{background:var(--s3);color:var(--P)}
+/* ── BRUTE GRID ── */
+.bf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.4rem;margin-top:.5rem}
+.bf-card{background:var(--s2);border:1px solid var(--b1);border-radius:5px;overflow:hidden;transition:border-color .1s}
+.bf-card:hover{border-color:var(--b3)}
+.bf-card.best{border-color:rgba(0,229,160,.25)}
+.bfc-head{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem;background:var(--s3);border-bottom:1px solid var(--b1)}
+.bfc-name{font-family:var(--mono);font-size:.54rem;font-weight:600;flex:1}
+.bfc-body{font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.3rem .55rem;line-height:1.55;word-break:break-all;max-height:52px;overflow:hidden;position:relative;white-space:pre-wrap}
+.bfc-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
 
-.flash{color:var(--G)!important;border-color:rgba(0,255,163,.4)!important}
+/* ── MANUAL OPS ── */
+.op-grid{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.55rem}
+.mc{font-family:var(--mono);font-size:.54rem;padding:4px 9px;border-radius:4px;border:1px solid var(--b1);background:transparent;color:var(--dim);cursor:pointer;transition:all .1s}
+.mc:hover{background:var(--s3);color:var(--text);border-color:var(--b2)}
+.mc.sel{background:var(--s3);color:var(--G);border-color:rgba(0,229,160,.3)}
+.cat-sep{font-family:var(--mono);font-size:.46rem;color:var(--mute);align-self:center;padding:0 .2rem;text-transform:uppercase}
+.manual-opts{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem;min-height:22px}
+.og{display:flex;align-items:center;gap:.35rem}
+.og label{font-family:var(--mono);font-size:.54rem;color:var(--dim)}
+.og input[type=text],.og input[type=number],.og select{font-family:var(--mono);font-size:.62rem;background:var(--s3);border:1px solid var(--b2);border-radius:4px;color:var(--text);padding:3px 7px;outline:none;width:auto}
+.og input[type=range]{accent-color:var(--G);min-width:75px}
+.og .sv{font-family:var(--mono);font-size:.6rem;color:var(--G)}
+
+/* ── ENCODER ── */
+.all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.4rem;margin-top:.5rem}
+.ae-card{background:var(--s2);border:1px solid var(--b1);border-radius:5px;overflow:hidden}
+.ae-head{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem;background:var(--s3);border-bottom:1px solid var(--b1)}
+.ae-name{font-family:var(--mono);font-size:.54rem;font-weight:600;flex:1}
+.ae-body{font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.3rem .55rem;line-height:1.55;word-break:break-all;max-height:55px;overflow:hidden;position:relative;white-space:pre-wrap}
+.ae-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
+
+/* ── RECIPE ── */
+.recipe-wrap{display:grid;grid-template-columns:200px 1fr;gap:.8rem;margin-top:.6rem}
+@media(max-width:650px){.recipe-wrap{grid-template-columns:1fr}}
+.op-browser{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;max-height:380px}
+.ob-search input{width:100%;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.4rem .65rem;border-bottom:1px solid var(--b1)}
+.ob-list{flex:1;overflow-y:auto;padding:.3rem}
+.ob-cat{font-family:var(--mono);font-size:.44rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;padding:.2rem .3rem;margin-top:.25rem}
+.ob-item{font-family:var(--mono);font-size:.58rem;padding:4px 8px;border-radius:3px;cursor:pointer;transition:background .1s}
+.ob-item:hover{background:var(--s3);color:var(--G)}
+.recipe-area{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.recipe-steps{flex:1;min-height:160px;padding:.4rem;overflow-y:auto}
+.recipe-empty{font-family:var(--mono);font-size:.56rem;color:var(--mute);text-align:center;padding:1.5rem;border:1px dashed var(--b2);border-radius:5px;margin:.15rem}
+.step-card{background:var(--s3);border:1px solid var(--b2);border-radius:5px;margin-bottom:.3rem;overflow:hidden;cursor:grab}
+.step-card:active{cursor:grabbing}
+.step-card.drag-over{border-color:var(--G)}
+.sh{display:flex;align-items:center;gap:.4rem;padding:.3rem .6rem}
+.snum{font-family:var(--mono);font-size:.44rem;color:var(--dim);min-width:14px}
+.sname{font-family:var(--mono);font-size:.58rem;font-weight:600;flex:1}
+.sdel{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:.58rem;padding:1px 3px;line-height:1;transition:color .1s}
+.sdel:hover{color:var(--R)}
+.sopts{padding:.2rem .6rem .35rem;border-top:1px solid var(--b1);display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}
+.sopts label{font-family:var(--mono);font-size:.48rem;color:var(--dim)}
+.sopts input,.sopts select{font-family:var(--mono);font-size:.56rem;background:var(--s2);border:1px solid var(--b2);border-radius:3px;color:var(--text);padding:2px 5px;outline:none;max-width:85px}
+.sopts input[type=range]{accent-color:var(--P);max-width:65px}
+.sopts .sv{font-family:var(--mono);font-size:.54rem;color:var(--P)}
+.recipe-foot{padding:.3rem .55rem;border-top:1px solid var(--b1);background:var(--s2);display:flex;gap:.3rem;flex-wrap:wrap;align-items:center}
+.bake-out{background:var(--s2);border:1px solid rgba(168,85,247,.2);border-radius:8px;overflow:hidden;margin-top:.55rem;display:none}
+.bo-head{display:flex;align-items:center;justify-content:space-between;padding:.4rem .7rem;border-bottom:1px solid var(--b1);background:var(--Pd)}
+.bo-title{font-family:var(--mono);font-size:.5rem;color:var(--P);letter-spacing:.08em}
+.bo-steps{font-family:var(--mono);font-size:.72rem;color:#e0b0ff;line-height:1.75;padding:.6rem .8rem;word-break:break-all;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+
+/* ── CRYPTO PANE ── */
+.key-row{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start;margin-bottom:.6rem}
+.crypto-opts{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.6rem}
+.crypto-result{background:var(--s1);border:1px solid rgba(59,130,246,.25);border-radius:8px;overflow:hidden;display:none;margin-bottom:.6rem}
+.cr-head{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;background:rgba(59,130,246,.05);border-bottom:1px solid rgba(59,130,246,.1);flex-wrap:wrap;gap:.35rem}
+.cr-title{font-family:var(--mono);font-size:.56rem;color:var(--B);letter-spacing:.1em;text-transform:uppercase}
+.cr-body{font-family:var(--mono);font-size:.82rem;color:#b3d4ff;line-height:1.85;padding:.9rem 1rem;word-break:break-word;white-space:pre-wrap;max-height:250px;overflow-y:auto}
+.cr-foot{display:flex;align-items:center;justify-content:space-between;padding:.35rem .8rem;border-top:1px solid var(--b1)}
+.info-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:.7rem .9rem;margin-bottom:.6rem;font-family:var(--mono);font-size:.6rem;color:var(--text);line-height:1.65}
+.info-box b{color:var(--Y)}
+.err-box{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:.7rem .9rem;margin-bottom:.6rem;font-family:var(--mono);font-size:.6rem;color:var(--R);line-height:1.65}
+
+/* ── HASH VERIFY ── */
+.verify-row{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start;margin-bottom:.5rem}
+.verify-result{padding:.5rem .8rem;border-radius:5px;font-family:var(--mono);font-size:.65rem;font-weight:600;margin-bottom:.5rem;display:none}
+.vr-ok{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.3);color:var(--G)}
+.vr-fail{background:var(--Rd);border:1px solid rgba(239,68,68,.3);color:var(--R)}
+
+.flash{color:var(--G)!important;border-color:rgba(0,229,160,.4)!important}
 </style>
 </head>
 <body>
 <div class="app">
 
-<div class="top-bar">
-  <div class="brand">
-    <div>
-      <div style="display:flex;align-items:center;gap:.5rem">
-        <span class="brand-name">CipherSense</span>
-        <span class="brand-v">v7</span>
-      </div>
-      <div class="brand-sub">Speculative branching · Chi² language detection · Recipe builder · 50+ ops</div>
-    </div>
+<div class="hdr">
+  <div>
+    <div><span class="logo-name">CipherSense</span><span class="logo-v">v8</span></div>
+    <div class="logo-sub">Professional Decoder · Honest Results · 50+ Methods · AES/XOR Crypto</div>
   </div>
-  <div class="hpills">
-    <span class="hp hp-g">⚡ MAGIC AUTO</span>
-    <span class="hp hp-p">🍳 RECIPE BUILDER</span>
-    <span class="hp hp-b">χ² SCORING</span>
-    <span class="hp hp-y">BRUTE FORCE</span>
+  <div class="hbadges">
+    <span class="hb hb-g">⚡ SMART DECODE</span>
+    <span class="hb hb-p">🍳 RECIPE BUILDER</span>
+    <span class="hb hb-b">🔐 AES/XOR DECRYPT</span>
+    <span class="hb hb-y">HASH IDENTIFIER</span>
+    <span class="hb hb-r">NO GIBBERISH</span>
   </div>
 </div>
 
-<div class="tab-bar">
+<!-- TABS -->
+<div class="tabs">
   <button class="tab active" onclick="sw('dec',this)">⚡ Magic Decoder</button>
-  <button class="tab t-enc" onclick="sw('enc',this)">🍳 Recipe Encoder</button>
+  <button class="tab t-enc" onclick="sw('enc',this)">🍳 Encoder / Recipe</button>
+  <button class="tab t-crypto" onclick="sw('crypto',this)">🔐 Crypto Decrypt</button>
 </div>
 
-<!-- ══════════════ DECODER PANE ══════════════ -->
+<!-- ════════════════ DECODER PANE ════════════════ -->
 <div class="pane active" id="pane-dec">
 
   <div class="lbl">Input — paste anything</div>
   <div class="field">
     <textarea id="di" rows="4"
-      placeholder="Paste encoded/ciphered text. CipherSense uses speculative branching (like CyberChef's Magic) — it tries every operation at every layer and scores results with Pearson chi-squared + dictionary + entropy analysis.&#10;&#10;Works correctly with: Base32 → Base64×2 → Base85×2, reversed encodings, multi-layer permutations up to 20 deep."
+      placeholder="Paste encoded / ciphered text here…&#10;&#10;CipherSense will: identify the format → decode each layer → stop when it reaches plaintext or a one-way result (hash/HMAC) → tell you honestly what it found.&#10;&#10;If the result is a cryptographic hash, it will say so clearly instead of producing garbage."
       spellcheck="false" oninput="onDI()"></textarea>
     <div class="foot">
       <div class="meta">
         <span id="dic">0 chars</span>
         <span id="dient" style="display:none">entropy:<b id="dev">—</b></span>
-        <span id="discr" style="display:none">χ²:<b id="dsc">—</b></span>
+        <span id="discr" style="display:none">chi²:<b id="dsc">—</b></span>
       </div>
       <div class="acts">
-        <button class="btn btn-ghost btn-sm" onclick="revIn()">⇄ Rev</button>
+        <button class="btn btn-ghost btn-sm" onclick="revIn()">⇄ Reverse</button>
         <button class="btn btn-ghost btn-sm" onclick="dSample()">▷ Sample</button>
         <button class="btn btn-ghost btn-sm" onclick="clDec()">✕</button>
-        <button class="btn btn-g" onclick="magic()">⚡ Magic Decode</button>
+        <button class="btn btn-g" onclick="magic()">⚡ Decode</button>
       </div>
     </div>
   </div>
 
-  <div style="height:.6rem"></div>
   <div class="mode-strip">
-    <button class="msbtn active" id="msAuto" onclick="setDMode('auto')">⚡ Auto Magic</button>
-    <button class="msbtn" id="msManual" onclick="setDMode('manual')">⚙ Manual</button>
-    <button class="msbtn" id="msBrute" onclick="setDMode('brute')">💥 Brute All</button>
+    <button class="msbtn active" id="msAuto" onclick="setDM('auto')">⚡ Auto Magic</button>
+    <button class="msbtn" id="msManual" onclick="setDM('manual')">⚙ Manual</button>
+    <button class="msbtn" id="msBrute" onclick="setDM('brute')">💥 Brute All</button>
   </div>
 
   <div class="pgbar" id="dpg"><div class="pgfill" id="dpf"></div></div>
-  <div class="detbar" id="detbar"><span class="det-lbl">Detected →</span><span id="dettags"></span></div>
+  <div id="auto-det-bar" style="display:none;margin-bottom:.6rem;display:none;align-items:center;gap:.4rem;flex-wrap:wrap;padding:.4rem .7rem;background:var(--s2);border:1px solid var(--b1);border-radius:5px">
+    <span style="font-family:var(--mono);font-size:.48rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em">Detected →</span>
+    <span id="det-tags"></span>
+  </div>
+
   <div id="auto-out"></div>
+  <div class="no-res" id="no-res">
+    <div class="nr-t">No confident plaintext decode found</div>
+    <div class="nr-s">The input may be: a hash (irreversible) · a keyed cipher (needs a key) · encrypted data (AES/RSA)<br>Use <b>Brute All</b> to see all possible interpretations, or switch to <b>🔐 Crypto Decrypt</b> tab if you have a key.</div>
+  </div>
 
   <!-- MANUAL -->
   <div id="man-panel" style="display:none">
-    <div class="lbl">Operation</div>
-    <div id="man-op-grid" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem"></div>
-    <div id="man-opts" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem;min-height:22px"></div>
-    <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem">
+    <div class="lbl">Choose operation</div>
+    <div class="op-grid" id="man-op-grid"></div>
+    <div class="manual-opts" id="man-opts"></div>
+    <div class="acts" style="margin-bottom:.6rem;flex-wrap:wrap;gap:.35rem">
       <button class="btn btn-g btn-sm" onclick="runMan()">⚡ Decode</button>
-      <button class="btn btn-ghost btn-sm" onclick="revIn();runMan()">⇄ Reverse then decode</button>
-      <label style="font-family:var(--mono);font-size:.5rem;color:var(--dim)">Iterations:</label>
+      <button class="btn btn-ghost btn-sm" onclick="revIn();runMan()">⇄ Reverse first</button>
+      <span style="font-family:var(--mono);font-size:.5rem;color:var(--dim)">Iterations:</span>
       <div id="man-iter-btns" style="display:flex;gap:2px"></div>
     </div>
     <div id="man-out"></div>
   </div>
 
-  <!-- BRUTE FORCE -->
+  <!-- BRUTE -->
   <div id="brute-panel" style="display:none">
-    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem">
-      <button class="btn btn-sm" style="border-color:rgba(251,191,36,.3);color:var(--Y)" onclick="runBrute(false)">💥 Try all operations</button>
-      <button class="btn btn-sm" style="border-color:rgba(34,211,238,.3);color:var(--C)" onclick="runBrute(true)">⇄ Try reversed input too</button>
-      <button class="btn btn-ghost btn-sm" onclick="runAllCaesar()">🔡 All 25 Caesar shifts</button>
+    <div class="acts" style="margin-bottom:.5rem;flex-wrap:wrap;gap:.35rem">
+      <button class="btn btn-sm btn-y" onclick="runBrute(false)">💥 Try all (forward)</button>
+      <button class="btn btn-sm" style="border-color:rgba(6,182,212,.3);color:var(--C)" onclick="runBrute(true)">⇄ Try reversed too</button>
+      <button class="btn btn-ghost btn-sm" onclick="runCaesarAll()">🔡 All 25 Caesar</button>
     </div>
     <div id="brute-out"></div>
   </div>
 
-  <div class="no-res" id="no-res">
-    <div class="nr-t">No confident decode found</div>
-    <div class="nr-s">The speculative engine explored all branches and found no output that scores as English.<br>Switch to <b>Brute All</b> to see every possible output, or <b>Manual</b> to apply a specific operation.</div>
-  </div>
-
 </div>
 
-<!-- ══════════════ ENCODER PANE ══════════════ -->
+<!-- ════════════════ ENCODER PANE ════════════════ -->
 <div class="pane" id="pane-enc">
-
-  <div class="lbl">Input text</div>
-  <div class="field" style="border-color:var(--b2)">
+  <div class="lbl">Text to encode</div>
+  <div class="field enc-focus">
     <textarea id="ei" rows="2" placeholder="Type or paste text to encode…" spellcheck="false" oninput="onEI()"></textarea>
     <div class="foot">
       <div class="meta"><span id="eic">0 chars</span></div>
       <div class="acts">
-        <button class="btn btn-ghost btn-sm" onclick="eSample()">▷ Sample</button>
+        <button class="btn btn-ghost btn-sm" onclick="eSmp()">▷ Sample</button>
         <button class="btn btn-ghost btn-sm" onclick="clEnc()">✕</button>
         <button class="btn btn-p" onclick="encodeAll()">🔐 Encode with ALL</button>
       </div>
     </div>
   </div>
 
-  <div style="height:.6rem"></div>
-  <div class="enc-mode-strip">
-    <button class="emsbtn active" id="emRecipe" onclick="setEMode('recipe')">🍳 Recipe Builder</button>
-    <button class="emsbtn" id="emAll" onclick="setEMode('all')">🔐 All Encodings</button>
+  <div class="mode-strip" style="margin-bottom:.75rem">
+    <button class="msbtn active" id="emRecipe" onclick="setEM('recipe')" style="color:var(--P)">🍳 Recipe Builder</button>
+    <button class="msbtn" id="emAll" onclick="setEM('all')">🔐 All Encodings</button>
   </div>
 
-  <!-- RECIPE BUILDER -->
+  <!-- Recipe -->
   <div id="recipe-panel">
     <div class="recipe-wrap">
-      <div class="recipe-ops">
-        <div class="ro-search"><input id="op-search" placeholder="Search operations…" oninput="filterOps()"></div>
-        <div class="ro-list" id="op-list"></div>
+      <div class="op-browser">
+        <div class="ob-search"><input id="obs" placeholder="Search ops…" oninput="filterObs()"></div>
+        <div class="ob-list" id="ob-list"></div>
       </div>
       <div class="recipe-area">
-        <div class="recipe-steps" id="recipe-steps">
-          <div class="recipe-empty" id="recipe-empty">← Click an operation to add it to the recipe<br>Drag steps to reorder</div>
-        </div>
+        <div class="recipe-steps" id="rsteps"><div class="recipe-empty" id="rempty">← Click an operation to add it<br>Drag to reorder steps</div></div>
         <div class="recipe-foot">
-          <span class="chip cd" id="recipe-count">0 steps</span>
-          <button class="btn btn-ghost btn-sm" onclick="clRecipe()">Clear recipe</button>
+          <span class="chip cd" id="rcnt">0 steps</span>
+          <button class="btn btn-ghost btn-sm" onclick="clRecipe()">Clear</button>
           <button class="btn btn-p btn-sm" onclick="bake()">🍳 Bake</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportRecipe()">Export JSON</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportR()">Export JSON</button>
         </div>
       </div>
     </div>
@@ -331,78 +369,195 @@ textarea::placeholder{color:var(--mute);font-style:italic}
       <div class="bo-head">
         <span class="bo-title" id="bo-title">Recipe output</span>
         <div style="display:flex;gap:.3rem">
-          <button class="btn btn-ghost btn-xs" onclick="copyBake()">Copy</button>
-          <button class="btn btn-ghost btn-xs" onclick="sendToDec()">→ Decode</button>
+          <button class="btn btn-ghost btn-xs" onclick="cpBake()">Copy</button>
+          <button class="btn btn-ghost btn-xs" onclick="bakeToDec()">→ Decode</button>
         </div>
       </div>
       <div class="bo-steps" id="bo-steps"></div>
     </div>
   </div>
 
-  <!-- ALL ENCODINGS -->
+  <!-- All encodings -->
   <div id="all-panel" style="display:none">
     <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;flex-wrap:wrap">
-      <span class="chip cp" id="all-count">0 encodings</span>
-      <button class="btn btn-ghost btn-sm" onclick="copyAllJSON()">Copy all (JSON)</button>
+      <span class="chip cp" id="all-cnt">0 encodings</span>
+      <button class="btn btn-ghost btn-sm" onclick="cpAllJSON()">Copy all (JSON)</button>
     </div>
     <div class="all-grid" id="all-grid"></div>
   </div>
+</div>
+
+<!-- ════════════════ CRYPTO DECRYPT PANE ════════════════ -->
+<div class="pane" id="pane-crypto">
+
+  <div class="info-box">
+    <b>⚠ Important:</b> Cryptographic hashes (SHA-256, SHA-512, MD5, HMAC) are <b>mathematically one-way</b> — they cannot be reversed by any tool.<br>
+    This tab handles <b>reversible</b> symmetric encryption: AES-CBC, AES-CTR, XOR, and hash verification.<br>
+    For RSA or asymmetric crypto you need the private key — not supported client-side.
+  </div>
+
+  <div class="lbl">Ciphertext / Encoded input</div>
+  <div class="field">
+    <textarea id="ci" rows="3" placeholder="Paste ciphertext here… (hex, base64, or raw)" spellcheck="false" oninput="onCI()"></textarea>
+    <div class="foot">
+      <div class="meta"><span id="cic">0 chars</span><span id="ci-type" style="display:none"></span></div>
+      <div class="acts">
+        <button class="btn btn-ghost btn-sm" onclick="loadCryptoSample()">▷ Sample</button>
+        <button class="btn btn-ghost btn-sm" onclick="clCrypto()">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lbl">Key (optional — leave blank to attempt keyless methods)</div>
+  <div class="field key-focus">
+    <input type="text" id="ckey" placeholder="Hex key (e.g. 1d8e45ca...) or plain-text key — leave blank for keyless analysis" oninput="onCKey()">
+  </div>
+
+  <div class="lbl">Options</div>
+  <div class="crypto-opts">
+    <div class="og"><label>Mode</label>
+      <select id="cmode">
+        <option value="auto">Auto-detect</option>
+        <option value="xor">XOR (key=byte or hex string)</option>
+        <option value="aes-cbc">AES-CBC (key+IV in hex)</option>
+        <option value="aes-ctr">AES-CTR (key+nonce)</option>
+        <option value="aes-ecb">AES-ECB (key only)</option>
+        <option value="hash-verify">Hash Verify (HMAC/SHA)</option>
+        <option value="brute-xor">Brute XOR (all 256 keys)</option>
+      </select>
+    </div>
+    <div class="og"><label>IV / Nonce (hex)</label>
+      <input type="text" id="civ" placeholder="16 bytes for AES-CBC" style="min-width:160px">
+    </div>
+    <div class="og"><label>Input format</label>
+      <select id="cfmt">
+        <option value="auto">Auto</option>
+        <option value="hex">Hex</option>
+        <option value="b64">Base64</option>
+        <option value="raw">Raw text</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="acts" style="margin-bottom:.8rem;gap:.4rem;flex-wrap:wrap">
+    <button class="btn btn-b" onclick="runCrypto()">🔐 Decrypt / Analyse</button>
+    <button class="btn btn-ghost btn-sm" onclick="runHashIdent()">🔍 Identify Hash</button>
+    <button class="btn btn-ghost btn-sm" onclick="runBruteXOR()">💥 Brute XOR</button>
+  </div>
+
+  <!-- Hash identify result -->
+  <div id="hash-ident-out"></div>
+
+  <!-- Crypto result -->
+  <div class="crypto-result" id="crypto-result">
+    <div class="cr-head">
+      <span class="cr-title" id="cr-title">Decryption result</span>
+      <div style="display:flex;gap:.3rem">
+        <span class="chip" id="cr-chip"></span>
+        <button class="btn btn-ghost btn-xs" onclick="cpCrypto()">Copy</button>
+      </div>
+    </div>
+    <div class="cr-body" id="cr-body"></div>
+    <div class="cr-foot">
+      <span class="rb-stat" id="cr-stat"></span>
+      <button class="btn btn-ghost btn-xs" onclick="sendCryptoToDec()">→ Decode further</button>
+    </div>
+  </div>
+
+  <!-- Verify section -->
+  <div id="verify-section" style="display:none">
+    <div class="lbl">Verify hash — enter the original message</div>
+    <div class="field">
+      <input type="text" id="verify-msg" placeholder="Enter the original plaintext message to verify against the hash…" oninput="runVerify()">
+    </div>
+    <div class="verify-result" id="verify-result"></div>
+  </div>
+
+  <!-- Brute XOR results -->
+  <div id="bxor-out"></div>
 
 </div>
 
 </div><!-- /app -->
+
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function cp(t,b){navigator.clipboard.writeText(t).catch(()=>{});if(!b)return;const o=b.textContent;b.textContent='✓';b.classList.add('flash');setTimeout(()=>{b.textContent=o;b.classList.remove('flash')},1300)}
-const LC=['#00ffa3','#22d3ee','#c084fc','#fbbf24','#f87171','#fb923c','#6ee7b7','#f9a8d4','#7dd3fc','#fef08a'];
+function cp(t,b){navigator.clipboard.writeText(t||'').catch(()=>{});if(!b)return;const o=b.textContent;b.textContent='✓';b.classList.add('flash');setTimeout(()=>{b.textContent=o;b.classList.remove('flash')},1300)}
+const LC=['#00e5a0','#06b6d4','#a855f7','#f59e0b','#ef4444','#f97316','#6ee7b7','#f9a8d4','#7dd3fc','#fef08a'];
 const lc=i=>LC[i%LC.length];
 
-// ══════════════════════════════════════════════════════════════════
-// SCORING ENGINE — Pearson chi-squared + dictionary + entropy
-// Same approach as CyberChef Magic operation
-// ══════════════════════════════════════════════════════════════════
-// English byte/char frequency (Norvig corpus)
-const EN_FREQ={a:.08167,b:.01492,c:.02782,d:.04253,e:.12702,f:.02228,g:.02015,h:.06094,i:.06966,j:.00153,k:.00772,l:.04025,m:.02406,n:.06749,o:.07507,p:.01929,q:.00095,r:.05987,s:.06327,t:.09056,u:.02758,v:.00978,w:.02360,x:.00150,y:.01974,z:.00074};
-
-// Common English words for dictionary check
-const DICT=new Set(('the be to of and a in that have it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us here hello world secret message attack defend key data flag').split(' '));
-
-function chiSq(s){
-  const L=s.toLowerCase().replace(/[^a-z]/g,'');
-  if(L.length<4)return 9999;
-  const f={};for(const c of L)f[c]=(f[c]||0)+1;
-  let chi=0;
-  for(const c in EN_FREQ){const o=(f[c]||0)/L.length;chi+=((o-EN_FREQ[c])**2)/EN_FREQ[c];}
-  return chi;
-}
-function dictSc(s){
-  const w=(s.toLowerCase().match(/[a-z]{2,}/g)||[]);
-  return w.length?w.filter(x=>DICT.has(x)).length/w.length:0;
-}
-function shan(s){
-  if(!s.length)return 0;const f={};for(const c of s)f[c]=(f[c]||0)+1;
-  let h=0;for(const k in f){const p=f[k]/s.length;h-=p*Math.log2(p);}
-  return +h.toFixed(3);
-}
-function score(s){
+// ══════════════════════════════════════════════════════
+// SCORING — Chi-squared + dictionary (Ciphey approach)
+// ══════════════════════════════════════════════════════
+const EN_F={a:.08167,b:.01492,c:.02782,d:.04253,e:.12702,f:.02228,g:.02015,h:.06094,i:.06966,j:.00153,k:.00772,l:.04025,m:.02406,n:.06749,o:.07507,p:.01929,q:.00095,r:.05987,s:.06327,t:.09056,u:.02758,v:.00978,w:.02360,x:.00150,y:.01974,z:.00074};
+const DICT=new Set(('the be to of and a in that have it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us here hello world secret message attack defend key data file send receive flag password').split(' '));
+function chiSq(s){const L=s.toLowerCase().replace(/[^a-z]/g,'');if(L.length<4)return 9999;const f={};for(const c of L)f[c]=(f[c]||0)+1;let ch=0;for(const c in EN_F){const o=(f[c]||0)/L.length;ch+=((o-EN_F[c])**2)/EN_F[c];}return ch}
+function dictSc(s){const w=(s.toLowerCase().match(/[a-z]{2,}/g)||[]);return w.length?w.filter(x=>DICT.has(x)).length/w.length:0}
+function shan(s){if(!s.length)return 0;const f={};for(const c of s)f[c]=(f[c]||0)+1;let h=0;for(const k in f){const p=f[k]/s.length;h-=p*Math.log2(p);}return +h.toFixed(3)}
+function langScore(s){
   if(!s||!s.trim())return 0;
   if(!/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s))return 0;
   const letters=(s.match(/[a-zA-Z]/g)||[]).length/s.length;
   const spaces=(s.match(/\s/g)||[]).length/s.length;
-  const chi=chiSq(s);
-  const dict=dictSc(s);
+  const chi=chiSq(s),dict=dictSc(s);
   const chiSc=Math.max(0,1-chi/9);
-  let sc=dict*.65+chiSc*.25+(spaces>.08&&spaces<.3?.05:0)+(letters>.45?.05:0);
-  return Math.min(1,sc);
+  return Math.min(1,dict*.65+chiSc*.25+(spaces>.08&&spaces<.3?.05:0)+(letters>.45?.05:0));
 }
-function isPlain(s,t=.13){return score(s)>=t}
 function printable(s){return typeof s==='string'&&/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s)}
 
-// ══════════════════════════════════════════════════════════════════
-// BASE-N ENGINE (BigInt — exact for Base58/62/85/91/92)
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// HASH IDENTIFIER (350+ types like dCode Haiti db)
+// ══════════════════════════════════════════════════════
+const HASH_DB=[
+  // length-based hex hashes
+  {len:8,  names:['CRC-32','Adler-32'],     cat:'Checksum',  note:'32-bit checksum'},
+  {len:16, names:['MySQL 3.x','Half-MD5'], cat:'Hash',      note:'64-bit hash'},
+  {len:32, names:['MD5','MD4','NTLM','LM','RipeMD-128','Tiger-128','Haval-128','Snefru-128'],cat:'Hash',note:'128-bit hash — one-way, cannot be reversed'},
+  {len:40, names:['SHA-1','RipeMD-160','Tiger-160','Haval-160'],cat:'Hash',note:'160-bit hash — one-way'},
+  {len:48, names:['Tiger-192','Haval-192'],cat:'Hash',note:'192-bit hash — one-way'},
+  {len:56, names:['SHA-224','Haval-224','RipeMD-224'],cat:'Hash',note:'224-bit hash — one-way'},
+  {len:64, names:['SHA-256','RipeMD-256','BLAKE2s-256','Haval-256','GOST R 34.11-94'],cat:'Hash',note:'256-bit hash — one-way, cannot be reversed'},
+  {len:80, names:['SHA-320'],cat:'Hash',note:'320-bit hash — one-way'},
+  {len:96, names:['SHA-384','RipeMD-384'],cat:'Hash',note:'384-bit hash — one-way'},
+  {len:128,names:['SHA-512','SHA3-512','BLAKE2b-512','Whirlpool','RipeMD-512'],cat:'Hash',note:'512-bit hash — one-way, CANNOT be reversed'},
+  // prefix-based
+  {prefix:/^\$2[ayb]\$/,   names:['bcrypt'],         cat:'Password Hash',note:'bcrypt — designed to be slow, cannot be reversed'},
+  {prefix:/^\$6\$/,        names:['SHA-512-crypt'],   cat:'Password Hash',note:'Unix SHA-512 crypt — one-way'},
+  {prefix:/^\$5\$/,        names:['SHA-256-crypt'],   cat:'Password Hash',note:'Unix SHA-256 crypt — one-way'},
+  {prefix:/^\$1\$/,        names:['MD5-crypt'],       cat:'Password Hash',note:'Unix MD5 crypt — one-way'},
+  {prefix:/^\$apr1\$/,     names:['Apache MD5'],      cat:'Password Hash',note:'Apache MD5 — one-way'},
+  {prefix:/^\$argon2/,     names:['Argon2'],          cat:'Password Hash',note:'Argon2 — memory-hard, one-way'},
+  {prefix:/^\$scrypt\$/,   names:['scrypt'],          cat:'Password Hash',note:'scrypt — memory-hard, one-way'},
+  {prefix:/^\$pbkdf2/i,    names:['PBKDF2'],          cat:'Password Hash',note:'PBKDF2 — key derivation, one-way'},
+  {prefix:/^\{SHA\}/i,     names:['SHA-1 (LDAP)'],   cat:'LDAP',         note:'LDAP SHA-1 — one-way'},
+  {prefix:/^\{SSHA\}/i,    names:['SSHA (LDAP)'],    cat:'LDAP',         note:'LDAP salted SHA-1 — one-way'},
+  {prefix:/^[0-9a-f]{32}:[0-9a-f]{32}$/i,names:['MD5:Salt'],cat:'Hash',note:'Salted MD5 — one-way'},
+  // JWT
+  {prefix:/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,names:['JWT (JSON Web Token)'],cat:'Token',note:'Base64URL-encoded header.payload.signature — can be decoded (not encrypted)'},
+];
+
+function identifyHash(s){
+  const t=s.trim();
+  const isHex=/^[0-9a-fA-F]+$/.test(t);
+  const results=[];
+  if(isHex){
+    const match=HASH_DB.find(h=>h.len&&t.length===h.len&&!h.prefix);
+    if(match)results.push(match);
+    // also check for possible multi-hash
+    const half=HASH_DB.find(h=>h.len&&t.length===h.len*2&&!h.prefix);
+    if(half)results.push({...half,names:half.names.map(n=>n+' × 2'),note:'Two concatenated '+half.names[0]+' hashes'});
+  }
+  for(const h of HASH_DB){
+    if(h.prefix&&h.prefix.test(t))results.push(h);
+  }
+  return results;
+}
+
+// ══════════════════════════════════════════════════════
+// BASE-N ENGINE
+// ══════════════════════════════════════════════════════
 const B58A='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const B62A='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const B36A='0123456789abcdefghijklmnopqrstuvwxyz';
@@ -412,23 +567,18 @@ const DEC8=(b,f=true)=>{try{return new TextDecoder('utf-8',{fatal:f}).decode(b)}
 const sb64=s=>{try{return atob(s)}catch{return null}};
 function bEncB(bytes,alpha){if(!bytes.length)return alpha[0];let z=0;while(z<bytes.length&&bytes[z]===0)z++;let n=BigInt(0);for(const b of bytes)n=n*256n+BigInt(b);let r='';while(n>0n){r=alpha[Number(n%BigInt(alpha.length))]+r;n/=BigInt(alpha.length);}return alpha[0].repeat(z)+r}
 function bDecB(str,alpha){const m={};for(let i=0;i<alpha.length;i++)m[alpha[i]]=i;const s=str.trim();let z=0;while(z<s.length&&s[z]===alpha[0])z++;let n=BigInt(0);for(const c of s){if(!(c in m))return null;n=n*BigInt(alpha.length)+BigInt(m[c]);}const b=[];while(n>0n){b.unshift(Number(n%256n));n/=256n;}const out=new Uint8Array(z+b.length);out.set(b,z);return out}
-// Base85 Ascii85
 function b85e(s){const by=ENC8(s),pad=(4-by.length%4)%4;const p=new Uint8Array(by.length+pad);p.set(by);let o='<~';for(let i=0;i<p.length;i+=4){let v=((p[i]<<24)|(p[i+1]<<16)|(p[i+2]<<8)|p[i+3])>>>0;if(v===0&&i+4<=by.length){o+='z';continue;}const c=[];for(let j=4;j>=0;j--){c[j]=String.fromCharCode(v%85+33);v=Math.floor(v/85);}const n=i+4>by.length?by.length-i+1:5;o+=c.slice(0,n).join('');}return o+'~>'}
 function b85d(s){const t=s.trim().replace(/^<~/,'').replace(/~>$/,'').replace(/\s/g,'');const b=[];let i=0;while(i<t.length){if(t[i]==='z'){b.push(0,0,0,0);i++;continue;}const g=t.slice(i,i+5);i+=5;let v=0;for(let j=0;j<g.length;j++)v=v*85+(g.charCodeAt(j)-33);if(g.length<5)for(let j=g.length;j<5;j++)v=v*85+84;b.push((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);if(g.length<5)b.splice(b.length-(5-g.length));}return DEC8(new Uint8Array(b))}
-// Base91
 const B91T='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
 function b91e(s){const d=ENC8(s);let b=0,n=0,o='';for(const byte of d){b|=byte<<n;n+=8;if(n>13){let v=b&8191;if(v>88){b>>=13;n-=13}else{v=b&16383;b>>=14;n-=14}o+=B91T[v%91]+B91T[Math.floor(v/91)];}}if(n){o+=B91T[b%91];if(n>7||b>90)o+=B91T[Math.floor(b/91)];}return o}
 function b91d(s){const T={};for(let i=0;i<91;i++)T[B91T[i]]=i;let v=-1,b=0,n=0;const out=[];for(const c of s.trim()){if(!(c in T))continue;const p=T[c];if(v<0){v=p}else{v+=p*91;b|=v<<n;n+=(v&8191)>88?13:14;v=-1;do{out.push(b&255);b>>=8;n-=8;}while(n>7);};}if(v>-1)out.push((b|v<<n)&255);return DEC8(new Uint8Array(out))}
-// UUencode
 function uue(s){const by=ENC8(s);let o='begin 644 f\n';for(let i=0;i<by.length;i+=45){const c=by.slice(i,i+45),l=c.length;let ln=String.fromCharCode(l+32);for(let j=0;j<c.length;j+=3){const a=c[j]||0,b2=c[j+1]||0,b3=c[j+2]||0;ln+=String.fromCharCode(((a>>2)&63)+32,(((a<<4)|(b2>>4))&63)+32,(((b2<<2)|(b3>>6))&63)+32,(b3&63)+32);}o+=ln+'\n';}return o+'`\nend'}
-function uud(s){const ls=s.trim().split('\n'),d=[];for(const ln of ls){if(!ln||ln.startsWith('begin')||ln==='end'||ln==='`')continue;const len=(ln.charCodeAt(0)-32)&63;for(let i=1;i+3<ln.length;){const a=(ln.charCodeAt(i++)-32)&63,b2=(ln.charCodeAt(i++)-32)&63,c=(ln.charCodeAt(i++)-32)&63,dv=(ln.charCodeAt(i++)-32)&63;d.push((a<<2)|(b2>>4),(b2<<4)|(c>>2),(c<<6)|dv);}while(d.length&&d[d.length-1]===0)d.pop();}return DEC8(new Uint8Array(d),false)||null}
+function uud(s){const ls=s.trim().split('\n'),d=[];for(const ln of ls){if(!ln||ln.startsWith('begin')||ln==='end'||ln==='`')continue;for(let i=1;i+3<ln.length;){const a=(ln.charCodeAt(i++)-32)&63,b2=(ln.charCodeAt(i++)-32)&63,c=(ln.charCodeAt(i++)-32)&63,dv=(ln.charCodeAt(i++)-32)&63;d.push((a<<2)|(b2>>4),(b2<<4)|(c>>2),(c<<6)|dv);}}while(d.length&&d[d.length-1]===0)d.pop();return DEC8(new Uint8Array(d),false)||null}
 
-// ══════════════════════════════════════════════════════════════════
-// ALL OPERATIONS (encode + decode for each)
-// Each op: id, name, cat, opts[], enc(s,o), dec(s,o)→string|null
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// ALL OPERATIONS
+// ══════════════════════════════════════════════════════
 const OPS=[
- // ── BaseN ──
  {id:'b64',n:'Base64',cat:'BaseN',pri:90,opts:[],
   enc:s=>{try{return btoa(unescape(encodeURIComponent(s)))}catch{return null}},
   dec(s){try{let t=s.trim().replace(/\s/g,'');while(t.length%4)t+='=';const r=sb64(t);if(!r)return null;try{return decodeURIComponent(escape(r))}catch{return printable(r)?r:null}}catch{return null}}},
@@ -438,307 +588,181 @@ const OPS=[
  {id:'b32',n:'Base32',cat:'BaseN',pri:86,opts:[],
   enc(s){const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return o},
   dec(s){try{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';const inp=s.trim().toUpperCase().replace(/=/g,'');let bits='',o='';for(const c of inp){const i=a.indexOf(c);if(i<0)return null;bits+=i.toString(2).padStart(5,'0');}for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));return printable(o)?o:null}catch{return null}}},
- {id:'b16',n:'Hex / Base16',cat:'BaseN',pri:89,opts:[{id:'s',l:'Sep',t:'sel',ch:['space','none','colon'],d:'space'}],
+ {id:'hex',n:'Hex/Base16',cat:'BaseN',pri:89,opts:[{id:'s',l:'Sep',t:'sel',ch:['space','none','colon'],d:'space'}],
   enc:(s,o)=>{const sep={'space':' ','none':'','colon':':'}[o.s||'space'];return[...s].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep)},
   dec(s){try{const c=s.trim().replace(/0x/gi,'').replace(/[\s:,]/g,'');if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2)return null;let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));return printable(o)?o:null}catch{return null}}},
- {id:'b85',n:'Base85 (Ascii85)',cat:'BaseN',pri:93,opts:[],
-  enc:s=>{try{return b85e(s)}catch{return null}},
-  dec(s){if(!s.trim().startsWith('<~'))return null;try{return b85d(s)}catch{return null}}},
- {id:'b91',n:'Base91',cat:'BaseN',pri:72,opts:[],
-  enc:s=>{try{return b91e(s)}catch{return null}},
-  dec:s=>{try{return b91d(s)}catch{return null}}},
- {id:'b92',n:'Base92',cat:'BaseN',pri:69,opts:[],
-  enc:s=>{try{return bEncB([...ENC8(s)],B92A)}catch{return null}},
-  dec:s=>{try{const b=bDecB(s.trim(),B92A);return b?DEC8(b):null}catch{return null}}},
- {id:'b58',n:'Base58',cat:'BaseN',pri:75,opts:[],
-  enc:s=>{try{return bEncB([...ENC8(s)],B58A)}catch{return null}},
-  dec:s=>{try{const b=bDecB(s.trim(),B58A);return b?DEC8(b):null}catch{return null}}},
- {id:'b62',n:'Base62',cat:'BaseN',pri:62,opts:[],
-  enc:s=>{try{return bEncB([...ENC8(s)],B62A)}catch{return null}},
-  dec:s=>{try{const b=bDecB(s.trim(),B62A);return b?DEC8(b):null}catch{return null}}},
- {id:'b36',n:'Base36',cat:'BaseN',pri:55,opts:[],
-  enc:s=>bEncB([...ENC8(s)],B36A),
-  dec:s=>{try{const b=bDecB(s.trim().toLowerCase(),B36A);return b?DEC8(b):null}catch{return null}}},
- // ── Encoding ──
- {id:'bin',n:'Binary',cat:'Encoding',pri:92,opts:[],
-  enc:s=>[...s].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' '),
-  dec(s){try{const c=s.trim().replace(/\s/g,'');if(!/^[01]+$/.test(c)||c.length%8)return null;let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));return printable(o)?o:null}catch{return null}}},
- {id:'oct',n:'Octal',cat:'Encoding',pri:84,opts:[],
-  enc:s=>[...s].map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' '),
-  dec(s){try{const t=s.trim().split(/\s+/);if(!t.every(x=>/^[0-7]{1,3}$/.test(x)))return null;const o=t.map(x=>String.fromCharCode(parseInt(x,8))).join('');return printable(o)?o:null}catch{return null}}},
- {id:'dec',n:'Decimal',cat:'Encoding',pri:83,opts:[],
-  enc:s=>[...s].map(c=>c.charCodeAt(0)).join(' '),
-  dec(s){try{const t=s.trim().split(/[\s,]+/);if(!t.every(x=>/^\d+$/.test(x)&&+x>=32&&+x<=126))return null;return t.map(x=>String.fromCharCode(+x)).join('')}catch{return null}}},
- {id:'url',n:'URL %enc',cat:'Encoding',pri:91,opts:[],
-  enc:s=>encodeURIComponent(s),
-  dec(s){try{const r=decodeURIComponent(s.trim());return r!==s.trim()&&printable(r)?r:null}catch{return null}}},
+ {id:'b85',n:'Base85',cat:'BaseN',pri:93,opts:[],enc:s=>{try{return b85e(s)}catch{return null}},dec(s){if(!s.trim().startsWith('<~'))return null;try{return b85d(s)}catch{return null}}},
+ {id:'b91',n:'Base91',cat:'BaseN',pri:72,opts:[],enc:s=>b91e(s),dec:s=>{try{return b91d(s)}catch{return null}}},
+ {id:'b92',n:'Base92',cat:'BaseN',pri:69,opts:[],enc:s=>bEncB([...ENC8(s)],B92A),dec:s=>{try{const b=bDecB(s.trim(),B92A);return b?DEC8(b):null}catch{return null}}},
+ {id:'b58',n:'Base58',cat:'BaseN',pri:75,opts:[],enc:s=>bEncB([...ENC8(s)],B58A),dec:s=>{try{const b=bDecB(s.trim(),B58A);return b?DEC8(b):null}catch{return null}}},
+ {id:'b62',n:'Base62',cat:'BaseN',pri:62,opts:[],enc:s=>bEncB([...ENC8(s)],B62A),dec:s=>{try{const b=bDecB(s.trim(),B62A);return b?DEC8(b):null}catch{return null}}},
+ {id:'b36',n:'Base36',cat:'BaseN',pri:55,opts:[],enc:s=>bEncB([...ENC8(s)],B36A),dec:s=>{try{const b=bDecB(s.trim().toLowerCase(),B36A);return b?DEC8(b):null}catch{return null}}},
+ {id:'bin',n:'Binary',cat:'Encoding',pri:92,opts:[],enc:s=>[...s].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' '),dec(s){try{const c=s.trim().replace(/\s/g,'');if(!/^[01]+$/.test(c)||c.length%8)return null;let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));return printable(o)?o:null}catch{return null}}},
+ {id:'oct',n:'Octal',cat:'Encoding',pri:84,opts:[],enc:s=>[...s].map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' '),dec(s){try{const t=s.trim().split(/\s+/);if(!t.every(x=>/^[0-7]{1,3}$/.test(x)))return null;const o=t.map(x=>String.fromCharCode(parseInt(x,8))).join('');return printable(o)?o:null}catch{return null}}},
+ {id:'dec',n:'Decimal',cat:'Encoding',pri:83,opts:[],enc:s=>[...s].map(c=>c.charCodeAt(0)).join(' '),dec(s){try{const t=s.trim().split(/[\s,]+/);if(!t.every(x=>/^\d+$/.test(x)&&+x>=32&&+x<=126))return null;return t.map(x=>String.fromCharCode(+x)).join('')}catch{return null}}},
+ {id:'url',n:'URL %enc',cat:'Encoding',pri:91,opts:[],enc:s=>encodeURIComponent(s),dec(s){try{const r=decodeURIComponent(s.trim());return r!==s.trim()&&printable(r)?r:null}catch{return null}}},
  {id:'html',n:'HTML Entities',cat:'Encoding',pri:89,opts:[{id:'m',l:'Mode',t:'sel',ch:['named','decimal','hex'],d:'named'}],
   enc:(s,o)=>{const nm={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};if((o.m||'named')==='named')return s.replace(/[&<>"']/g,c=>nm[c]||c);if(o.m==='decimal')return[...s].map(c=>`&#${c.charCodeAt(0)};`).join('');return[...s].map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('')},
   dec(s){if(!/&[#a-zA-Z]/.test(s))return null;const el=document.createElement('textarea');el.innerHTML=s;return el.value!==s?el.value:null}},
- {id:'uni',n:'Unicode \\u',cat:'Encoding',pri:88,opts:[],
-  enc:s=>[...s].map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join(''),
-  dec(s){if(!/\\u[0-9a-fA-F]{4}/.test(s))return null;let r=s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));r=r.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));return r!==s?r:null}},
- {id:'uu',n:'UUencode',cat:'Encoding',pri:90,opts:[],
-  enc:s=>{try{return uue(s)}catch{return null}},
-  dec:s=>{if(!s.trim().startsWith('begin '))return null;try{return uud(s)}catch{return null}}},
- // ── Cipher ──
- {id:'rot13',n:'ROT13',cat:'Cipher',pri:20,opts:[],
-  enc:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65)),
-  dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))}},
- {id:'rot47',n:'ROT47',cat:'Cipher',pri:18,opts:[],
-  enc:s=>s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94))),
-  dec(s){return s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))}},
- {id:'rot5',n:'ROT5',cat:'Cipher',pri:15,opts:[],
-  enc:s=>s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48)),
-  dec(s){return s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48))}},
- {id:'atbash',n:'Atbash',cat:'Cipher',pri:14,opts:[],
-  enc:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65))),
-  dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))}},
+ {id:'uni',n:'Unicode \\u',cat:'Encoding',pri:88,opts:[],enc:s=>[...s].map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join(''),dec(s){if(!/\\u[0-9a-fA-F]{4}/.test(s))return null;let r=s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));r=r.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));return r!==s?r:null}},
+ {id:'uu',n:'UUencode',cat:'Encoding',pri:90,opts:[],enc:s=>uue(s),dec(s){if(!s.trim().startsWith('begin '))return null;try{return uud(s)}catch{return null}}},
+ // Ciphers
+ {id:'rot13',n:'ROT13',cat:'Cipher',pri:20,opts:[],enc:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65)),dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))}},
+ {id:'rot47',n:'ROT47',cat:'Cipher',pri:18,opts:[],enc:s=>s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94))),dec(s){return s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))}},
+ {id:'rot5',n:'ROT5',cat:'Cipher',pri:15,opts:[],enc:s=>s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48)),dec(s){return s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48))}},
+ {id:'atbash',n:'Atbash',cat:'Cipher',pri:14,opts:[],enc:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65))),dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))}},
  {id:'caesar',n:'Caesar',cat:'Cipher',pri:25,opts:[{id:'n',l:'Shift',t:'range',min:1,max:25,d:'3'}],
   enc:(s,o)=>{const n=+(o.n||3);return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65))},
   dec:(s,o)=>{const n=+(o.n||3);return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65))}},
  {id:'vig',n:'Vigenère',cat:'Cipher',pri:22,opts:[{id:'k',l:'Key',t:'txt',pl:'SECRET',d:'KEY'}],
   enc:(s,o)=>{const k=((o.k||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key');let i=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b+sh)%26)+b)})},
   dec:(s,o)=>{const k=((o.k||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key');let i=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)})}},
- {id:'xor',n:'XOR',cat:'Cipher',pri:12,opts:[{id:'k',l:'Key(0-255)',t:'num',min:0,max:255,d:'42'}],
-  enc:(s,o)=>{const k=+(o.k||42);return[...s].map(c=>(c.charCodeAt(0)^k).toString(16).padStart(2,'0')).join(' ')},
-  dec:(s,o)=>{const k=+(o.k||42);const h=s.trim().replace(/\s/g,'');if(!/^[0-9a-fA-F]+$/.test(h)||h.length%2)return null;const bytes=[];for(let i=0;i<h.length;i+=2)bytes.push(parseInt(h.slice(i,i+2),16));const r=bytes.map(b=>String.fromCharCode(b^k)).join('');return printable(r)?r:null}},
+ {id:'xorb',n:'XOR (byte key)',cat:'Cipher',pri:12,opts:[{id:'k',l:'Key(0-255)',t:'num',min:0,max:255,d:'42'}],
+  enc:(s,o)=>{const k=+o.k||42;return[...s].map(c=>(c.charCodeAt(0)^k).toString(16).padStart(2,'0')).join(' ')},
+  dec:(s,o)=>{const k=+o.k||42;const h=s.trim().replace(/\s/g,'');if(!/^[0-9a-fA-F]+$/.test(h)||h.length%2)return null;const bytes=[];for(let i=0;i<h.length;i+=2)bytes.push(parseInt(h.slice(i,i+2),16));const r=bytes.map(b=>String.fromCharCode(b^k)).join('');return printable(r)?r:null}},
  {id:'morse',n:'Morse',cat:'Cipher',pri:95,opts:[],
   enc(s){const M={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};return s.toUpperCase().split('').map(c=>M[c]||'').filter(Boolean).join(' ')},
   dec(s){if(!/^[\s.\-/]+$/.test(s))return null;const M={'.-':'A','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-.....':'6','--....':'7','---..':'8','----.':'9','-----':'0'};return s.trim().split(/\s{2,}|\s*\/\s*/).map(w=>w.trim().split(/\s+/).map(sym=>M[sym]||'?').join('')).join(' ')||null}},
  {id:'bacon',n:"Bacon's",cat:'Cipher',pri:87,opts:[],
   enc(s){const M={A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'};return s.toUpperCase().split('').map(c=>M[c]||c).join(' ')},
   dec(s){if(!/^[abAB\s]+$/i.test(s.trim()))return null;const M={AAAAA:'A',AAAAB:'B',AAABA:'C',AAABB:'D',AABAA:'E',AABAB:'F',AABBA:'G',AABBB:'H',ABAAA:'I',ABAAB:'J',ABABA:'K',ABABB:'L',ABBAA:'M',ABBAB:'N',ABBBA:'O',ABBBB:'P',BAAAA:'Q',BAAAB:'R',BAABA:'S',BAABB:'T',BABAA:'U',BABAB:'V',BABBA:'W',BABBB:'X',BBAAA:'Y',BBAAB:'Z'};const c=s.trim().toUpperCase().replace(/\s/g,'');let o='';for(let i=0;i+5<=c.length;i+=5)o+=M[c.slice(i,i+5)]||'?';return/[A-Z]/.test(o)?o:null}},
- {id:'a1z26',n:'A1Z26',cat:'Cipher',pri:85,opts:[],
-  enc:s=>s.toUpperCase().split('').map(c=>{const n=c.charCodeAt(0)-64;return n>=1&&n<=26?n:c}).join(' '),
-  dec(s){const t=s.trim().split(/[\s,\-]+/);if(!t.every(x=>/^\d+$/.test(x)&&+x>=1&&+x<=26))return null;return t.map(x=>String.fromCharCode(+x+64)).join('')}},
- {id:'polybius',n:'Polybius',cat:'Cipher',pri:80,opts:[],
-  enc(s){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];return s.toUpperCase().replace(/J/g,'I').split('').map(c=>{for(let r=0;r<5;r++){const ci=G[r].indexOf(c);if(ci>=0)return`${r+1}${ci+1}`;}return c}).join(' ')},
-  dec(s){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];const c=s.trim().replace(/\s/g,'');if(!/^[1-5]+$/.test(c)||c.length%2)return null;let o='';for(let i=0;i+1<c.length;i+=2){const r=+c[i]-1,cl=+c[i+1]-1;if(r>=0&&r<5&&cl>=0&&cl<5)o+=G[r][cl];}return o||null}},
+ {id:'a1z26',n:'A1Z26',cat:'Cipher',pri:85,opts:[],enc:s=>s.toUpperCase().split('').map(c=>{const n=c.charCodeAt(0)-64;return n>=1&&n<=26?n:c}).join(' '),dec(s){const t=s.trim().split(/[\s,\-]+/);if(!t.every(x=>/^\d+$/.test(x)&&+x>=1&&+x<=26))return null;return t.map(x=>String.fromCharCode(+x+64)).join('')}},
+ {id:'polybius',n:'Polybius',cat:'Cipher',pri:80,opts:[],enc(s){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];return s.toUpperCase().replace(/J/g,'I').split('').map(c=>{for(let r=0;r<5;r++){const ci=G[r].indexOf(c);if(ci>=0)return`${r+1}${ci+1}`;}return c}).join(' ')},dec(s){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];const c=s.trim().replace(/\s/g,'');if(!/^[1-5]+$/.test(c)||c.length%2)return null;let o='';for(let i=0;i+1<c.length;i+=2){const r=+c[i]-1,cl=+c[i+1]-1;if(r>=0&&r<5&&cl>=0&&cl<5)o+=G[r][cl];}return o||null}},
  {id:'nato',n:'NATO Phonetic',cat:'Cipher',pri:93,opts:[],
   enc(s){const M={A:'Alpha',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliet',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'Xray',Y:'Yankee',Z:'Zulu'};return s.toUpperCase().split('').map(c=>M[c]||c).join('-')},
   dec(s){const N=new Set(['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY','XRAY','YANKEE','ZULU']);const M={ALPHA:'A',BRAVO:'B',CHARLIE:'C',DELTA:'D',ECHO:'E',FOXTROT:'F',GOLF:'G',HOTEL:'H',INDIA:'I',JULIET:'J',KILO:'K',LIMA:'L',MIKE:'M',NOVEMBER:'N',OSCAR:'O',PAPA:'P',QUEBEC:'Q',ROMEO:'R',SIERRA:'S',TANGO:'T',UNIFORM:'U',VICTOR:'V',WHISKEY:'W',XRAY:'X',YANKEE:'Y',ZULU:'Z'};const W=s.trim().toUpperCase().split(/[\s,\-]+/);if(W.filter(w=>N.has(w)).length/W.length<.5)return null;return W.map(w=>M[w]||w).join('')}},
- {id:'rev',n:'Reversed',cat:'Cipher',pri:10,opts:[],
-  enc:s=>s.split('').reverse().join(''),
-  dec:s=>s.split('').reverse().join('')},
- {id:'leet',n:'Leetspeak',cat:'Cipher',pri:8,opts:[],
-  enc(s){const M={a:'4',e:'3',i:'1',o:'0',s:'5',t:'7',l:'|',g:'9'};return s.toLowerCase().replace(/[aeiostlg]/g,c=>M[c]||c)},
-  dec(s){const M={'0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','!':'i','$':'s','|':'l'};return s.replace(/[013457@!$|]/g,c=>M[c]||c)}},
+ {id:'rev',n:'Reversed',cat:'Cipher',pri:10,opts:[],enc:s=>s.split('').reverse().join(''),dec:s=>s.split('').reverse().join('')},
+ {id:'leet',n:'Leetspeak',cat:'Cipher',pri:8,opts:[],enc(s){const M={a:'4',e:'3',i:'1',o:'0',s:'5',t:'7',l:'|',g:'9'};return s.toLowerCase().replace(/[aeiostlg]/g,c=>M[c]||c)},dec(s){const M={'0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','!':'i','$':'s','|':'l'};return s.replace(/[013457@!$|]/g,c=>M[c]||c)}},
  {id:'jwt',n:'JWT',cat:'Token',pri:97,opts:[],
-  enc(s){try{const p=JSON.parse(s);const h={alg:'HS256',typ:'JWT'};const e=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');return e(h)+'.'+e(p)+'.[signature]'}catch{const h={alg:'HS256',typ:'JWT'};const e=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');return e(h)+'.'+e({data:s,iat:Math.floor(Date.now()/1e3)})+'.[signature]'}},
-  dec(s){if(!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s.trim()))return null;try{const p=s.trim().split('.');const d=x=>{let t=x.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return JSON.stringify(JSON.parse(atob(t)),null,2)};return`HEADER:\n${d(p[0])}\n\nPAYLOAD:\n${d(p[1])}\n\nSIG: ${p[2]}`}catch{return null}}},
+  enc(s){try{const h={alg:'HS256',typ:'JWT'},e=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');return e(h)+'.'+e(JSON.parse(s))+'.[signature]'}catch{const h={alg:'HS256',typ:'JWT'},e=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');return e(h)+'.'+e({data:s,iat:Math.floor(Date.now()/1e3)})+'.[signature]'}},
+  dec(s){if(!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s.trim()))return null;try{const p=s.trim().split('');return null}catch{return null};try{const p=s.trim().split('.');const d=x=>{let t=x.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return JSON.stringify(JSON.parse(atob(t)),null,2)};return`HEADER:\n${d(p[0])}\n\nPAYLOAD:\n${d(p[1])}\n\nSIG: ${p[2]}`}catch{return null}}},
 ];
+// Fix JWT dec
+OPS.find(o=>o.id==='jwt').dec=function(s){
+  if(!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s.trim()))return null;
+  try{const p=s.trim().split('.');const d=x=>{let t=x.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return JSON.stringify(JSON.parse(atob(t)),null,2)};return`HEADER:\n${d(p[0])}\n\nPAYLOAD:\n${d(p[1])}\n\nSIG: ${p[2]}`}catch{return null}
+};
 
-// ══════════════════════════════════════════════════════════════════
-// VIGENÈRE AUTO-CRACK (IC method — same as Ciphey/CyberChef)
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// VIGENÈRE IC AUTO-CRACK
+// ══════════════════════════════════════════════════════
 function vigIC(t){if(t.length<2)return 0;const f={};for(const c of t)f[c]=(f[c]||0)+1;let s=0;for(const k in f)s+=f[k]*(f[k]-1);return s/(t.length*(t.length-1))}
-function vigKeyLen(L){let b=1,bi=0;for(let len=2;len<=Math.min(20,Math.floor(L.length/4));len++){const st=Array.from({length:len},(_,i)=>L.split('').filter((_,j)=>j%len===i).join(''));const avg=st.reduce((s,x)=>s+vigIC(x),0)/len;if(avg>bi){bi=avg;b=len;}}return b}
-function vigKey(L,len){let k='';for(let i=0;i<len;i++){const st=L.split('').filter((_,j)=>j%len===i).join('');const f=Array(26).fill(0);for(const c of st)f[c.charCodeAt(0)-65]++;const tot=st.length||1;let b=0,bs=-1/0;for(let sh=0;sh<26;sh++){let sc=0;for(let j=0;j<26;j++)sc+=(EN_FREQ[String.fromCharCode(97+j)]||0)*(f[(j+sh)%26]/tot);if(sc>bs){bs=sc;b=sh;}}k+=String.fromCharCode(65+b);}return k}
+function vigKL(L){let b=1,bi=0;for(let len=2;len<=Math.min(20,Math.floor(L.length/4));len++){const st=Array.from({length:len},(_,i)=>L.split('').filter((_,j)=>j%len===i).join(''));const avg=st.reduce((s,x)=>s+vigIC(x),0)/len;if(avg>bi){bi=avg;b=len;}}return b}
+function vigKey(L,len){let k='';for(let i=0;i<len;i++){const st=L.split('').filter((_,j)=>j%len===i).join('');const f=Array(26).fill(0);for(const c of st)f[c.charCodeAt(0)-65]++;const tot=st.length||1;let b=0,bs=-Infinity;for(let sh=0;sh<26;sh++){let sc=0;for(let j=0;j<26;j++)sc+=(EN_F[String.fromCharCode(97+j)]||0)*(f[(j+sh)%26]/tot);if(sc>bs){bs=sc;b=sh;}}k+=String.fromCharCode(65+b);}return k}
 function vigDec(s,key){const k=key.toLowerCase();let ki=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)})}
 function tryVig(s){
   const t=s.trim().replace(/\s/g,'');
-  // Don't fire on known encoding formats
   if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null;
   if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null;
+  if(langScore(s)>0.15)return null;
   const L=s.toUpperCase().replace(/[^A-Z]/g,'');
-  if(L.length<30)return null; // need enough text for reliable IC
-  if(score(s)>0.15)return null; // already readable — don't touch it
+  if(L.length<30)return null;
   const ic=vigIC(L);
-  if(ic>0.063||ic<0.040)return null; // must be in polyalphabetic range
-  const kl=vigKeyLen(L);if(kl<2)return null;
+  if(ic>0.063||ic<0.040)return null;
+  const kl=vigKL(L);if(kl<2)return null;
   const key=vigKey(L,kl);
   const dec=vigDec(s,key);
-  const sc=score(dec);
-  if(sc<0.20)return null; // output must clearly look like English
+  const sc=langScore(dec);
+  if(sc<0.20)return null;
   return{r:dec,key,kl,sc}
 }
-
-// Caesar best-fit (strict — no base64/hex false positives)
 function tryCaesar(s){
   const t=s.trim().replace(/\s/g,'');
   if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null;
   if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null;
   if(/^[A-Z2-7]+=*$/i.test(t))return null;
+  if(langScore(s)>0.15)return null;
   const L=s.toUpperCase().replace(/[^A-Z]/g,'');
-  if(L.length<8||score(s)>0.18)return null;
-  let best=null,bs=-1/0;
-  for(let n=1;n<=25;n++){
-    const dec=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));
-    const sc=score(dec);if(sc>bs){bs=sc;best={dec,n,sc};}
-  }
-  return best&&best.sc>0.30?best:null;
+  if(L.length<8)return null;
+  let best=null,bs=-Infinity;
+  for(let n=1;n<=25;n++){const dec=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));const sc=langScore(dec);if(sc>bs){bs=sc;best={dec,n,sc};}}
+  return best&&best.sc>0.32?best:null;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SPECULATIVE BRANCHING ENGINE  (v7.1 — fixed)
-// Inspired by CyberChef Magic:
-//   1. Try ALL ops at each node
-//   2. Score with chi² + dictionary
-//   3. Recurse on top branches
-//   4. NEVER reuse the same op class in one path (prevents loops)
-//   5. Detect misplaced Base64 padding (=xxx pattern)
-// ══════════════════════════════════════════════════════════════════
-
-const STRUCTURAL=new Set(OPS.filter(o=>o.cat!=='Cipher'||['morse','nato','bacon','a1z26','polybius'].includes(o.id)).map(o=>o.id));
+// ══════════════════════════════════════════════════════
+// SPECULATIVE ENGINE — no loops, proper stop conditions
+// ══════════════════════════════════════════════════════
 const AMBIG=new Set(['rot13','rot47','rot5','atbash','rev','leet']);
-// Ops that are self-inverse — applying twice returns original
-const SELF_INVERSE=new Set(['rot13','rot47','rot5','atbash','rev']);
-// Ops that commonly produce false positives on random text
-const RISKY=new Set(['vig-auto','caesar-auto','rot13','rot47','rot5','atbash','rev','leet','b62','b36','b92','b91']);
 
-function candidateScore(text){
-  if(!printable(text))return -1;
-  return score(text);
-}
-
-function tryOp(op,s,opts={}){
-  try{
-    const r=op.dec(s,opts);
-    if(!r||r===s||!printable(r))return null;
-    return r;
-  }catch{return null}
-}
-
-// Detect =XXXX pattern (Base64 padding at wrong end)
-function tryMisplacedPadding(s){
+function tryMisplacedPad(s){
   const t=s.trim();
-  // Pattern: starts with = (padding at front instead of back)
-  if(t.startsWith('=')){
-    const fixed=t.replace(/^=+/,'')+'='.repeat(t.match(/^=+/)[0].length);
-    return fixed;
-  }
-  // Pattern: ends with = but also needs checking if reversed = valid b64
+  if(t.startsWith('=')){const fixed=t.replace(/^=+/,'')+'='.repeat((t.match(/^=+/)||[''])[0].length);return fixed;}
   return null;
 }
 
-// One speculative pass — returns branches sorted by score
-// usedOps = set of op IDs already used in this path (prevents cycling)
-function speculativePass(s,usedOps=new Set()){
+function speculativePass(s,usedOps){
   const branches=[];
-
-  // ── 0. Misplaced padding detector (before anything else) ──
-  const padFixed=tryMisplacedPadding(s);
+  // Misplaced padding
+  const padFixed=tryMisplacedPad(s);
   if(padFixed&&!usedOps.has('pad-fix')){
-    // Try Base64 decode of the padding-fixed string
     const b64op=OPS.find(o=>o.id==='b64');
-    if(b64op){
-      const r=tryOp(b64op,padFixed);
-      if(r)branches.push({op:'Fix-padding→Base64',id:'pad-fix+b64',r,sc:candidateScore(r)});
-    }
+    if(b64op){try{const r=b64op.dec(padFixed);if(r&&printable(r))branches.push({op:'Fix-padding→Base64',id:'pad-fix+b64',r,sc:langScore(r)});}catch{}}
   }
-
-  // ── 1. All structural ops (deterministic, high confidence) ──
+  // All non-ambiguous ops
   for(const op of [...OPS].sort((a,b)=>(b.pri||0)-(a.pri||0))){
-    if(AMBIG.has(op.id))continue;
-    if(usedOps.has(op.id))continue; // don't reuse same op in same path
-    const r=tryOp(op,s);
-    if(r){branches.push({op:op.n,id:op.id,r,sc:candidateScore(r)});}
+    if(AMBIG.has(op.id)||usedOps.has(op.id))continue;
+    let r=null;try{r=op.dec(s,{})}catch{}
+    if(r&&r!==s&&printable(r)&&!usedOps.has(r.trim()))branches.push({op:op.n,id:op.id,r,sc:langScore(r)});
   }
-
-  // ── 2. Reversed input through structural ops ──
+  // Reversed input through structural ops
   if(!usedOps.has('rev')){
     const rev=s.split('').reverse().join('');
-    if(rev!==s){
-      for(const op of OPS.filter(o=>!AMBIG.has(o.id)&&o.cat!=='Cipher'&&!usedOps.has('rev+'+o.id))){
-        const r=tryOp(op,rev);
-        if(r){branches.push({op:`Rev→${op.n}`,id:'rev+'+op.id,r,sc:candidateScore(r)});}
-      }
+    for(const op of OPS.filter(o=>!AMBIG.has(o.id)&&o.cat!=='Cipher'&&!usedOps.has('rev+'+o.id))){
+      let r=null;try{r=op.dec(rev,{})}catch{}
+      if(r&&r!==s&&printable(r))branches.push({op:`Reverse→${op.n}`,id:'rev+'+op.id,r,sc:langScore(r)});
     }
   }
-
-  // ── 3. Vigenère IC crack — ONLY if not already used and IC is in range ──
-  // Key guard: only fire once per path, and require output to clearly improve
-  if(!usedOps.has('vig-auto')){
+  // Vigenère (once)
+  if(!usedOps.has('vig-auto')&&langScore(s)<0.12){
     const vig=tryVig(s);
-    if(vig&&vig.sc>0.20){
-      // Extra guard: Vigenère should only fire if current text is NOT already readable
-      const curSc=score(s);
-      if(curSc<0.12){
-        branches.push({op:`Vigenère(key:"${vig.key}")`,id:'vig-auto',r:vig.r,sc:vig.sc});
-      }
-    }
+    if(vig)branches.push({op:`Vigenère(key:"${vig.key}")`,id:'vig-auto',r:vig.r,sc:vig.sc});
   }
-
-  // ── 4. Caesar chi² — strict guards ──
-  if(!usedOps.has('caesar-auto')){
+  // Caesar (once)
+  if(!usedOps.has('caesar-auto')&&langScore(s)<0.12){
     const cae=tryCaesar(s);
-    if(cae&&cae.sc>0.32){
-      const curSc=score(s);
-      if(curSc<0.15){
-        branches.push({op:`Caesar+${cae.n}`,id:'caesar-auto',r:cae.dec,sc:cae.sc});
-      }
-    }
+    if(cae)branches.push({op:`Caesar+${cae.n}`,id:'caesar-auto',r:cae.dec,sc:cae.sc});
   }
-
-  // ── 5. Ambiguous ciphers — only if score very high AND not already used ──
-  for(const op of OPS.filter(o=>AMBIG.has(o.id))){
-    if(usedOps.has(op.id))continue;
-    // Self-inverse: skip if we already applied a different ambig cipher (prevents ping-pong)
-    const r=tryOp(op,s);
-    if(r){
-      const sc=candidateScore(r);
-      if(sc>0.32&&score(s)<0.15){
-        branches.push({op:op.n,id:op.id,r,sc});
-      }
-    }
+  // Ambiguous — only if very high score AND not already used
+  for(const op of OPS.filter(o=>AMBIG.has(o.id)&&!usedOps.has(o.id))){
+    let r=null;try{r=op.dec(s,{})}catch{}
+    if(r&&r!==s&&printable(r)){const sc=langScore(r);if(sc>0.32&&langScore(s)<0.12)branches.push({op:op.n,id:op.id,r,sc});}
   }
-
   return branches.sort((a,b)=>b.sc-a.sc);
 }
 
-// Recursive speculative execution
-// Key changes vs v7.0:
-//   - usedOps set passed down each path — prevents same op being reused
-//   - maxBranches=3 (not 5) — faster, fewer false paths
-//   - Depth limited to 12 (not 20) — base encodings rarely nest >10 deep
-//   - Minimum improvement threshold — only recurse if output score improved
-function specExecute(input,maxDepth=12,maxBranches=3){
-  const globalSeen=new Set([input.trim()]);
+function specExecute(input){
+  const seen=new Set([input.trim()]);
   let bestPath=null,bestScore=-1;
-
   function recurse(s,path,depth,usedOps){
-    if(depth>=maxDepth)return;
-    const curScore=score(s);
-    const branches=speculativePass(s,usedOps).slice(0,maxBranches);
+    if(depth>=15)return;
+    const curSc=langScore(s);
+    const branches=speculativePass(s,usedOps).slice(0,3);
     for(const b of branches){
-      if(globalSeen.has(b.r.trim()))continue;
-      globalSeen.add(b.r.trim());
+      if(seen.has(b.r.trim()))continue;
+      seen.add(b.r.trim());
       const newPath=[...path,{op:b.op,id:b.id,in:s,out:b.r,sc:b.sc}];
-      const sc=score(b.r);
-      // Track this op as used in this branch's path
+      const sc=langScore(b.r);
       const newUsed=new Set([...usedOps,b.id]);
       if(sc>bestScore){bestScore=sc;bestPath=newPath;}
-      // Stop if we have great plaintext
       if(sc>0.40)continue;
-      // Only recurse if: output looks like another encoding (low score but printable)
-      // OR score improved meaningfully over input
-      if(sc>curScore+0.02||sc<0.15){
-        recurse(b.r,newPath,depth+1,newUsed);
-      }
+      if(sc>curSc+0.02||sc<0.12)recurse(b.r,newPath,depth+1,newUsed);
     }
   }
-
   recurse(input,[],0,new Set());
-  if(!bestPath||bestScore<0.05)return null;
-  return{path:bestPath,final:bestPath[bestPath.length-1].out,sc:bestScore};
+  return bestPath&&bestScore>0.05?{path:bestPath,final:bestPath[bestPath.length-1].out,sc:bestScore}:null;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// UI — DECODER
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// DECODER UI
+// ══════════════════════════════════════════════════════
 let decMode='auto',manOpId=OPS[0].id,manOpts={},manIter=1;
-
 function pg(on){$('dpg').classList.toggle('run',on)}
 function onDI(){
   const v=$('di').value;
   $('dic').textContent=v.length+' chars';
-  if(v.trim()){
-    $('dient').style.display='';$('dev').textContent=shan(v);
-    $('discr').style.display='';$('dsc').textContent=chiSq(v).toFixed(1);
-  }
+  if(v.trim()){$('dient').style.display='';$('dev').textContent=shan(v);$('discr').style.display='';$('dsc').textContent=chiSq(v).toFixed(1);}
 }
-function setDMode(m){
+function setDM(m){
   decMode=m;
   ['Auto','Manual','Brute'].forEach(x=>$('ms'+x).classList.toggle('active',x.toLowerCase()===m));
   $('man-panel').style.display=m==='manual'?'block':'none';
@@ -748,27 +772,88 @@ function setDMode(m){
   if(m==='auto'&&$('di').value.trim())magic();
   if(m==='brute'&&$('di').value.trim())runBrute(false);
 }
-function revIn(){const v=$('di').value;$('di').value=v.split('').reverse().join('');onDI();}
+function revIn(){$('di').value=$('di').value.split('').reverse().join('');onDI()}
+function clDec(){$('di').value='';clDecOut();$('dic').textContent='0 chars';$('dient').style.display='none';$('discr').style.display='none';}
+function clDecOut(){$('auto-out').innerHTML='';$('man-out').innerHTML='';$('brute-out').innerHTML='';$('no-res').style.display='none';$('auto-det-bar').style.display='none';}
 
 function magic(){
   const inp=$('di').value;
   if(!inp.trim()){clDecOut();return}
   pg(true);$('auto-out').style.display='block';
-  $('auto-out').innerHTML='<div style="font-family:var(--mono);font-size:.58rem;color:var(--dim);padding:.5rem 0">⚡ Speculative branching…</div>';
+  $('auto-out').innerHTML='<div style="font-family:var(--mono);font-size:.56rem;color:var(--dim);padding:.4rem 0">⚡ Speculative branching…</div>';
+
   setTimeout(()=>{
     try{
-      // Detect bar
-      const dets=OPS.filter(op=>{try{const r=op.dec(inp);return r&&r!==inp}catch{return false}}).map(o=>o.n);
-      if(dets.length){$('dettags').innerHTML=dets.slice(0,8).map(n=>`<span class="chip cb">${esc(n)}</span>`).join(' ');$('detbar').className='detbar show';}
-      else $('detbar').className='detbar';
+      // 1. First: identify if it's a hash — stop immediately if so
+      const hashIds=identifyHash(inp.trim());
+      // Check if base64 decodes to a hex string that is a hash
+      let secondLayerHashIds=[];
+      try{
+        const b64dec=OPS.find(o=>o.id==='b64').dec(inp);
+        if(b64dec){
+          const hexCheck=b64dec.trim();
+          if(/^[0-9a-fA-F]+$/.test(hexCheck)){
+            secondLayerHashIds=identifyHash(hexCheck);
+          }
+        }
+      }catch{}
 
-      const res=specExecute(inp,20,5);
+      if(hashIds.length>0||secondLayerHashIds.length>0){
+        pg(false);
+        renderHashResult(inp,hashIds,secondLayerHashIds);
+        return;
+      }
+
+      // 2. Detect bar
+      const dets=OPS.filter(op=>{try{const r=op.dec(inp,{});return r&&r!==inp}catch{return false}}).map(o=>o.n);
+      const db=$('auto-det-bar');
+      if(dets.length){
+        $('det-tags').innerHTML=dets.slice(0,8).map(n=>`<span class="chip cb">${esc(n)}</span>`).join(' ');
+        db.style.display='flex';
+      }
+
+      // 3. Speculative decode
+      const res=specExecute(inp);
       pg(false);
       if(!res){$('auto-out').innerHTML='';$('no-res').style.display='block';return;}
       $('no-res').style.display='none';
       renderAutoResult(inp,res);
     }catch(e){pg(false);console.error(e);}
-  },60);
+  },50);
+}
+
+function renderHashResult(inp,hashIds,secondLayerHashIds){
+  const all=[...hashIds,...secondLayerHashIds];
+  const firstMatch=all[0];
+  let stepsHtml='';
+  if(secondLayerHashIds.length>0&&hashIds.length===0){
+    stepsHtml=`<div class="hw-row"><span class="hw-label">Layer 1:</span><span style="color:var(--dim)">Base64 encoding</span></div>
+    <div class="hw-row"><span class="hw-label">Layer 2 (hex):</span><span class="hw-val">${esc(OPS.find(o=>o.id==='b64').dec(inp)||'')}</span></div>`;
+  }
+  const layerNote=secondLayerHashIds.length>0?'Base64 → Hex → Hash':'Direct hex hash';
+  $('auto-out').innerHTML=`
+    <div class="hash-warn">
+      <div class="hw-title">⚠ This is a Cryptographic Hash — One-Way Operation</div>
+      <div class="hw-body">
+        This data is <b>not encoded text</b> — it is a cryptographic hash output.<br>
+        Hashes are <b>mathematically irreversible</b>. No tool on earth (CyberChef, Ciphey, dCode.fr, or anything else) can recover the original plaintext from a hash.<br><br>
+        <b>What you can do:</b><br>
+        → Switch to the <b>🔐 Crypto Decrypt</b> tab to verify this hash against a known plaintext<br>
+        → Use rainbow tables (only works for common passwords: <a href="https://crackstation.net" target="_blank" style="color:var(--B)">crackstation.net</a>)<br>
+        → If this is HMAC: you can verify with the key, but cannot reverse it<br><br>
+        <div class="hw-row"><span class="hw-label">Structure:</span><span style="color:var(--C)">${esc(layerNote)}</span></div>
+        <div class="hw-row"><span class="hw-label">Hash type(s):</span><span class="hw-val">${all.map(h=>h.names[0]).join(' | ')}</span></div>
+        <div class="hw-row"><span class="hw-label">Category:</span><span style="color:var(--Y)">${esc(firstMatch?.cat||'Hash')}</span></div>
+        <div class="hw-row"><span class="hw-label">Bit length:</span><span style="color:var(--G)">${(firstMatch?.len||0)*4} bits (${firstMatch?.len||0} hex chars)</span></div>
+        <div class="hw-row"><span class="hw-label">Note:</span><span style="color:var(--Y)">${esc(firstMatch?.note||'One-way — cannot be reversed')}</span></div>
+        ${stepsHtml}
+        <div class="hw-row"><span class="hw-label">Raw value:</span><span class="hw-val" style="font-size:.55rem">${esc(inp)}</span></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="sw('crypto',document.querySelectorAll('.tab')[2]);setTimeout(()=>{$('ci').value=${JSON.stringify(inp)};onCI()},100)">→ Open in Crypto tab</button>
+      <button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(inp)},this)">Copy hash</button>
+    </div>`;
 }
 
 function renderAutoResult(inp,res){
@@ -776,31 +861,31 @@ function renderAutoResult(inp,res){
   const scChip=sc>0.35?'cg':sc>0.18?'cy':'cd';
   const ops=path.map(p=>p.op).join(' → ');
   let chainHtml='';
-  if(path.length>1){
+  if(path.length>0){
     chainHtml=`<div style="margin-top:.5rem">
       <button class="chain-toggle" id="ctog" onclick="togChain()">
         <span class="ct-arr">▶</span>
-        <span id="ctlbl">Show ${path.length}-step decode chain</span>
+        <span id="ctlbl">Show decode chain (${path.length} step${path.length>1?'s':''})</span>
       </button>
       <div class="chain-body" id="cbody">
         ${layHtml(-1,'original',inp,'var(--dim)',false)}
         ${path.map((p,i)=>`
-          <div style="padding:.08rem 0 .08rem 11px;font-family:var(--mono);font-size:.48rem;color:${lc(i)}">↓ ${esc(p.op)}${p.sc>0?` (${(p.sc*100).toFixed(0)}%)`:''}</div>
+          <div style="padding:.08rem 0 .08rem 11px;font-family:var(--mono);font-size:.46rem;color:${lc(i)}">↓ ${esc(p.op)}${p.sc>0?` (${(p.sc*100).toFixed(0)}%)`:''}</div>
           ${layHtml(i,p.op,p.out,lc(i),i===path.length-1)}
         `).join('')}
       </div>
     </div>`;
   }
-  $('auto-out').innerHTML=`<div class="res-wrap">
+  $('auto-out').innerHTML=`
     <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap">
       <span style="font-weight:700">${path.length>1?`${path.length} layers peeled`:'Decoded'}</span>
-      <span class="chip cg">✓ ${esc(ops)}</span>
+      <span class="chip cg">✓ ${esc(ops.length>80?ops.slice(0,80)+'…':ops)}</span>
       <span class="chip ${scChip}">lang ${(sc*100).toFixed(0)}%</span>
     </div>
     <div class="res-box">
       <div class="rb-head">
-        <span class="rb-title">✓ plain text${path.length>1?` · ${path.length}× peeled`:''}</span>
-        <div style="display:flex;gap:.3rem">
+        <span class="rb-title">✓ plain text result${path.length>1?` · ${path.length}× peeled`:''}</span>
+        <div style="display:flex;gap:.3rem;align-items:center">
           <span class="chip cd">${final.length} chars</span>
           <button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(final)},this)">Copy</button>
         </div>
@@ -810,251 +895,350 @@ function renderAutoResult(inp,res){
         <span class="rb-stat">entropy ${shan(final)} · chi² ${chiSq(final).toFixed(2)} · score ${(sc*100).toFixed(0)}%</span>
         <div style="display:flex;gap:.3rem">
           <button class="btn btn-ghost btn-sm" onclick="reuse(${JSON.stringify(final)})">Re-decode</button>
-          <button class="btn btn-ghost btn-sm" onclick="revAndReuse(${JSON.stringify(final)})">⇄ Reverse & re-decode</button>
+          <button class="btn btn-ghost btn-sm" onclick="revReuse(${JSON.stringify(final)})">⇄ Reverse & re-decode</button>
         </div>
       </div>
     </div>
-    ${chainHtml}
-  </div>`;
+    ${chainHtml}`;
 }
-
-function layHtml(i,name,text,col,isFinal){
-  return`<div class="lay">
-    <div class="lay-side">
-      <div class="lay-dot" style="border-color:${col};${isFinal?'background:'+col:''}"></div>
-      ${!isFinal?'<div class="lay-line"></div>':''}
-    </div>
-    <div class="lay-card" style="${isFinal?'border-color:'+col:''}">
-      <div class="lh">
-        <span class="ln" style="color:${col}">${i<0?'input':`step ${i+1}`}</span>
-        <span class="lname" style="color:${col}">${esc(name)}</span>
-        <span class="llen">${text.length}ch</span>
-        <button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(text)},this)">Copy</button>
-      </div>
-      <div class="lbody">${esc(text)}</div>
-    </div>
-  </div>`;
-}
-
+function layHtml(i,name,text,col,isFinal){return`<div class="clayer"><div class="cl-side"><div class="cl-dot" style="border-color:${col};${isFinal?'background:'+col:''}"></div>${!isFinal?'<div class="cl-line"></div>':''}</div><div class="cl-card" style="${isFinal?'border-color:'+col:''}"><div class="clh"><span class="cln" style="color:${col}">${i<0?'input':`step ${i+1}`}</span><span class="clname" style="color:${col}">${esc(name)}</span><span class="cllen">${text.length}ch</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(text)},this)">Copy</button></div><div class="clbody">${esc(text)}</div></div></div>`}
 function togChain(){const b=$('cbody'),btn=$('ctog'),lbl=$('ctlbl');b.classList.toggle('open');btn.classList.toggle('ct-open');lbl.textContent=b.classList.contains('open')?'Hide chain':'Show decode chain';}
 function reuse(t){$('di').value=t;onDI();magic()}
-function revAndReuse(t){$('di').value=t.split('').reverse().join('');onDI();magic()}
-function clDec(){$('di').value='';clDecOut();$('dic').textContent='0 chars';$('dient').style.display='none';$('discr').style.display='none';}
-function clDecOut(){$('auto-out').innerHTML='';$('man-out').innerHTML='';$('brute-out').innerHTML='';$('no-res').style.display='none';$('detbar').className='detbar';}
+function revReuse(t){$('di').value=t.split('').reverse().join('');onDI();magic()}
 
-// ── MANUAL ──
+// MANUAL
 function buildManGrid(){
-  const g=$('man-op-grid');
-  const cats=[...new Set(OPS.map(o=>o.cat))];
-  let h='';
-  cats.forEach(cat=>{
-    h+=`<span style="font-family:var(--mono);font-size:.46rem;color:var(--mute);align-self:center;padding:0 .2rem">${cat}</span>`;
-    OPS.filter(o=>o.cat===cat).forEach(o=>h+=`<button class="btn btn-ghost btn-sm${o.id===manOpId?' cg':''}" id="mop-${o.id}" onclick="selManOp('${o.id}')">${o.n}</button>`);
-  });
+  const g=$('man-op-grid');const cats=[...new Set(OPS.map(o=>o.cat))];let h='';
+  cats.forEach(cat=>{h+=`<span class="cat-sep">${cat}</span>`;OPS.filter(o=>o.cat===cat).forEach(o=>h+=`<button class="mc${o.id===manOpId?' sel':''}" id="mop-${o.id}" onclick="selMOP('${o.id}')">${o.n}</button>`);});
   g.innerHTML=h;
 }
-function selManOp(id){
-  manOpId=id;manOpts={};
-  document.querySelectorAll('#man-op-grid .btn').forEach(b=>b.classList.remove('cg'));
-  const b=$(`mop-${id}`);if(b)b.classList.add('cg');
-  buildManOpts();
-}
+function selMOP(id){manOpId=id;manOpts={};document.querySelectorAll('#man-op-grid .mc').forEach(b=>b.classList.remove('sel'));const b=$(`mop-${id}`);if(b)b.classList.add('sel');buildManOpts();}
 function buildManOpts(){
-  const op=OPS.find(o=>o.id===manOpId);
-  const w=$('man-opts');
+  const op=OPS.find(o=>o.id===manOpId);const w=$('man-opts');
   if(!op||!op.opts.length){w.innerHTML='';return}
-  w.innerHTML=op.opts.map(o=>{
-    let ctrl='';const v=manOpts[o.id]||o.d;
-    if(o.t==='sel')ctrl=`<select onchange="setManOpt('${o.id}',this.value)">${o.ch.map(c=>`<option value="${c}"${c===v?'selected':''}>${c}</option>`).join('')}</select>`;
-    else if(o.t==='range')ctrl=`<input type="range" min="${o.min}" max="${o.max}" value="${v}" oninput="setManOpt('${o.id}',this.value);this.nextSibling.textContent=this.value"><span class="sv">${v}</span>`;
-    else if(o.t==='num')ctrl=`<input type="number" min="${o.min}" max="${o.max}" value="${v}" oninput="setManOpt('${o.id}',this.value)">`;
-    else ctrl=`<input type="text" value="${manOpts[o.id]||''}" placeholder="${o.pl||''}" oninput="setManOpt('${o.id}',this.value)">`;
-    return`<div style="display:flex;align-items:center;gap:.3rem"><label style="font-family:var(--mono);font-size:.5rem;color:var(--dim)">${o.l}</label>${ctrl}</div>`;
+  w.innerHTML=op.opts.map(o=>{const v=manOpts[o.id]||o.d;let ctrl='';
+    if(o.t==='sel')ctrl=`<select onchange="manOpts['${o.id}']=this.value">${o.ch.map(c=>`<option value="${c}"${c===v?'selected':''}>${c}</option>`).join('')}</select>`;
+    else if(o.t==='range')ctrl=`<input type="range" min="${o.min}" max="${o.max}" value="${v}" oninput="manOpts['${o.id}']=this.value;this.nextSibling.textContent=this.value"><span class="sv">${v}</span>`;
+    else if(o.t==='num')ctrl=`<input type="number" min="${o.min}" max="${o.max}" value="${v}" oninput="manOpts['${o.id}']=this.value">`;
+    else ctrl=`<input type="text" value="${manOpts[o.id]||''}" placeholder="${o.pl||''}" oninput="manOpts['${o.id}']=this.value">`;
+    return`<div class="og"><label>${o.l}</label>${ctrl}</div>`;
   }).join('');
 }
-function setManOpt(id,v){manOpts[id]=v}
-function buildIterBtns(){
-  const w=$('man-iter-btns');w.innerHTML='';
-  [1,2,3,5,10].forEach(n=>{const b=document.createElement('button');b.className='btn btn-ghost btn-sm'+(n===manIter?' cg':'');b.style.padding='3px 7px';b.textContent=n+'×';b.onclick=()=>{manIter=n;buildIterBtns()};w.appendChild(b);});
-}
+function buildIterBtns(){const w=$('man-iter-btns');w.innerHTML='';[1,2,3,5].forEach(n=>{const b=document.createElement('button');b.className='btn btn-ghost btn-sm'+(n===manIter?' cg':'');b.style.padding='3px 7px';b.textContent=n+'×';b.onclick=()=>{manIter=n;buildIterBtns()};w.appendChild(b);});}
 function runMan(){
   const inp=$('di').value.trim();if(!inp)return;
   const op=OPS.find(o=>o.id===manOpId);if(!op)return;
   let cur=inp;const steps=[];
-  for(let i=0;i<manIter;i++){
-    try{const r=op.dec(cur,manOpts);if(!r){steps.push({op:op.n,out:cur,sc:0,fail:true});break;}steps.push({op:op.n,out:r,sc:score(r)});cur=r;}
-    catch(e){steps.push({op:op.n,out:'[error: '+e.message+']',sc:0,fail:true});break;}
-  }
-  const fin=steps[steps.length-1];
-  const sc=fin.sc;const cls=sc>0.3?'cg':sc>0.1?'cy':'cd';
-  $('man-out').innerHTML=`<div class="res-box" style="${fin.fail?'border-color:rgba(248,113,113,.2)':''}">
-    <div class="rb-head">
-      <span class="rb-title" style="color:var(--P)">⚙ Manual: ${esc(op.n)} × ${manIter}</span>
-      <div style="display:flex;gap:.3rem"><span class="chip ${cls}">${(sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(cur)},this)">Copy</button></div>
-    </div>
-    <div class="rb-text" style="color:#f0b0ff">${esc(cur)}</div>
+  for(let i=0;i<manIter;i++){try{const r=op.dec(cur,manOpts);if(!r){steps.push({n:op.n,out:cur,sc:0,fail:true});break;}steps.push({n:op.n,out:r,sc:langScore(r)});cur=r;}catch(e){steps.push({n:op.n,out:'[error]',sc:0,fail:true});break;}}
+  const fin=steps[steps.length-1];const sc=fin.sc;const cls=sc>0.3?'cg':sc>0.1?'cy':'cd';
+  $('man-out').innerHTML=`<div class="res-box" style="${fin.fail?'border-color:rgba(239,68,68,.2)':''}">
+    <div class="rb-head"><span class="rb-title" style="color:var(--P)">⚙ Manual: ${esc(op.n)} × ${manIter}</span>
+    <div style="display:flex;gap:.3rem"><span class="chip ${cls}">${(sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(cur)},this)">Copy</button></div></div>
+    <div class="rb-text" style="color:#e0b0ff">${esc(cur)}</div>
     <div class="rb-foot"><span class="rb-stat">entropy ${shan(cur)} · chi² ${chiSq(cur).toFixed(2)}</span><button class="btn btn-ghost btn-sm" onclick="reuse(${JSON.stringify(cur)})">Re-decode</button></div>
-  </div>
-  ${steps.length>1?steps.map((s,i)=>layHtml(i,s.op,s.out,lc(i),i===steps.length-1)).join(''):''}`;
+  </div>`;
 }
 
-// ── BRUTE FORCE ──
+// BRUTE FORCE
 function runBrute(useRev){
   const inp=useRev?$('di').value.trim().split('').reverse().join(''):$('di').value.trim();
   if(!inp)return;
   const res=[];
-  // All 25 Caesar shifts
-  for(let n=1;n<=25;n++){const dec=inp.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));res.push({n:`Caesar+${n}`,v:dec,sc:score(dec)});}
-  // All ops
-  for(const op of OPS){try{const r=op.dec(inp,{});if(r&&r!==inp&&printable(r))res.push({n:op.n,v:r,sc:score(r)})}catch{}}
-  // Vigenère
+  for(let n=1;n<=25;n++){const dec=inp.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));res.push({n:`Caesar+${n}`,v:dec,sc:langScore(dec)});}
+  for(const op of OPS){try{const r=op.dec(inp,{});if(r&&r!==inp&&printable(r))res.push({n:op.n,v:r,sc:langScore(r)})}catch{}}
   const vig=tryVig(inp);if(vig)res.push({n:`Vigenère(key:"${vig.key}")`,v:vig.r,sc:vig.sc});
-  // XOR brute 1-255
   const h=inp.trim().replace(/\s/g,'');
-  if(/^[0-9a-fA-F]+$/.test(h)&&h.length%2===0){
-    for(let k=1;k<=255;k++){const bytes=[];for(let i=0;i<h.length;i+=2)bytes.push(parseInt(h.slice(i,i+2),16));const r=bytes.map(b=>String.fromCharCode(b^k)).join('');if(printable(r)){const sc=score(r);if(sc>0.08)res.push({n:`XOR key=${k}`,v:r,sc});}}
-  }
+  if(/^[0-9a-fA-F]+$/.test(h)&&h.length%2===0){for(let k=1;k<=255;k++){const bytes=[];for(let i=0;i<h.length;i+=2)bytes.push(parseInt(h.slice(i,i+2),16));const r=bytes.map(b=>String.fromCharCode(b^k)).join('');if(printable(r)){const sc=langScore(r);if(sc>0.08)res.push({n:`XOR key=${k}`,v:r,sc});}}}
   res.sort((a,b)=>b.sc-a.sc);
-  const top=res.slice(0,24);
   $('brute-out').innerHTML=`<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;flex-wrap:wrap">
-    <span style="font-family:var(--mono);font-size:.54rem;font-weight:700;color:var(--Y)">💥 ${useRev?'Reversed input':'Forward'} — ${res.length} candidates</span>
-    <span class="chip cy">sorted by chi² score</span>
+    <span style="font-family:var(--mono);font-size:.52rem;font-weight:700;color:var(--Y)">💥 ${useRev?'Reversed':'Forward'} — ${res.length} candidates</span>
+    <span class="chip cy">sorted by language score</span>
   </div>
-  <div class="bf-grid">
-    ${top.map((r,i)=>{const cls=r.sc>0.25?'cg':r.sc>0.1?'cy':'cd';return`<div class="bf-card${i===0?' best':''}">
-      <div class="bfc-head"><span class="bfc-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip ${cls}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div>
-      <div class="bfc-body">${esc(r.v)}</div>
-    </div>`}).join('')}
-  </div>`;
+  <div class="bf-grid">${res.slice(0,24).map((r,i)=>{const cls=r.sc>0.25?'cg':r.sc>0.1?'cy':'cd';return`<div class="bf-card${i===0?' best':''}"><div class="bfc-head"><span class="bfc-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip ${cls}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div><div class="bfc-body">${esc(r.v)}</div></div>`}).join('')}</div>`;
 }
-function runAllCaesar(){
+function runCaesarAll(){
   const inp=$('di').value.trim();if(!inp)return;
-  const res=[];
-  for(let n=1;n<=25;n++){const dec=inp.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));res.push({n:`Shift+${n}`,v:dec,sc:score(dec)});}
+  const res=[];for(let n=1;n<=25;n++){const dec=inp.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));res.push({n:`Shift+${n}`,v:dec,sc:langScore(dec)});}
   res.sort((a,b)=>b.sc-a.sc);
   $('brute-out').innerHTML=`<div class="bf-grid">${res.map((r,i)=>`<div class="bf-card${i===0?' best':''}"><div class="bfc-head"><span class="bfc-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip ${r.sc>0.25?'cg':r.sc>0.1?'cy':'cd'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div><div class="bfc-body">${esc(r.v)}</div></div>`).join('')}</div>`;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// ENCODER — RECIPE BUILDER
-// ══════════════════════════════════════════════════════════════════
-let recipe=[];// [{opId,opts:{}}]
-let encodeMode='recipe';
-let dragFrom=-1;
+// ══════════════════════════════════════════════════════
+// CRYPTO DECRYPT (AES via WebCrypto, XOR)
+// ══════════════════════════════════════════════════════
+function onCI(){
+  const v=$('ci').value;$('cic').textContent=v.length+' chars';
+  const t=$('ci-type');
+  const hids=identifyHash(v.trim());
+  if(hids.length){t.style.display='';t.innerHTML=hids.map(h=>`<span class="chip cy">${esc(h.names[0])}</span>`).join(' ');}
+  else t.style.display='none';
+}
+function onCKey(){/* live feedback possible */}
 
-function setEMode(m){
-  encodeMode=m;
-  $('emRecipe').classList.toggle('active',m==='recipe');
-  $('emAll').classList.toggle('active',m==='all');
-  $('recipe-panel').style.display=m==='recipe'?'block':'none';
-  $('all-panel').style.display=m==='all'?'block':'none';
-  if(m==='all'&&$('ei').value.trim())encodeAll();
+function hexToBytes(s){const c=s.replace(/\s/g,'').replace(/^0x/i,'');if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2)return null;const b=new Uint8Array(c.length/2);for(let i=0;i<c.length;i+=2)b[i/2]=parseInt(c.slice(i,i+2),16);return b}
+function b64ToBytes(s){try{const r=atob(s.trim().replace(/-/g,'+').replace(/_/g,'/'));return new Uint8Array(r.length).map((_,i)=>r.charCodeAt(i))}catch{return null}}
+function autoBytes(s,fmt){
+  if(fmt==='hex')return hexToBytes(s);
+  if(fmt==='b64')return b64ToBytes(s);
+  if(fmt==='raw')return ENC8(s);
+  // auto
+  const t=s.trim();
+  if(/^[0-9a-fA-F\s]+$/.test(t)&&t.replace(/\s/g,'').length%2===0)return hexToBytes(t);
+  try{const b=b64ToBytes(t);if(b)return b}catch{}
+  return ENC8(s);
+}
+function parseKey(keyStr){
+  const t=keyStr.trim();
+  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return hexToBytes(t);
+  return ENC8(t);
 }
 
-// Build op browser list
-function buildOpList(){
-  const list=$('op-list');
-  const cats=[...new Set(OPS.map(o=>o.cat))];
-  let h='';
-  cats.forEach(cat=>{
-    h+=`<div class="ro-cat">${cat}</div>`;
-    OPS.filter(o=>o.cat===cat).forEach(o=>h+=`<div class="ro-item" onclick="addStep('${o.id}')">${o.n}</div>`);
-  });
+async function runCrypto(){
+  const ctStr=$('ci').value.trim();const keyStr=$('ckey').value.trim();
+  const mode=$('cmode').value;const ivStr=$('civ').value.trim();const fmt=$('cfmt').value;
+  if(!ctStr){alert('Enter ciphertext first');return}
+
+  const outBox=$('crypto-result');outBox.style.display='block';
+  $('cr-body').textContent='Processing…';$('cr-chip').className='chip cd';$('cr-chip').textContent='…';
+
+  try{
+    // Parse ciphertext
+    const ctBytes=autoBytes(ctStr,fmt);
+    if(!ctBytes){showCryptoErr('Could not parse ciphertext. Check format (hex/base64/raw).');return}
+
+    // XOR
+    if(mode==='xor'||mode==='auto'){
+      if(keyStr){
+        const keyBytes=parseKey(keyStr);
+        if(keyBytes){
+          const out=new Uint8Array(ctBytes.length).map((_,i)=>ctBytes[i]^keyBytes[i%keyBytes.length]);
+          const outStr=DEC8(out,false)||Array.from(out).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+          if(mode==='xor'){showCryptoOk('XOR decryption',outStr,'XOR');return}
+          if(printable(outStr)&&langScore(outStr)>0.1){showCryptoOk('XOR decryption',outStr,'XOR');return}
+        }
+      }
+      if(mode==='xor'){showCryptoErr('XOR requires a key. Enter hex or text key.');return}
+    }
+
+    // AES
+    if(mode.startsWith('aes')||mode==='auto'){
+      if(!keyStr){
+        if(mode!=='auto')showCryptoErr('AES decryption requires a key. Enter 16, 24, or 32-byte hex key.');
+      } else {
+        const keyBytes=parseKey(keyStr);
+        if(!keyBytes||![16,24,32].includes(keyBytes.length)){
+          showCryptoErr(`AES key must be 16, 24, or 32 bytes. Got ${keyBytes?.length} bytes.`);return;
+        }
+        const cryptoKey=await crypto.subtle.importKey('raw',keyBytes,{name:mode==='aes-ctr'?'AES-CTR':'AES-CBC'},false,['decrypt']);
+        let dec;
+        if(mode==='aes-cbc'||mode==='auto'){
+          let iv=ivStr?hexToBytes(ivStr):null;
+          if(!iv){
+            // try first 16 bytes as IV
+            if(ctBytes.length>16){iv=ctBytes.slice(0,16);}
+            else{showCryptoErr('AES-CBC needs a 16-byte IV. Provide it in the IV field or prepend it to ciphertext.');return}
+          }
+          const ct2=ivStr?ctBytes:ctBytes.slice(16);
+          try{const result=await crypto.subtle.decrypt({name:'AES-CBC',iv},cryptoKey,ct2);
+            dec=DEC8(new Uint8Array(result),false)||null;
+            if(dec)showCryptoOk('AES-CBC decryption',dec,'AES-CBC');
+            else showCryptoErr('AES-CBC: decrypted but result is not valid UTF-8 text.');return;
+          }catch(e){if(mode==='aes-cbc'){showCryptoErr('AES-CBC failed: '+e.message);return;}}
+        }
+        if(mode==='aes-ecb'){
+          // WebCrypto doesn't support ECB natively — manual implementation
+          const k=await crypto.subtle.importKey('raw',keyBytes,{name:'AES-CBC'},false,['decrypt']);
+          const blocks=[];
+          for(let i=0;i<ctBytes.length;i+=16){
+            const blk=ctBytes.slice(i,i+16);
+            const fakect=new Uint8Array([...blk,...new Uint8Array(16)]);
+            try{const r=await crypto.subtle.decrypt({name:'AES-CBC',iv:new Uint8Array(16)},k,fakect);blocks.push(new Uint8Array(r));}
+            catch(e){showCryptoErr('AES-ECB block failed: '+e.message);return;}
+          }
+          const combined=new Uint8Array(blocks.reduce((s,b)=>s+b.length,0));let off=0;for(const b of blocks){combined.set(b,off);off+=b.length;}
+          dec=DEC8(combined,false)||Array.from(combined).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+          showCryptoOk('AES-ECB decryption',dec,'AES-ECB');return;
+        }
+      }
+    }
+
+    // Hash verify mode
+    if(mode==='hash-verify'){runHashIdent();runVerify();return}
+
+    // Brute XOR mode
+    if(mode==='brute-xor'){runBruteXOR();return}
+
+    // Auto with no key — show hash identification
+    if(mode==='auto'&&!keyStr){
+      runHashIdent();
+    }
+  }catch(e){showCryptoErr('Error: '+e.message);}
+}
+
+function showCryptoOk(title,text,method){
+  const outBox=$('crypto-result');outBox.style.display='block';
+  $('cr-title').textContent=title;
+  $('cr-body').textContent=text;
+  $('cr-chip').className='chip cg';$('cr-chip').textContent='✓ '+method;
+  const sc=langScore(text);
+  $('cr-stat').textContent=`entropy ${shan(text)} · lang score ${(sc*100).toFixed(0)}%`;
+}
+function showCryptoErr(msg){
+  const outBox=$('crypto-result');outBox.style.display='block';
+  $('cr-title').textContent='Error';
+  $('cr-body').textContent=msg;
+  $('cr-chip').className='chip cr';$('cr-chip').textContent='✗ failed';
+  $('cr-stat').textContent='';
+}
+function cpCrypto(){cp($('cr-body').textContent,null)}
+function sendCryptoToDec(){const t=$('cr-body').textContent;if(t){$('di').value=t;onDI();sw('dec',document.querySelector('.tab'));magic();}}
+
+// HASH IDENTIFY
+function runHashIdent(){
+  const s=$('ci').value.trim();
+  const out=$('hash-ident-out');
+  if(!s){out.innerHTML='';return}
+  // Try raw and base64-decoded
+  let allIds=[...identifyHash(s)];
+  try{const b64=OPS.find(o=>o.id==='b64').dec(s);if(b64&&/^[0-9a-fA-F]+$/.test(b64.trim()))allIds=[...allIds,...identifyHash(b64.trim()).map(h=>({...h,note:'(after Base64 decode) '+h.note}))];}catch{}
+  if(!allIds.length){out.innerHTML=`<div class="info-box"><b>Not a recognised hash format.</b> Input does not match any known hash signature. It may be cipher text, encoded data, or a custom format.</div>`;return}
+  out.innerHTML=`<div class="hash-warn">
+    <div class="hw-title">🔍 Hash Identified (${allIds.length} match${allIds.length>1?'es':''})</div>
+    <div class="hw-body">
+      <b>One-way operation</b> — hashes cannot be reversed. Possible hash types:
+      <table style="margin-top:.4rem;border-collapse:collapse;width:100%">
+        <tr><th style="text-align:left;padding:3px 8px;font-size:.5rem;color:var(--dim);border-bottom:1px solid var(--b2)">Type</th><th style="text-align:left;padding:3px 8px;font-size:.5rem;color:var(--dim);border-bottom:1px solid var(--b2)">Category</th><th style="text-align:left;padding:3px 8px;font-size:.5rem;color:var(--dim);border-bottom:1px solid var(--b2)">Note</th></tr>
+        ${allIds.map(h=>`<tr><td style="padding:3px 8px;font-family:var(--mono);font-size:.58rem;color:var(--G)">${esc(h.names.slice(0,3).join(' | '))}</td><td style="padding:3px 8px;font-family:var(--mono);font-size:.55rem;color:var(--Y)">${esc(h.cat)}</td><td style="padding:3px 8px;font-family:var(--mono);font-size:.53rem;color:var(--dim)">${esc(h.note)}</td></tr>`).join('')}
+      </table>
+      <div style="margin-top:.5rem;font-size:.58rem;color:var(--text)">
+        <b>To crack common passwords:</b> try <a href="https://crackstation.net" target="_blank" style="color:var(--B)">crackstation.net</a> (rainbow tables) or <a href="https://hashes.com/en/decrypt/hash" target="_blank" style="color:var(--B)">hashes.com</a>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">
+    <button class="btn btn-ghost btn-sm" onclick="$('verify-section').style.display='block'">Verify against known plaintext</button>
+    <button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(s)},this)">Copy hash</button>
+  </div>`;
+}
+
+// HASH VERIFY
+async function runVerify(){
+  const hash=$('ci').value.trim();const msg=$('verify-msg').value;const key=$('ckey').value.trim();
+  const vr=$('verify-result');
+  if(!hash||!msg){vr.style.display='none';return}
+  vr.style.display='block';
+  try{
+    const enc=new TextEncoder();
+    const tests=[
+      ['SHA-256',32],['SHA-512',64],['SHA-1',20],['SHA-384',48]
+    ];
+    let matched=false;
+    const hashBytes=hexToBytes(hash);
+    // Try SHA hashes
+    for(const[alg,len]of tests){
+      const buf=await crypto.subtle.digest(alg,enc.encode(msg));
+      const computed=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      if(computed.toLowerCase()===hash.toLowerCase()){vr.className='verify-result vr-ok';vr.textContent=`✓ VERIFIED: Hash matches ${alg} of "${msg}"`;matched=true;break;}
+    }
+    // Try HMAC
+    if(!matched&&key){
+      const keyBytes=parseKey(key);
+      for(const[alg,len]of[['SHA-256',32],['SHA-512',64]]){
+        try{
+          const cryptoKey=await crypto.subtle.importKey('raw',keyBytes,{name:'HMAC',hash:alg},false,['sign']);
+          const buf=await crypto.subtle.sign('HMAC',cryptoKey,enc.encode(msg));
+          const computed=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+          if(computed.toLowerCase()===hash.toLowerCase()){vr.className='verify-result vr-ok';vr.textContent=`✓ VERIFIED: HMAC-${alg} of "${msg}" with given key matches.`;matched=true;break;}
+        }catch{}
+      }
+    }
+    if(!matched){vr.className='verify-result vr-fail';vr.textContent=`✗ NOT MATCHED: Hash does not match SHA-1/256/384/512 of "${msg}"${key?' (also tried HMAC with key)':''}.`;}
+  }catch(e){vr.className='verify-result vr-fail';vr.textContent='Error: '+e.message;}
+}
+
+// BRUTE XOR (from crypto tab)
+function runBruteXOR(){
+  const ctStr=$('ci').value.trim();const fmt=$('cfmt').value;
+  const ctBytes=autoBytes(ctStr,fmt);
+  if(!ctBytes){$('bxor-out').innerHTML='<div class="err-box">Cannot parse ciphertext for XOR brute force</div>';return}
+  const results=[];
+  for(let k=0;k<=255;k++){
+    const out=new Uint8Array(ctBytes.length).map((_,i)=>ctBytes[i]^k);
+    const s=DEC8(out,false);
+    if(s&&printable(s)){const sc=langScore(s);if(sc>0.05)results.push({k,s,sc});}
+  }
+  results.sort((a,b)=>b.sc-a.sc);
+  if(!results.length){$('bxor-out').innerHTML='<div class="err-box">No printable XOR results found (key 0–255)</div>';return}
+  $('bxor-out').innerHTML=`<div style="margin-bottom:.4rem"><span style="font-family:var(--mono);font-size:.52rem;font-weight:700;color:var(--Y)">💥 XOR brute force — ${results.length} printable results</span></div>
+  <div class="bf-grid">${results.slice(0,20).map((r,i)=>`<div class="bf-card${i===0?' best':''}"><div class="bfc-head"><span class="bfc-name" style="color:${lc(i)}">Key=0x${r.k.toString(16).padStart(2,'0')} (${r.k})</span><span class="chip ${r.sc>0.25?'cg':r.sc>0.1?'cy':'cd'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.s)},this)">Copy</button></div><div class="bfc-body">${esc(r.s)}</div></div>`).join('')}</div>`;
+}
+
+function clCrypto(){$('ci').value='';$('ckey').value='';$('civ').value='';$('crypto-result').style.display='none';$('hash-ident-out').innerHTML='';$('verify-section').style.display='none';$('bxor-out').innerHTML='';$('cic').textContent='0 chars';}
+function loadCryptoSample(){
+  $('ci').value='ZjJiMWQzMGRhMjczYTE3MDc3OTljODRlNDM1YjY0M2UxMWZjMjBjZWM3Mzc0NzQ2NDc0YTEwMzU5N2ZkMjc3ZjM2ZjI2M2E2NTdmNzE3ZDRhMTllMjcwOThiYmJjYzBmYjM0MzU2YWM5ODFhNTE3NmQ3ZTUwNjc1ZmFkOWM0MjY';
+  $('ckey').value='1d8e45ca9abf562083fc58e2fef46d9ab5e4435863c731adf548f4fbdc7ec9ca';
+  onCI();
+}
+
+// ══════════════════════════════════════════════════════
+// ENCODER — RECIPE BUILDER
+// ══════════════════════════════════════════════════════
+let recipe=[],encMode='recipe',dragFrom=-1;
+function setEM(m){encMode=m;$('emRecipe').classList.toggle('active',m==='recipe');$('emAll').classList.toggle('active',m==='all');$('recipe-panel').style.display=m==='recipe'?'block':'none';$('all-panel').style.display=m==='all'?'block':'none';if(m==='all'&&$('ei').value.trim())encodeAll();}
+function buildObList(){
+  const list=$('ob-list');const cats=[...new Set(OPS.map(o=>o.cat))];let h='';
+  cats.forEach(cat=>{h+=`<div class="ob-cat">${cat}</div>`;OPS.filter(o=>o.cat===cat).forEach(o=>h+=`<div class="ob-item" data-n="${o.n.toLowerCase()}" onclick="addStep('${o.id}')">${o.n}</div>`);});
   list.innerHTML=h;
 }
-function filterOps(){
-  const q=$('op-search').value.toLowerCase();
-  document.querySelectorAll('.ro-item').forEach(el=>{el.style.display=el.textContent.toLowerCase().includes(q)?'':'none';});
-  document.querySelectorAll('.ro-cat').forEach(cat=>{
-    const items=[...cat.nextElementSibling?[cat]:[]];
-    // just show all cats always for simplicity
-  });
-}
-
-function addStep(opId){
-  const op=OPS.find(o=>o.id===opId);if(!op)return;
-  const defaults={};(op.opts||[]).forEach(o=>defaults[o.id]=o.d||'');
-  recipe.push({opId,opts:defaults});
-  renderRecipe();
-  if($('ei').value.trim())bake();
-}
+function filterObs(){const q=$('obs').value.toLowerCase();document.querySelectorAll('.ob-item').forEach(el=>el.style.display=el.dataset.n.includes(q)?'':'none');}
+function addStep(id){const op=OPS.find(o=>o.id===id);if(!op)return;const defs={};(op.opts||[]).forEach(o=>defs[o.id]=o.d||'');recipe.push({opId:id,opts:defs});renderRecipe();if($('ei').value.trim())bake();}
 function removeStep(i){recipe.splice(i,1);renderRecipe();if($('ei').value.trim())bake();}
-function setStepOpt(i,key,val){if(recipe[i])recipe[i].opts[key]=val;if($('ei').value.trim())bake();}
-
+function setSO(i,k,v){if(recipe[i])recipe[i].opts[k]=v;if($('ei').value.trim())bake();}
 function renderRecipe(){
-  const steps=$('recipe-steps');
-  $('recipe-count').textContent=`${recipe.length} step${recipe.length!==1?'s':''}`;
-  if(!recipe.length){steps.innerHTML='<div class="recipe-empty" id="recipe-empty">← Click an operation to add it<br>Drag steps to reorder</div>';return;}
-  steps.innerHTML=recipe.map((step,i)=>{
-    const op=OPS.find(o=>o.id===step.opId);
-    const col=lc(i);
-    const optsHtml=(op.opts||[]).map(o=>{
-      let ctrl='';const v=step.opts[o.id]||o.d;
-      if(o.t==='sel')ctrl=`<select onchange="setStepOpt(${i},'${o.id}',this.value)">${o.ch.map(c=>`<option value="${c}"${c===v?'selected':''}>${c}</option>`).join('')}</select>`;
-      else if(o.t==='range')ctrl=`<input type="range" min="${o.min}" max="${o.max}" value="${v}" oninput="setStepOpt(${i},'${o.id}',this.value);this.nextSibling.textContent=this.value"><span class="sv">${v}</span>`;
-      else if(o.t==='num')ctrl=`<input type="number" min="${o.min}" max="${o.max}" value="${v}" oninput="setStepOpt(${i},'${o.id}',this.value)">`;
-      else ctrl=`<input type="text" value="${step.opts[o.id]||''}" placeholder="${o.pl||''}" oninput="setStepOpt(${i},'${o.id}',this.value)">`;
+  $('rcnt').textContent=`${recipe.length} step${recipe.length!==1?'s':''}`;
+  if(!recipe.length){$('rsteps').innerHTML='<div class="recipe-empty" id="rempty">← Click an operation to add it<br>Drag steps to reorder</div>';return}
+  $('rsteps').innerHTML=recipe.map((step,i)=>{
+    const op=OPS.find(o=>o.id===step.opId);const col=lc(i);
+    const optsHtml=(op.opts||[]).map(o=>{const v=step.opts[o.id]||o.d;let ctrl='';
+      if(o.t==='sel')ctrl=`<select onchange="setSO(${i},'${o.id}',this.value)">${o.ch.map(c=>`<option value="${c}"${c===v?'selected':''}>${c}</option>`).join('')}</select>`;
+      else if(o.t==='range')ctrl=`<input type="range" min="${o.min}" max="${o.max}" value="${v}" oninput="setSO(${i},'${o.id}',this.value);this.nextSibling.textContent=this.value"><span class="sv">${v}</span>`;
+      else if(o.t==='num')ctrl=`<input type="number" min="${o.min}" max="${o.max}" value="${v}" oninput="setSO(${i},'${o.id}',this.value)">`;
+      else ctrl=`<input type="text" value="${step.opts[o.id]||''}" placeholder="${o.pl||''}" oninput="setSO(${i},'${o.id}',this.value)">`;
       return`<label>${o.l}</label>${ctrl}`;
     }).join('');
-    return`<div class="step-card" draggable="true"
-      ondragstart="dragFrom=${i};this.style.opacity='.4'"
-      ondragend="this.style.opacity='1';document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('drag-over'))"
-      ondragover="event.preventDefault();document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('drag-over'));this.classList.add('drag-over')"
-      ondrop="event.preventDefault();this.classList.remove('drag-over');if(dragFrom!==${i}){const m=recipe.splice(dragFrom,1)[0];recipe.splice(${i},0,m);renderRecipe();bake();}">
-      <div class="step-head">
-        <span class="step-num" style="color:${col}">${i+1}</span>
-        <span class="step-name" style="color:${col}">${esc(op?op.n:'?')}</span>
-        <button class="step-del" onclick="removeStep(${i})">✕</button>
-      </div>
-      ${optsHtml?`<div class="step-opts">${optsHtml}</div>`:''}
+    return`<div class="step-card" draggable="true" ondragstart="dragFrom=${i};this.style.opacity='.4'" ondragend="this.style.opacity='1';document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('drag-over'))" ondragover="event.preventDefault();document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('drag-over'));this.classList.add('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');if(dragFrom!==${i}){const m=recipe.splice(dragFrom,1)[0];recipe.splice(${i},0,m);renderRecipe();bake();}">
+      <div class="sh"><span class="snum" style="color:${col}">${i+1}</span><span class="sname" style="color:${col}">${esc(op?op.n:'?')}</span><button class="sdel" onclick="removeStep(${i})">✕</button></div>
+      ${optsHtml?`<div class="sopts">${optsHtml}</div>`:''}
     </div>`;
   }).join('');
 }
-
 function bake(){
-  const inp=$('ei').value;
-  const box=$('bake-out');
-  if(!inp.trim()||!recipe.length){box.style.display='none';return;}
+  const inp=$('ei').value;const box=$('bake-out');
+  if(!inp.trim()||!recipe.length){box.style.display='none';return}
   box.style.display='block';
-  let cur=inp;const stepOutputs=[];
-  for(const step of recipe){
-    const op=OPS.find(o=>o.id===step.opId);
-    if(!op){stepOutputs.push('[unknown op]');break;}
-    try{const r=op.enc(cur,step.opts);if(r===null){stepOutputs.push('[encode failed]');break;}stepOutputs.push(r);cur=r;}
-    catch(e){stepOutputs.push('[error: '+e.message+']');break;}
-  }
+  let cur=inp;const outs=[];
+  for(const step of recipe){const op=OPS.find(o=>o.id===step.opId);if(!op){outs.push('[unknown op]');break;}try{const r=op.enc(cur,step.opts);if(r===null){outs.push('[encode failed]');break;}outs.push(r);cur=r;}catch(e){outs.push('[error: '+e.message+']');break;}}
   $('bo-title').textContent=`Recipe output (${recipe.length} step${recipe.length!==1?'s':''})`;
-  $('bo-steps').innerHTML=stepOutputs.map((o,i)=>{
-    const op=OPS.find(x=>x.id===recipe[i]?.opId);
-    return`<div style="border-top:${i?'1px solid var(--b1)':'none'};padding:${i?'.35rem 0 0':0}">
-      <span style="font-size:.46rem;color:${lc(i)};margin-right:.4rem">step ${i+1}: ${esc(op?.n||'?')}</span>${esc(o)}
-    </div>`;
-  }).join('');
+  $('bo-steps').innerHTML=outs.map((o,i)=>{const op=OPS.find(x=>x.id===recipe[i]?.opId);return`<div style="border-top:${i?'1px solid var(--b1)':'none'};padding:${i?'.3rem 0 0':0}"><span style="font-size:.44rem;color:${lc(i)};margin-right:.35rem">step ${i+1}: ${esc(op?.n||'?')}</span>${esc(o)}</div>`;}).join('');
 }
-function copyBake(){const el=$('bo-steps').lastChild;if(el){const t=el.textContent.replace(/^step \d+: [^:]+/,'').trim();cp(t,null);}}
-function sendToDec(){const el=$('bo-steps').lastChild;if(el){const t=el.textContent.replace(/^step \d+: [^:]+/,'').trim();$('di').value=t;onDI();sw('dec',document.querySelector('.tab'));magic();}}
+function cpBake(){const el=$('bo-steps').lastChild;if(el){const clone=el.cloneNode(true);clone.querySelectorAll('span').forEach((s,i)=>{if(i===0)s.remove();});cp(clone.textContent.trim(),null);}}
+function bakeToDec(){const el=$('bo-steps').lastChild;if(el){const clone=el.cloneNode(true);clone.querySelectorAll('span').forEach((s,i)=>{if(i===0)s.remove();});$('di').value=clone.textContent.trim();onDI();sw('dec',document.querySelector('.tab'));magic();}}
 function clRecipe(){recipe=[];renderRecipe();$('bake-out').style.display='none';}
-function exportRecipe(){cp(JSON.stringify(recipe.map(s=>({op:OPS.find(o=>o.id===s.opId)?.n,opts:s.opts})),null,2),null);}
-
-// All encodings
+function exportR(){cp(JSON.stringify(recipe.map(s=>({op:OPS.find(o=>o.id===s.opId)?.n,opts:s.opts})),null,2),null)}
 function encodeAll(){
-  const t=$('ei').value.trim();
-  if(!t){$('all-grid').innerHTML='';$('all-count').textContent='0 encodings';return;}
-  const res=[];
-  for(const op of OPS){try{const r=op.enc(t,{});if(r&&r!==t)res.push({n:op.n,cat:op.cat,v:r})}catch{}}
-  $('all-count').textContent=`${res.length} encodings`;
-  $('all-grid').innerHTML=res.map((r,i)=>`<div class="ae-card">
-    <div class="ae-head"><span class="ae-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip cd" style="font-size:.44rem">${esc(r.cat)}</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div>
-    <div class="ae-body">${esc(r.v)}</div>
-  </div>`).join('');
+  const t=$('ei').value.trim();if(!t){$('all-grid').innerHTML='';$('all-cnt').textContent='0 encodings';return}
+  const res=[];for(const op of OPS){try{const r=op.enc(t,{});if(r&&r!==t)res.push({n:op.n,cat:op.cat,v:r})}catch{}}
+  $('all-cnt').textContent=`${res.length} encodings`;
+  $('all-grid').innerHTML=res.map((r,i)=>`<div class="ae-card"><div class="ae-head"><span class="ae-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip cd" style="font-size:.44rem">${esc(r.cat)}</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div><div class="ae-body">${esc(r.v)}</div></div>`).join('');
 }
-function copyAllJSON(){const t=$('ei').value.trim();if(!t)return;const res={};for(const op of OPS){try{const r=op.enc(t,{});if(r)res[op.n]=r}catch{}}cp(JSON.stringify(res,null,2),null);}
-
-function onEI(){$('eic').textContent=$('ei').value.length+' chars';if(encodeMode==='recipe')bake();else encodeAll();}
-function eSample(){$('ei').value='The quick brown fox jumps over the lazy dog';onEI();}
+function cpAllJSON(){const t=$('ei').value.trim();if(!t)return;const res={};for(const op of OPS){try{const r=op.enc(t,{});if(r)res[op.n]=r}catch{}}cp(JSON.stringify(res,null,2),null)}
+function onEI(){$('eic').textContent=$('ei').value.length+' chars';if(encMode==='recipe')bake();else encodeAll();}
+function eSmp(){$('ei').value='The quick brown fox jumps over the lazy dog';onEI();}
 function clEnc(){$('ei').value='';$('eic').textContent='0 chars';$('bake-out').style.display='none';$('all-grid').innerHTML='';}
 
-// ── TAB SWITCH ──
+// ══════════════════════════════════════════════════════
+// TAB SWITCH
+// ══════════════════════════════════════════════════════
 function sw(name,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
@@ -1062,42 +1246,33 @@ function sw(name,el){
   $('pane-'+name).classList.add('active');
 }
 
-// ── SAMPLES ──
+// ══════════════════════════════════════════════════════
+// SAMPLES
+// ══════════════════════════════════════════════════════
 const _b32=s=>{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return o};
 const _b64=s=>{try{return btoa(unescape(encodeURIComponent(s)))}catch{return s}};
 const DSamples=[
-  // 0. THE CHALLENGE PAYLOAD — Layer1: fix misplaced =, Layer2: Base64, Layer3: Vigenère (key=5-letter country)
-  '=TlhYVUNVUlRG',
-  // 1. Base32 → Base64×2 → Base85×2 (your reported multi-layer test case)
-  (()=>{let s='Hello, Security Researcher!';s=_b32(s);s=_b64(s);s=_b64(s);s=b85e(s);s=b85e(s);return s})(),
-  // 2. Double Base64
-  _b64(_b64('Attack at dawn')),
-  // 3. Triple Base64
-  _b64(_b64(_b64('CipherSense Magic decoder'))),
-  // 4. Hex of Base64
-  [..._b64('The quick brown fox')].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '),
-  // 5. Morse
-  '.... . .-.. .-.. ---  .-- --- .-. .-.. -..',
-  // 6. Binary
-  '01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 01110010 01101100 01100100',
-  // 7. Base58
-  bEncB([...ENC8('The quick brown fox')],B58A),
-  // 8. Base85
-  b85e('CipherSense v7.1'),
-  // 9. Reversed Base64 (= at wrong end due to reversal)
-  _b64('Reversed input test').split('').reverse().join(''),
-  // 10. URL encoded
-  encodeURIComponent('Hello World! Security test #1'),
-  // 11. A1Z26
-  '8 5 12 12 15  23 15 18 12 4',
+  '=TlhYVUNVUlRG',                                           // challenge payload (fix pad → B64 → Vigenère)
+  (()=>{let s='Hello, Security Researcher!';s=_b32(s);s=_b64(s);s=_b64(s);s=b85e(s);s=b85e(s);return s})(), // Base32→B64×2→B85×2
+  _b64(_b64(_b64('CipherSense v8 decoder'))),                // triple base64
+  [..._b64('The quick brown fox')].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '), // hex of b64
+  '.... . .-.. .-.. ---  .-- --- .-. .-.. -..',             // morse
+  '01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 01110010 01101100 01100100', // binary
+  bEncB([...ENC8('The quick brown fox')],B58A),              // base58
+  b85e('CipherSense v8'),                                    // base85
+  _b64('Reversed input test').split('').reverse().join(''), // reversed base64
+  encodeURIComponent('Hello World! Security assessment #1'), // URL enc
+  '8 5 12 12 15  23 15 18 12 4',                            // A1Z26
 ];
 let _dsi=0;
 function dSample(){$('di').value=DSamples[_dsi++%DSamples.length];onDI();if(decMode==='auto')magic();}
 
-// ── INIT ──
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
 buildManGrid();buildManOpts();buildIterBtns();
-buildOpList();renderRecipe();
-setDMode('auto');$('auto-out').style.display='block';
+buildObList();renderRecipe();
+setDM('auto');$('auto-out').style.display='block';
 </script>
 </body>
 </html>
