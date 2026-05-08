@@ -648,27 +648,120 @@ function detectFormat(raw){
 }
 
 /* ═══════════════════════════════════════════════════════
-   IDENTIFY ENGINE — peels layers recursively
+   AUTO-CRACKERS — Caesar, Vigenère, ROT (no key needed)
+═══════════════════════════════════════════════════════ */
+function vigIC(t){if(t.length<2)return 0;const f={};for(const c of t)f[c]=(f[c]||0)+1;let s=0;for(const k in f)s+=f[k]*(f[k]-1);return s/(t.length*(t.length-1))}
+function vigKeyLen(L){let b=1,bi=0;for(let len=2;len<=Math.min(20,Math.floor(L.length/4));len++){const st=Array.from({length:len},(_,i)=>L.split('').filter((_,j)=>j%len===i).join(''));const avg=st.reduce((s,x)=>s+vigIC(x),0)/len;if(avg>bi){bi=avg;b=len;}}return b}
+function vigKeyStr(L,len){let k='';for(let i=0;i<len;i++){const st=L.split('').filter((_,j)=>j%len===i).join('');const f=Array(26).fill(0);for(const c of st)f[c.charCodeAt(0)-65]++;const tot=st.length||1;let b=0,bs=-Infinity;for(let sh=0;sh<26;sh++){let sc=0;for(let j=0;j<26;j++)sc+=(EN_F[String.fromCharCode(97+j)]||0)*(f[(j+sh)%26]/tot);if(sc>bs){bs=sc;b=sh;}}k+=String.fromCharCode(65+b);}return k}
+function vigDecrypt(s,key){const k=key.toLowerCase();let ki=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)})}
+
+function autoCrackCaesar(s){
+  // Skip if input looks like an encoding format (b64, hex, etc.)
+  const t=s.trim().replace(/\s/g,'');
+  if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null;
+  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null;
+  if(langScore(s)>0.18)return null;
+  const L=s.toUpperCase().replace(/[^A-Z]/g,'');
+  if(L.length<6)return null;
+  let best=null,bs=-Infinity;
+  for(let n=0;n<=25;n++){
+    const dec=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97))
+               .replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));
+    const sc=langScore(dec);
+    if(sc>bs){bs=sc;best={dec,n,sc};}
+  }
+  // Only return if shift actually improves score significantly and result looks English
+  if(best&&best.n>0&&best.sc>0.20&&best.sc>langScore(s)+0.05)return best;
+  return null;
+}
+
+function autoCrackVigenere(s){
+  const t=s.trim().replace(/\s/g,'');
+  // Guards: skip known format strings
+  if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null;
+  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null;
+  if(langScore(s)>0.18)return null;
+  const L=s.toUpperCase().replace(/[^A-Z]/g,'');
+  if(L.length<30)return null;
+  const ic=vigIC(L);
+  if(ic>0.062||ic<0.038)return null; // not polyalphabetic range
+  const kl=vigKeyLen(L);
+  if(kl<2)return null;
+  const key=vigKeyStr(L,kl);
+  const dec=vigDecrypt(s,key);
+  const sc=langScore(dec);
+  if(sc<0.20)return null;
+  return{dec,key,kl,sc};
+}
+
+function autoCrackROT13(s){
+  if(langScore(s)>0.18)return null;
+  const r=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65));
+  const sc=langScore(r);
+  if(sc>0.20&&sc>langScore(s)+0.08)return{dec:r,sc};
+  return null;
+}
+
+function autoCrackAtbash(s){
+  if(langScore(s)>0.18)return null;
+  const r=s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)));
+  const sc=langScore(r);
+  if(sc>0.20&&sc>langScore(s)+0.08)return{dec:r,sc};
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════
+   IDENTIFY ENGINE — peels layers + decodes each one
 ═══════════════════════════════════════════════════════ */
 function peelAllLayers(input){
   const layers=[];
   let current=input;
   const seen=new Set([current.trim()]);
-  const MAX=12;
+  const MAX=15;
 
   for(let i=0;i<MAX;i++){
     const fmt=detectFormat(current);
     if(!fmt)break;
-    layers.push({input:current,fmt});
-    // Can we automatically peel this layer?
-    if(fmt.type==='plaintext'||fmt.type==='hash'||fmt.type==='unknown'||fmt.needsKey)break;
-    // Try to decode
-    const next=tryDecode(current,fmt);
-    if(!next||next===current||seen.has(next.trim()))break;
-    seen.add(next.trim());
-    current=next;
+
+    // ── Try to decode this layer immediately ──────────────
+    let decoded=null;
+    let decMethod=fmt.subtype;
+
+    if(!fmt.needsKey&&fmt.type!=='hash'&&fmt.type!=='unknown'&&fmt.type!=='plaintext'){
+      decoded=tryDecode(current,fmt);
+    }
+
+    // ── If standard decode failed/unavailable, try auto-crackers ──
+    if(!decoded&&fmt.type==='cipher'){
+      // Try Caesar auto-crack
+      const cae=autoCrackCaesar(current);
+      if(cae){decoded=cae.dec;decMethod=`Caesar shift-${cae.n} (auto-cracked, score ${(cae.sc*100).toFixed(0)}%)`;}
+      // Try Vigenère auto-crack
+      if(!decoded){const vig=autoCrackVigenere(current);if(vig){decoded=vig.dec;decMethod=`Vigenère key:"${vig.key}" (auto-cracked IC, score ${(vig.sc*100).toFixed(0)}%)`;}}
+      // Try ROT13
+      if(!decoded){const r=autoCrackROT13(current);if(r){decoded=r.dec;decMethod='ROT13 (auto-detected)';}}
+      // Try Atbash
+      if(!decoded){const a=autoCrackAtbash(current);if(a){decoded=a.dec;decMethod='Atbash (auto-detected)';}}
+    }
+
+    // ── Even for 'unknown' — try brute-force light pass ──
+    if(!decoded&&fmt.type==='unknown'){
+      const cae=autoCrackCaesar(current);
+      if(cae){decoded=cae.dec;decMethod=`Caesar shift-${cae.n} (auto-cracked)`;}
+      if(!decoded){const r=autoCrackROT13(current);if(r){decoded=r.dec;decMethod='ROT13';}}
+    }
+
+    // Store layer WITH its decoded value
+    layers.push({input:current,fmt,decoded,decMethod});
+
+    if(fmt.type==='plaintext'||fmt.type==='hash')break;
+    if(fmt.needsKey&&!decoded)break; // needs key and couldn't crack
+    if(!decoded||decoded===current||seen.has(decoded.trim()))break;
+
+    seen.add(decoded.trim());
+    current=decoded;
   }
-  return layers;
+  return{layers,final:current};
 }
 
 function tryDecode(s,fmt){
@@ -679,24 +772,34 @@ function tryDecode(s,fmt){
       const fixed=fmt.fix||t;
       let p=fixed.replace(/\s/g,'');while(p.length%4)p+='=';
       const r=sb64(p);if(!r)return null;
-      try{return decodeURIComponent(escape(r))}catch{return printable(r)?r:null}
+      try{const u=decodeURIComponent(escape(r));return printable(u)?u:null}
+      catch{return printable(r)?r:null}
     }
-    if(fmt.subtype==='Base64URL'){let p=t.replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');while(p.length%4)p+='=';const r=sb64(p);if(!r)return null;try{return decodeURIComponent(escape(r))}catch{return null}}
+    if(fmt.subtype==='Base64URL'){let p=t.replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');while(p.length%4)p+='=';const r=sb64(p);if(!r)return null;try{const u=decodeURIComponent(escape(r));return printable(u)?u:null}catch{return printable(r)?r:null}}
     if(fmt.subtype==='Base32'){const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';const inp=t.toUpperCase().replace(/=/g,'');let bits='',o='';for(const c of inp){const i=a.indexOf(c);if(i<0)return null;bits+=i.toString(2).padStart(5,'0');}for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));return printable(o)?o:null}
     if(fmt.subtype==='Hexadecimal'){const c=t.replace(/[\s:,]/g,'');let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));return printable(o)?o:null}
     if(fmt.subtype==='Binary (8-bit)'){const c=t.replace(/\s/g,'');let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));return printable(o)?o:null}
-    if(fmt.subtype==='Octal'){return t.split(/\s+/).map(x=>String.fromCharCode(parseInt(x,8))).join('')}
-    if(fmt.subtype==='Decimal ASCII'){return t.split(/[\s,]+/).map(x=>String.fromCharCode(+x)).join('')}
-    if(fmt.subtype==='URL Encoding'){return decodeURIComponent(t)}
-    if(fmt.subtype==='HTML Entities'){const el=document.createElement('textarea');el.innerHTML=t;return el.value}
-    if(fmt.subtype==='Unicode Escapes'){return t.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)))}
-    if(fmt.subtype==='Morse Code'){const M={'.-':'A','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-.....':'6','--....':'7','---..':'8','----.':'9','-----':'0'};return t.trim().split(/\s{2,}|\s*\/\s*/).map(w=>w.trim().split(/\s+/).map(sym=>M[sym]||'?').join('')).join(' ')}
+    if(fmt.subtype==='Octal'){const r=t.split(/\s+/).map(x=>String.fromCharCode(parseInt(x,8))).join('');return printable(r)?r:null}
+    if(fmt.subtype==='Decimal ASCII'){const r=t.split(/[\s,]+/).map(x=>String.fromCharCode(+x)).join('');return printable(r)?r:null}
+    if(fmt.subtype==='URL Encoding'){try{const r=decodeURIComponent(t);return printable(r)?r:null}catch{return null}}
+    if(fmt.subtype==='HTML Entities'){const el=document.createElement('textarea');el.innerHTML=t;return el.value!==t?el.value:null}
+    if(fmt.subtype==='Unicode Escapes'){const r=t.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));return r!==t?r:null}
+    if(fmt.subtype==='Morse Code'){const M={'.-':'A','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-.....':'6','--....':'7','---..':'8','----.':'9','-----':'0'};return t.trim().split(/\s{2,}|\s*\/\s*/).map(w=>w.trim().split(/\s+/).map(sym=>M[sym]||'?').join('')).join(' ')||null}
     if(fmt.subtype==='NATO Phonetic'){const M={ALPHA:'A',BRAVO:'B',CHARLIE:'C',DELTA:'D',ECHO:'E',FOXTROT:'F',GOLF:'G',HOTEL:'H',INDIA:'I',JULIET:'J',KILO:'K',LIMA:'L',MIKE:'M',NOVEMBER:'N',OSCAR:'O',PAPA:'P',QUEBEC:'Q',ROMEO:'R',SIERRA:'S',TANGO:'T',UNIFORM:'U',VICTOR:'V',WHISKEY:'W',XRAY:'X',YANKEE:'Y',ZULU:'Z'};return t.toUpperCase().split(/[\s,\-]+/).map(w=>M[w]||w).join('')}
-    if(fmt.subtype==="Bacon's Cipher"){const M={AAAAA:'A',AAAAB:'B',AAABA:'C',AAABB:'D',AABAA:'E',AABAB:'F',AABBA:'G',AABBB:'H',ABAAA:'I',ABAAB:'J',ABABA:'K',ABABB:'L',ABBAA:'M',ABBAB:'N',ABBBA:'O',ABBBB:'P',BAAAA:'Q',BAAAB:'R',BAABA:'S',BAABB:'T',BABAA:'U',BABAB:'V',BABBA:'W',BABBB:'X',BBAAA:'Y',BBAAB:'Z'};const c=t.toUpperCase().replace(/\s/g,'');let o='';for(let i=0;i+5<=c.length;i+=5)o+=M[c.slice(i,i+5)]||'?';return o}
+    if(fmt.subtype==="Bacon's Cipher"){const M={AAAAA:'A',AAAAB:'B',AAABA:'C',AAABB:'D',AABAA:'E',AABAB:'F',AABBA:'G',AABBB:'H',ABAAA:'I',ABAAB:'J',ABABA:'K',ABABB:'L',ABBAA:'M',ABBAB:'N',ABBBA:'O',ABBBB:'P',BAAAA:'Q',BAAAB:'R',BAABA:'S',BAABB:'T',BABAA:'U',BABAB:'V',BABBA:'W',BABBB:'X',BBAAA:'Y',BBAAB:'Z'};const c=t.toUpperCase().replace(/\s/g,'');let o='';for(let i=0;i+5<=c.length;i+=5)o+=M[c.slice(i,i+5)]||'?';return/[A-Z]/.test(o)?o:null}
     if(fmt.subtype==='A1Z26'){return t.split(/[\s,\-]+/).map(x=>String.fromCharCode(+x+64)).join('')}
-    if(fmt.subtype==='Polybius Square'){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];const c=t.replace(/\s/g,'');let o='';for(let i=0;i+1<c.length;i+=2){const r=+c[i]-1,cl=+c[i+1]-1;if(r>=0&&r<5&&cl>=0&&cl<5)o+=G[r][cl];}return o}
+    if(fmt.subtype==='Polybius Square'){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];const c=t.replace(/\s/g,'');let o='';for(let i=0;i+1<c.length;i+=2){const r=+c[i]-1,cl=+c[i+1]-1;if(r>=0&&r<5&&cl>=0&&cl<5)o+=G[r][cl];}return o||null}
     if(fmt.subtype==='JWT'){try{const p=t.split('.');const d=x=>{let v=x.replace(/-/g,'+').replace(/_/g,'/');while(v.length%4)v+='=';return JSON.stringify(JSON.parse(atob(v)),null,2)};return'HEADER:\n'+d(p[0])+'\n\nPAYLOAD:\n'+d(p[1])+'\n\nSIG: '+p[2]}catch{return null}}
-  }catch{return null}
+    if(fmt.subtype==='UUencode'){try{return uud?uud(t):null}catch{return null}}
+    if(fmt.subtype==='Base85 (Ascii85)'){try{return b85d?b85d(t):null}catch{return null}}
+    // Monoalphabetic cipher — try Caesar auto
+    if(fmt.subtype==='Monoalphabetic cipher (Caesar/ROT/Atbash)'){
+      const cae=autoCrackCaesar(t);if(cae)return cae.dec;
+      const r=autoCrackROT13(t);if(r)return r.dec;
+      const a=autoCrackAtbash(t);if(a)return a.dec;
+      return null;
+    }
+  }catch(e){return null}
   return null;
 }
 
