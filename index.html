@@ -3,1276 +3,1185 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherSense v8 — Professional Decoder</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>CipherSense — Crypto Analysis Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* ─────────────────────────────────── RESET + ROOT */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#04060c;--s1:#080c18;--s2:#0c1120;--s3:#111828;--s4:#172030;
-  --b1:#1c2840;--b2:#243356;--b3:#2e4070;
-  --G:#00e5a0;--Gd:rgba(0,229,160,.08);
-  --P:#a855f7;--Pd:rgba(168,85,247,.08);
-  --B:#3b82f6;--Bd:rgba(59,130,246,.08);
-  --Y:#f59e0b;--Yd:rgba(245,158,11,.08);
-  --R:#ef4444;--Rd:rgba(239,68,68,.08);
-  --C:#06b6d4;--Cd:rgba(6,182,212,.08);
-  --O:#f97316;
-  --text:#c8d8f4;--dim:#4a6080;--mute:#142030;
-  --mono:'JetBrains Mono',monospace;--ui:'Outfit',sans-serif;
+  --ink:#07090f;
+  --card:#0d1020;
+  --layer:#131828;
+  --border:#1e2840;
+  --border2:#263354;
+  --text:#d0deff;
+  --dim:#4a6090;
+  --ghost:#1a2440;
+  /* accent palette */
+  --green:#00e8a2;
+  --blue:#3b82f6;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --violet:#a78bfa;
+  --cyan:#22d3ee;
+  --pink:#f472b6;
+  /* semantic */
+  --encoding-col:#00e8a2;
+  --cipher-col:#a78bfa;
+  --crypto-col:#3b82f6;
+  --hash-col:#f59e0b;
+  --unknown-col:#4a6090;
 }
-html,body{min-height:100%;background:var(--bg)}
-body{color:var(--text);font-family:var(--ui);overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;
-  background:radial-gradient(ellipse 60% 40% at 20% 0,rgba(0,229,160,.04),transparent 60%),
-             radial-gradient(ellipse 50% 50% at 85% 90%,rgba(59,130,246,.04),transparent 60%);
-  pointer-events:none;z-index:0}
+html,body{min-height:100%;background:var(--ink);color:var(--text);font-family:'Syne',sans-serif}
 ::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
-.app{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 1.25rem 5rem}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-/* ── HEADER ── */
-.hdr{padding:1.2rem 0 .9rem;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--b1);margin-bottom:1.2rem;flex-wrap:wrap;gap:.5rem}
-.logo-name{font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--G);letter-spacing:-.03em}
-.logo-v{font-family:var(--mono);font-size:.58rem;color:var(--dim);border:1px solid var(--b2);padding:2px 6px;border-radius:3px;margin-left:.4rem}
-.logo-sub{font-family:var(--mono);font-size:.5rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
-.hbadges{display:flex;gap:4px;flex-wrap:wrap}
-.hb{font-family:var(--mono);font-size:.48rem;padding:2px 7px;border-radius:3px;border:1px solid;letter-spacing:.06em;font-weight:600}
-.hb-g{background:var(--Gd);color:var(--G);border-color:rgba(0,229,160,.2)}
-.hb-p{background:var(--Pd);color:var(--P);border-color:rgba(168,85,247,.2)}
-.hb-b{background:var(--Bd);color:var(--B);border-color:rgba(59,130,246,.18)}
-.hb-y{background:var(--Yd);color:var(--Y);border-color:rgba(245,158,11,.18)}
-.hb-r{background:var(--Rd);color:var(--R);border-color:rgba(239,68,68,.18)}
+/* ─────────────────────────────────── LAYOUT */
+.shell{min-height:100vh;display:flex;flex-direction:column;max-width:1040px;margin:0 auto;padding:0 1.25rem 4rem}
 
-/* ── TABS ── */
-.tabs{display:flex;gap:2px;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:3px;margin-bottom:1.1rem}
-.tab{flex:1;font-family:var(--mono);font-size:.58rem;font-weight:600;padding:7px 12px;border-radius:5px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;letter-spacing:.04em;text-transform:uppercase}
+/* ─────────────────────────────────── HEADER */
+.hdr{padding:1.4rem 0 1rem;border-bottom:1px solid var(--border);margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.wordmark{font-size:1.3rem;font-weight:800;letter-spacing:-.03em;color:var(--green)}
+.wordmark span{color:var(--text)}
+.tagline{font-family:'DM Mono',monospace;font-size:.55rem;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.hbadges{display:flex;gap:5px;flex-wrap:wrap}
+.hb{font-family:'DM Mono',monospace;font-size:.5rem;padding:2px 8px;border-radius:3px;border:1px solid;letter-spacing:.06em;font-weight:500}
+
+/* ─────────────────────────────────── TABS */
+.tabrow{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:1rem}
+.tab{flex:1;font-family:'DM Mono',monospace;font-size:.62rem;font-weight:500;padding:8px 10px;border-radius:5px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .12s;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 .tab:hover{color:var(--text)}
-.tab.active{background:var(--s3);color:var(--G);box-shadow:0 1px 6px rgba(0,0,0,.4)}
-.tab.active.t-enc{color:var(--P)}
-.tab.active.t-crypto{color:var(--B)}
+.tab.on{background:var(--layer);box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.tab.on.t1{color:var(--cyan)}
+.tab.on.t2{color:var(--green)}
+.tab.on.t3{color:var(--violet)}
 .pane{display:none}
-.pane.active{display:block}
+.pane.on{display:block}
 
-/* ── SHARED ── */
-.lbl{font-family:var(--mono);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:.45rem;display:flex;align-items:center;gap:.5rem}
-.lbl::after{content:'';flex:1;height:1px;background:var(--b1)}
-.field{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;transition:border-color .15s,box-shadow .15s;margin-bottom:.8rem}
-.field:focus-within{border-color:var(--G);box-shadow:0 0 0 2px var(--Gd)}
-.field.enc-focus:focus-within{border-color:var(--P);box-shadow:0 0 0 2px var(--Pd)}
-.field.key-focus:focus-within{border-color:var(--B);box-shadow:0 0 0 2px var(--Bd)}
-textarea,input[type=text]{width:100%;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:.8rem;color:var(--text);line-height:1.8;padding:.8rem 1rem;caret-color:var(--G)}
+/* ─────────────────────────────────── SHARED */
+.lbl{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:.45rem;display:flex;align-items:center;gap:.5rem}
+.lbl::after{content:'';flex:1;height:1px;background:var(--border)}
+.box{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:.75rem;transition:border-color .15s}
+.box:focus-within{border-color:var(--cyan)}
+textarea,input[type=text],input[type=password]{width:100%;background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--text);padding:.85rem 1rem;line-height:1.75;caret-color:var(--green)}
 textarea{resize:none}
-textarea::placeholder,input::placeholder{color:var(--mute);font-style:italic}
-.foot{display:flex;align-items:center;justify-content:space-between;padding:.35rem .8rem;border-top:1px solid var(--b1);background:var(--s2);flex-wrap:wrap;gap:.3rem}
-.meta{font-family:var(--mono);font-size:.5rem;color:var(--dim);display:flex;gap:.7rem;align-items:center}
+textarea::placeholder,input::placeholder{color:var(--ghost);font-style:italic}
+.bfoot{display:flex;align-items:center;justify-content:space-between;padding:.38rem .85rem;border-top:1px solid var(--border);background:var(--layer);flex-wrap:wrap;gap:.3rem}
+.bmeta{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--dim);display:flex;gap:.65rem;align-items:center}
 
-/* ── BUTTONS ── */
-.btn{font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:.04em;padding:6px 14px;border-radius:5px;border:1px solid;cursor:pointer;transition:all .1s;white-space:nowrap;text-transform:uppercase}
+/* ─────────────────────────────────── BUTTONS */
+.btn{font-family:'DM Mono',monospace;font-size:.58rem;font-weight:500;padding:6px 14px;border-radius:5px;border:1px solid;cursor:pointer;transition:all .1s;letter-spacing:.04em;white-space:nowrap}
 .btn:active{transform:scale(.95)}
-.btn-g{background:var(--G);color:#000;border-color:var(--G)}
-.btn-g:hover{background:#2affc0}
-.btn-p{background:var(--P);color:#fff;border-color:var(--P)}
-.btn-p:hover{background:#c084fc}
-.btn-b{background:var(--B);color:#fff;border-color:var(--B)}
-.btn-b:hover{background:#60a5fa}
-.btn-y{background:var(--Y);color:#000;border-color:var(--Y)}
-.btn-y:hover{background:#fbbf24}
-.btn-ghost{background:transparent;color:var(--dim);border-color:var(--b2)}
-.btn-ghost:hover{background:var(--s3);color:var(--text)}
-.btn-sm{font-size:.5rem;padding:4px 10px}
-.btn-xs{font-size:.46rem;padding:3px 7px}
+.btn-run{background:var(--green);color:#000;border-color:var(--green);font-weight:700}
+.btn-run:hover{background:#2effc0}
+.btn-sec{background:var(--layer);color:var(--text);border-color:var(--border2)}
+.btn-sec:hover{background:var(--border);border-color:var(--border2)}
+.btn-ghost{background:transparent;color:var(--dim);border-color:var(--border)}
+.btn-ghost:hover{background:var(--layer);color:var(--text)}
+.btn-sm{font-size:.52rem;padding:4px 10px}
+.btn-xs{font-size:.46rem;padding:2px 7px}
 .acts{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center}
 
-/* ── CHIPS ── */
-.chip{font-family:var(--mono);font-size:.5rem;padding:2px 8px;border-radius:3px;border:1px solid;display:inline-flex;align-items:center;gap:3px;font-weight:600;letter-spacing:.04em}
-.cg{background:var(--Gd);color:var(--G);border-color:rgba(0,229,160,.2)}
-.cp{background:var(--Pd);color:var(--P);border-color:rgba(168,85,247,.2)}
-.cb{background:var(--Bd);color:var(--B);border-color:rgba(59,130,246,.18)}
-.cy{background:var(--Yd);color:var(--Y);border-color:rgba(245,158,11,.18)}
-.cr{background:var(--Rd);color:var(--R);border-color:rgba(239,68,68,.2)}
-.cc{background:var(--Cd);color:var(--C);border-color:rgba(6,182,212,.18)}
-.co{background:rgba(249,115,22,.08);color:var(--O);border-color:rgba(249,115,22,.2)}
-.cd{background:transparent;color:var(--dim);border-color:var(--b2)}
+/* ─────────────────────────────────── CHIPS */
+.chip{font-family:'DM Mono',monospace;font-size:.5rem;padding:2px 8px;border-radius:3px;border:1px solid;display:inline-flex;align-items:center;gap:3px;letter-spacing:.04em;font-weight:500}
+.c-enc{background:rgba(0,232,162,.07);color:var(--encoding-col);border-color:rgba(0,232,162,.2)}
+.c-cip{background:rgba(167,139,250,.07);color:var(--cipher-col);border-color:rgba(167,139,250,.2)}
+.c-cry{background:rgba(59,130,246,.07);color:var(--crypto-col);border-color:rgba(59,130,246,.2)}
+.c-has{background:rgba(245,158,11,.07);color:var(--hash-col);border-color:rgba(245,158,11,.2)}
+.c-unk{background:transparent;color:var(--dim);border-color:var(--border)}
+.c-ok{background:rgba(0,232,162,.07);color:var(--green);border-color:rgba(0,232,162,.2)}
+.c-err{background:rgba(239,68,68,.07);color:var(--red);border-color:rgba(239,68,68,.2)}
 
-/* ── PROGRESS ── */
-.pgbar{height:2px;background:var(--b1);border-radius:1px;overflow:hidden;margin-bottom:.8rem}
-.pgfill{height:100%;width:0;background:linear-gradient(90deg,var(--G),var(--C),var(--P),var(--G));background-size:400%;border-radius:1px}
+/* ─────────────────────────────────── PROGRESS */
+.pgbar{height:2px;background:var(--border);overflow:hidden;margin-bottom:.8rem;border-radius:1px}
+.pgfill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--cyan),var(--blue),var(--green));background-size:400%;border-radius:1px}
 .pgbar.run .pgfill{width:100%;animation:pa .7s linear infinite}
-@keyframes pa{from{background-position:0%}to{background-position:400%}}
+@keyframes pa{from{background-position:0}to{background-position:400%}}
 
-/* ── ANALYSIS CARD ── */
-.analysis-card{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;margin-bottom:.7rem;animation:fadeUp .15s ease}
+/* ─────────────────────────────────── LAYER CARDS (Identify tab) */
+.layers-wrap{display:flex;flex-direction:column;gap:.5rem}
+.layer-card{border-radius:8px;overflow:hidden;border:1px solid;animation:fadeUp .15s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.ac-head{display:flex;align-items:center;justify-content:space-between;padding:.55rem .9rem;border-bottom:1px solid var(--b1);flex-wrap:wrap;gap:.35rem}
-.ac-title{font-family:var(--mono);font-size:.58rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
-.ac-body{padding:.75rem 1rem}
+.lc-enc{border-color:rgba(0,232,162,.25);background:rgba(0,232,162,.03)}
+.lc-cip{border-color:rgba(167,139,250,.25);background:rgba(167,139,250,.03)}
+.lc-cry{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.04)}
+.lc-has{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.04)}
+.lc-unk{border-color:var(--border);background:var(--card)}
+.lc-hdr{display:flex;align-items:center;gap:.6rem;padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.05)}
+.lc-icon{font-size:1.1rem;flex-shrink:0}
+.lc-title{font-size:.85rem;font-weight:700;flex:1}
+.lc-body{padding:.75rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;line-height:1.7;color:var(--text)}
+.lc-row{display:flex;gap:.5rem;margin-bottom:.3rem;align-items:baseline}
+.lc-key{color:var(--dim);min-width:110px;flex-shrink:0;font-size:.65rem}
+.lc-val{word-break:break-all;color:var(--text)}
+.lc-val.good{color:var(--green)}
+.lc-val.warn{color:var(--amber)}
+.lc-val.hint{color:var(--cyan)}
+.lc-actions{padding:.5rem 1rem;border-top:1px solid rgba(255,255,255,.05);display:flex;gap:.35rem;flex-wrap:wrap}
 
-/* ── HASH WARNING BOX ── */
-.hash-warn{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:.85rem 1rem;margin-bottom:.7rem}
-.hw-title{font-family:var(--mono);font-size:.65rem;font-weight:700;color:var(--Y);margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem}
-.hw-body{font-family:var(--mono);font-size:.62rem;color:var(--text);line-height:1.7}
-.hw-row{display:flex;gap:.5rem;align-items:baseline;margin-top:.3rem}
-.hw-label{color:var(--dim);min-width:90px;flex-shrink:0}
-.hw-val{word-break:break-all;color:var(--G)}
+/* arrow between layers */
+.layer-arrow{text-align:center;font-family:'DM Mono',monospace;font-size:.6rem;color:var(--dim);padding:.2rem 0}
 
-/* ── RESULT BOX ── */
-.res-box{background:var(--s1);border:1px solid rgba(0,229,160,.22);border-radius:8px;overflow:hidden;margin-bottom:.6rem}
-.rb-head{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;background:rgba(0,229,160,.04);border-bottom:1px solid rgba(0,229,160,.1);flex-wrap:wrap;gap:.35rem}
-.rb-title{font-family:var(--mono);font-size:.56rem;color:var(--G);letter-spacing:.1em;text-transform:uppercase}
-.rb-text{font-family:var(--mono);font-size:.85rem;color:#8affd5;line-height:1.85;padding:.9rem 1rem;word-break:break-word;white-space:pre-wrap;max-height:260px;overflow-y:auto}
-.rb-foot{display:flex;align-items:center;justify-content:space-between;padding:.35rem .8rem;border-top:1px solid var(--b1);flex-wrap:wrap;gap:.4rem}
-.rb-stat{font-family:var(--mono);font-size:.5rem;color:var(--dim)}
+/* ─────────────────────────────────── DECODE RESULTS */
+.result-box{background:var(--card);border:1px solid rgba(0,232,162,.3);border-radius:8px;overflow:hidden;margin-bottom:.6rem}
+.rb-hdr{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;background:rgba(0,232,162,.04);border-bottom:1px solid rgba(0,232,162,.1);flex-wrap:wrap;gap:.3rem}
+.rb-title{font-family:'DM Mono',monospace;font-size:.56rem;color:var(--green);letter-spacing:.1em;text-transform:uppercase}
+.rb-body{font-family:'DM Mono',monospace;font-size:.85rem;color:#8affd5;line-height:1.85;padding:.9rem 1rem;word-break:break-word;white-space:pre-wrap;max-height:260px;overflow-y:auto}
+.rb-foot{display:flex;align-items:center;justify-content:space-between;padding:.38rem .85rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:.4rem}
+.rb-stat{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--dim)}
 
-/* ── LAYER CHAIN ── */
-.chain-toggle{font-family:var(--mono);font-size:.5rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:.4rem;padding:.25rem 0}
-.chain-toggle:hover{color:var(--text)}
-.ct-arr{transition:transform .15s;font-size:.55rem}
-.ct-open .ct-arr{transform:rotate(90deg)}
-.chain-body{display:none;padding:.4rem 0 0}
-.chain-body.open{display:block}
-.clayer{display:flex;align-items:stretch}
-.cl-side{display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0}
-.cl-dot{width:7px;height:7px;border-radius:50%;border:2px solid;flex-shrink:0;margin-top:10px}
-.cl-line{flex:1;width:1px;background:var(--b2);margin:2px 0}
-.cl-card{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:5px;margin-bottom:4px;overflow:hidden}
-.clh{display:flex;align-items:center;gap:.4rem;padding:.3rem .6rem;border-bottom:1px solid var(--b1);background:var(--s3)}
-.cln{font-family:var(--mono);font-size:.48rem;color:var(--dim);min-width:38px}
-.clname{font-family:var(--mono);font-size:.56rem;font-weight:600;flex:1}
-.cllen{font-family:var(--mono);font-size:.46rem;color:var(--dim)}
-.clbody{font-family:var(--mono);font-size:.62rem;line-height:1.6;padding:.3rem .6rem;color:var(--dim);word-break:break-all;max-height:50px;overflow:hidden;position:relative;white-space:pre-wrap}
-.clbody::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
+/* key required box */
+.key-req{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:.85rem 1rem;margin-bottom:.6rem}
+.kr-title{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--blue);margin-bottom:.55rem;display:flex;align-items:center;gap:.4rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.kr-fields{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.55rem}
+.kr-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.kr-lbl{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--dim);min-width:80px;flex-shrink:0}
+.kr-input{flex:1;min-width:200px;font-family:'DM Mono',monospace;font-size:.72rem;background:var(--layer);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:5px 9px;outline:none;transition:border-color .12s}
+.kr-input:focus{border-color:var(--blue)}
+.kr-select{font-family:'DM Mono',monospace;font-size:.68rem;background:var(--layer);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:5px 8px;outline:none;cursor:pointer}
+.kr-hint{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--dim);line-height:1.5;margin-top:.3rem}
 
-/* ── NO RESULT ── */
-.no-res{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:1.6rem;text-align:center;display:none}
-.nr-t{font-weight:700;font-size:.88rem;color:var(--dim);margin-bottom:.3rem}
-.nr-s{font-family:var(--mono);font-size:.6rem;color:var(--mute);line-height:1.7}
+/* warning/info boxes */
+.warn-box{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem;font-family:'DM Mono',monospace;font-size:.62rem;line-height:1.65;color:var(--text)}
+.warn-box .wt{color:var(--amber);font-weight:700;margin-bottom:.25rem;font-size:.65rem}
+.info-box{background:rgba(34,211,238,.04);border:1px solid rgba(34,211,238,.2);border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem;font-family:'DM Mono',monospace;font-size:.62rem;line-height:1.65;color:var(--text)}
+.info-box .it{color:var(--cyan);font-weight:700;margin-bottom:.25rem;font-size:.65rem}
 
-/* ── MODE STRIP ── */
-.mode-strip{display:flex;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:2px;margin-bottom:.75rem}
-.msbtn{flex:1;font-family:var(--mono);font-size:.55rem;font-weight:600;padding:6px 8px;border-radius:4px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
-.msbtn:hover{color:var(--text)}
-.msbtn.active{background:var(--s3);color:var(--G);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+/* ─────────────────────────────────── PIPELINE VIZ */
+.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;padding:.55rem .85rem;background:var(--layer);border:1px solid var(--border);border-radius:6px;margin-bottom:.75rem;font-family:'DM Mono',monospace;font-size:.6rem}
+.pipe-step{padding:3px 9px;border-radius:3px;border:1px solid;white-space:nowrap}
+.pipe-arrow{color:var(--dim);font-size:.7rem}
+.pipe-lbl{color:var(--dim);margin-right:.3rem;font-size:.52rem;text-transform:uppercase;letter-spacing:.08em}
 
-/* ── BRUTE GRID ── */
-.bf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.4rem;margin-top:.5rem}
-.bf-card{background:var(--s2);border:1px solid var(--b1);border-radius:5px;overflow:hidden;transition:border-color .1s}
-.bf-card:hover{border-color:var(--b3)}
-.bf-card.best{border-color:rgba(0,229,160,.25)}
-.bfc-head{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem;background:var(--s3);border-bottom:1px solid var(--b1)}
-.bfc-name{font-family:var(--mono);font-size:.54rem;font-weight:600;flex:1}
-.bfc-body{font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.3rem .55rem;line-height:1.55;word-break:break-all;max-height:52px;overflow:hidden;position:relative;white-space:pre-wrap}
-.bfc-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
-
-/* ── MANUAL OPS ── */
-.op-grid{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.55rem}
-.mc{font-family:var(--mono);font-size:.54rem;padding:4px 9px;border-radius:4px;border:1px solid var(--b1);background:transparent;color:var(--dim);cursor:pointer;transition:all .1s}
-.mc:hover{background:var(--s3);color:var(--text);border-color:var(--b2)}
-.mc.sel{background:var(--s3);color:var(--G);border-color:rgba(0,229,160,.3)}
-.cat-sep{font-family:var(--mono);font-size:.46rem;color:var(--mute);align-self:center;padding:0 .2rem;text-transform:uppercase}
-.manual-opts{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem;min-height:22px}
+/* ─────────────────────────────────── ENCODE TAB */
+.method-row{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem}
+.mchip{font-family:'DM Mono',monospace;font-size:.58rem;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all .1s}
+.mchip:hover{background:var(--layer);color:var(--text);border-color:var(--border2)}
+.mchip.on{background:var(--layer);color:var(--violet);border-color:rgba(167,139,250,.4)}
+.cat-lbl{font-family:'DM Mono',monospace;font-size:.48rem;color:var(--ghost);align-self:center;padding:0 .2rem;text-transform:uppercase}
+.enc-opts{display:flex;flex-wrap:wrap;gap:.55rem;align-items:center;margin-bottom:.6rem;min-height:22px}
 .og{display:flex;align-items:center;gap:.35rem}
-.og label{font-family:var(--mono);font-size:.54rem;color:var(--dim)}
-.og input[type=text],.og input[type=number],.og select{font-family:var(--mono);font-size:.62rem;background:var(--s3);border:1px solid var(--b2);border-radius:4px;color:var(--text);padding:3px 7px;outline:none;width:auto}
-.og input[type=range]{accent-color:var(--G);min-width:75px}
-.og .sv{font-family:var(--mono);font-size:.6rem;color:var(--G)}
+.og label{font-family:'DM Mono',monospace;font-size:.56rem;color:var(--dim)}
+.og input,.og select{font-family:'DM Mono',monospace;font-size:.65rem;background:var(--layer);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:3px 7px;outline:none}
+.og input[type=range]{accent-color:var(--violet);min-width:70px}
+.og .sv{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--violet)}
+.iters{display:flex;align-items:center;gap:.4rem;margin-bottom:.6rem}
+.iters label{font-family:'DM Mono',monospace;font-size:.54rem;color:var(--dim)}
+.iter-btn{font-family:'DM Mono',monospace;font-size:.56rem;width:26px;height:24px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all .1s}
+.iter-btn:hover{background:var(--layer);color:var(--text)}
+.iter-btn.on{background:var(--layer);color:var(--violet);border-color:rgba(167,139,250,.4)}
 
-/* ── ENCODER ── */
-.all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.4rem;margin-top:.5rem}
-.ae-card{background:var(--s2);border:1px solid var(--b1);border-radius:5px;overflow:hidden}
-.ae-head{display:flex;align-items:center;gap:.4rem;padding:.28rem .55rem;background:var(--s3);border-bottom:1px solid var(--b1)}
-.ae-name{font-family:var(--mono);font-size:.54rem;font-weight:600;flex:1}
-.ae-body{font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.3rem .55rem;line-height:1.55;word-break:break-all;max-height:55px;overflow:hidden;position:relative;white-space:pre-wrap}
-.ae-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(transparent,var(--s2))}
+/* encode output */
+.enc-result{background:var(--card);border:1px solid rgba(167,139,250,.25);border-radius:8px;overflow:hidden;display:none;margin-bottom:.6rem}
+.er-hdr{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;background:rgba(167,139,250,.04);border-bottom:1px solid rgba(167,139,250,.1)}
+.er-title{font-family:'DM Mono',monospace;font-size:.54rem;color:var(--violet);letter-spacing:.1em;text-transform:uppercase}
+.er-row{font-family:'DM Mono',monospace;font-size:.75rem;color:#d8b4fe;line-height:1.75;padding:.4rem .9rem;border-top:1px solid var(--border);word-break:break-all;white-space:pre-wrap}
+.er-row:first-child{border-top:none}
+.er-step-lbl{font-size:.46rem;color:var(--violet);margin-right:.4rem;opacity:.7}
 
-/* ── RECIPE ── */
-.recipe-wrap{display:grid;grid-template-columns:200px 1fr;gap:.8rem;margin-top:.6rem}
-@media(max-width:650px){.recipe-wrap{grid-template-columns:1fr}}
-.op-browser{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;max-height:380px}
-.ob-search input{width:100%;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:.62rem;color:var(--text);padding:.4rem .65rem;border-bottom:1px solid var(--b1)}
-.ob-list{flex:1;overflow-y:auto;padding:.3rem}
-.ob-cat{font-family:var(--mono);font-size:.44rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;padding:.2rem .3rem;margin-top:.25rem}
-.ob-item{font-family:var(--mono);font-size:.58rem;padding:4px 8px;border-radius:3px;cursor:pointer;transition:background .1s}
-.ob-item:hover{background:var(--s3);color:var(--G)}
-.recipe-area{background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
-.recipe-steps{flex:1;min-height:160px;padding:.4rem;overflow-y:auto}
-.recipe-empty{font-family:var(--mono);font-size:.56rem;color:var(--mute);text-align:center;padding:1.5rem;border:1px dashed var(--b2);border-radius:5px;margin:.15rem}
-.step-card{background:var(--s3);border:1px solid var(--b2);border-radius:5px;margin-bottom:.3rem;overflow:hidden;cursor:grab}
-.step-card:active{cursor:grabbing}
-.step-card.drag-over{border-color:var(--G)}
-.sh{display:flex;align-items:center;gap:.4rem;padding:.3rem .6rem}
-.snum{font-family:var(--mono);font-size:.44rem;color:var(--dim);min-width:14px}
-.sname{font-family:var(--mono);font-size:.58rem;font-weight:600;flex:1}
-.sdel{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:.58rem;padding:1px 3px;line-height:1;transition:color .1s}
-.sdel:hover{color:var(--R)}
-.sopts{padding:.2rem .6rem .35rem;border-top:1px solid var(--b1);display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}
-.sopts label{font-family:var(--mono);font-size:.48rem;color:var(--dim)}
-.sopts input,.sopts select{font-family:var(--mono);font-size:.56rem;background:var(--s2);border:1px solid var(--b2);border-radius:3px;color:var(--text);padding:2px 5px;outline:none;max-width:85px}
-.sopts input[type=range]{accent-color:var(--P);max-width:65px}
-.sopts .sv{font-family:var(--mono);font-size:.54rem;color:var(--P)}
-.recipe-foot{padding:.3rem .55rem;border-top:1px solid var(--b1);background:var(--s2);display:flex;gap:.3rem;flex-wrap:wrap;align-items:center}
-.bake-out{background:var(--s2);border:1px solid rgba(168,85,247,.2);border-radius:8px;overflow:hidden;margin-top:.55rem;display:none}
-.bo-head{display:flex;align-items:center;justify-content:space-between;padding:.4rem .7rem;border-bottom:1px solid var(--b1);background:var(--Pd)}
-.bo-title{font-family:var(--mono);font-size:.5rem;color:var(--P);letter-spacing:.08em}
-.bo-steps{font-family:var(--mono);font-size:.72rem;color:#e0b0ff;line-height:1.75;padding:.6rem .8rem;word-break:break-all;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+/* all-encodings grid */
+.all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.4rem;margin-top:.5rem}
+.ag-card{background:var(--layer);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.ag-hdr{display:flex;align-items:center;gap:.4rem;padding:.3rem .6rem;border-bottom:1px solid var(--border)}
+.ag-name{font-family:'DM Mono',monospace;font-size:.56rem;font-weight:500;flex:1}
+.ag-body{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--text);padding:.32rem .6rem;line-height:1.55;word-break:break-all;max-height:54px;overflow:hidden;position:relative;white-space:pre-wrap}
+.ag-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:14px;background:linear-gradient(transparent,var(--layer))}
 
-/* ── CRYPTO PANE ── */
-.key-row{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start;margin-bottom:.6rem}
-.crypto-opts{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.6rem}
-.crypto-result{background:var(--s1);border:1px solid rgba(59,130,246,.25);border-radius:8px;overflow:hidden;display:none;margin-bottom:.6rem}
-.cr-head{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;background:rgba(59,130,246,.05);border-bottom:1px solid rgba(59,130,246,.1);flex-wrap:wrap;gap:.35rem}
-.cr-title{font-family:var(--mono);font-size:.56rem;color:var(--B);letter-spacing:.1em;text-transform:uppercase}
-.cr-body{font-family:var(--mono);font-size:.82rem;color:#b3d4ff;line-height:1.85;padding:.9rem 1rem;word-break:break-word;white-space:pre-wrap;max-height:250px;overflow-y:auto}
-.cr-foot{display:flex;align-items:center;justify-content:space-between;padding:.35rem .8rem;border-top:1px solid var(--b1)}
-.info-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:.7rem .9rem;margin-bottom:.6rem;font-family:var(--mono);font-size:.6rem;color:var(--text);line-height:1.65}
-.info-box b{color:var(--Y)}
-.err-box{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:.7rem .9rem;margin-bottom:.6rem;font-family:var(--mono);font-size:.6rem;color:var(--R);line-height:1.65}
+/* copied flash */
+.flash{color:var(--green)!important;border-color:rgba(0,232,162,.4)!important}
 
-/* ── HASH VERIFY ── */
-.verify-row{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start;margin-bottom:.5rem}
-.verify-result{padding:.5rem .8rem;border-radius:5px;font-family:var(--mono);font-size:.65rem;font-weight:600;margin-bottom:.5rem;display:none}
-.vr-ok{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.3);color:var(--G)}
-.vr-fail{background:var(--Rd);border:1px solid rgba(239,68,68,.3);color:var(--R)}
-
-.flash{color:var(--G)!important;border-color:rgba(0,229,160,.4)!important}
+/* mode strip */
+.mode-strip{display:flex;gap:2px;background:var(--layer);border:1px solid var(--border);border-radius:6px;padding:2px;margin-bottom:.75rem}
+.ms-btn{flex:1;font-family:'DM Mono',monospace;font-size:.56rem;font-weight:500;padding:6px 8px;border-radius:4px;border:none;background:transparent;color:var(--dim);cursor:pointer;transition:all .1s;letter-spacing:.04em;text-transform:uppercase}
+.ms-btn:hover{color:var(--text)}
+.ms-btn.on{background:var(--border);color:var(--violet);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="shell">
 
+<!-- HEADER -->
 <div class="hdr">
   <div>
-    <div><span class="logo-name">CipherSense</span><span class="logo-v">v8</span></div>
-    <div class="logo-sub">Professional Decoder · Honest Results · 50+ Methods · AES/XOR Crypto</div>
+    <div class="wordmark">Cipher<span>Sense</span></div>
+    <div class="tagline">Identify · Decode · Encrypt — Cryptography Analysis Tool</div>
   </div>
   <div class="hbadges">
-    <span class="hb hb-g">⚡ SMART DECODE</span>
-    <span class="hb hb-p">🍳 RECIPE BUILDER</span>
-    <span class="hb hb-b">🔐 AES/XOR DECRYPT</span>
-    <span class="hb hb-y">HASH IDENTIFIER</span>
-    <span class="hb hb-r">NO GIBBERISH</span>
+    <span class="hb" style="background:rgba(0,232,162,.07);color:var(--green);border-color:rgba(0,232,162,.2)">🔍 IDENTIFY</span>
+    <span class="hb" style="background:rgba(34,211,238,.07);color:var(--cyan);border-color:rgba(34,211,238,.2)">⚡ AUTO-DECODE</span>
+    <span class="hb" style="background:rgba(59,130,246,.07);color:var(--blue);border-color:rgba(59,130,246,.2)">🔐 AES / XOR</span>
+    <span class="hb" style="background:rgba(167,139,250,.07);color:var(--violet);border-color:rgba(167,139,250,.2)">📦 ENCODER</span>
   </div>
 </div>
 
 <!-- TABS -->
-<div class="tabs">
-  <button class="tab active" onclick="sw('dec',this)">⚡ Magic Decoder</button>
-  <button class="tab t-enc" onclick="sw('enc',this)">🍳 Encoder / Recipe</button>
-  <button class="tab t-crypto" onclick="sw('crypto',this)">🔐 Crypto Decrypt</button>
+<div class="tabrow">
+  <button class="tab on t1" onclick="switchTab('id',this)">🔍 Identify</button>
+  <button class="tab t2" onclick="switchTab('dec',this)">⚡ Decode / Decrypt</button>
+  <button class="tab t3" onclick="switchTab('enc',this)">📦 Encode / Encrypt</button>
 </div>
 
-<!-- ════════════════ DECODER PANE ════════════════ -->
-<div class="pane active" id="pane-dec">
+<!-- ══════════════════════════════════════ IDENTIFY TAB -->
+<div class="pane on" id="pane-id">
 
-  <div class="lbl">Input — paste anything</div>
-  <div class="field">
-    <textarea id="di" rows="4"
-      placeholder="Paste encoded / ciphered text here…&#10;&#10;CipherSense will: identify the format → decode each layer → stop when it reaches plaintext or a one-way result (hash/HMAC) → tell you honestly what it found.&#10;&#10;If the result is a cryptographic hash, it will say so clearly instead of producing garbage."
-      spellcheck="false" oninput="onDI()"></textarea>
-    <div class="foot">
-      <div class="meta">
-        <span id="dic">0 chars</span>
-        <span id="dient" style="display:none">entropy:<b id="dev">—</b></span>
-        <span id="discr" style="display:none">chi²:<b id="dsc">—</b></span>
+  <div class="lbl">Paste anything — get a full analysis of every layer</div>
+  <div class="box">
+    <textarea id="id-input" rows="5"
+      placeholder="Paste any string here — encoded, encrypted, or unknown.&#10;&#10;CipherSense will identify every layer: Base64 → AES → Hash → etc.&#10;It will tell you exactly what each layer is, whether it needs a key, and what to do next.&#10;&#10;Example: TCAM41VSrIfLt+akv+JbARa8x/... (Base64-encoded AES ciphertext)"
+      spellcheck="false" oninput="onIdInput()"></textarea>
+    <div class="bfoot">
+      <div class="bmeta">
+        <span id="id-chars">0 chars</span>
+        <span id="id-bytes" style="display:none">decoded: <b id="id-byte-count">—</b> bytes</span>
       </div>
       <div class="acts">
-        <button class="btn btn-ghost btn-sm" onclick="revIn()">⇄ Reverse</button>
-        <button class="btn btn-ghost btn-sm" onclick="dSample()">▷ Sample</button>
-        <button class="btn btn-ghost btn-sm" onclick="clDec()">✕</button>
-        <button class="btn btn-g" onclick="magic()">⚡ Decode</button>
+        <button class="btn btn-ghost btn-sm" onclick="idSample()">▷ Sample</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearId()">✕ Clear</button>
+        <button class="btn btn-run" onclick="runIdentify()">🔍 Identify All Layers</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pgbar" id="id-pg"><div class="pgfill"></div></div>
+  <div id="id-output"></div>
+
+</div>
+
+<!-- ══════════════════════════════════════ DECODE TAB -->
+<div class="pane" id="pane-dec">
+
+  <div class="lbl">Input</div>
+  <div class="box">
+    <textarea id="dec-input" rows="4"
+      placeholder="Paste encoded or encrypted text…&#10;&#10;• Encoding (Base64, Hex, Binary…) → decoded automatically&#10;• Encrypted (AES, XOR) → enter key below&#10;• Unknown → use Identify tab first to understand the format"
+      spellcheck="false" oninput="onDecInput()"></textarea>
+    <div class="bfoot">
+      <div class="bmeta"><span id="dec-chars">0 chars</span></div>
+      <div class="acts">
+        <button class="btn btn-ghost btn-sm" onclick="revDecInput()">⇄ Reverse</button>
+        <button class="btn btn-ghost btn-sm" onclick="decSample()">▷ Sample</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearDec()">✕</button>
+        <button class="btn btn-run" onclick="runDecode()">⚡ Decode / Decrypt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decryption key fields (shown when needed) -->
+  <div class="key-req" id="key-req-box">
+    <div class="kr-title">🔑 Decryption Parameters</div>
+    <div class="kr-fields">
+      <div class="kr-row">
+        <span class="kr-lbl">Algorithm</span>
+        <select class="kr-select" id="dec-algo" onchange="onAlgoChange()">
+          <option value="auto">Auto-detect</option>
+          <optgroup label="Symmetric Encryption">
+            <option value="aes-cbc">AES-CBC</option>
+            <option value="aes-ctr">AES-CTR</option>
+            <option value="aes-ecb">AES-ECB (no IV)</option>
+            <option value="aes-gcm">AES-GCM</option>
+          </optgroup>
+          <optgroup label="Stream / Simple">
+            <option value="xor-byte">XOR (single byte key)</option>
+            <option value="xor-str">XOR (string/hex key)</option>
+            <option value="xor-brute">XOR Brute Force (0-255)</option>
+            <option value="rc4">RC4</option>
+          </optgroup>
+          <optgroup label="Classical Ciphers">
+            <option value="caesar">Caesar (shift)</option>
+            <option value="vigenere">Vigenère</option>
+            <option value="rot13">ROT13</option>
+            <option value="rot47">ROT47</option>
+            <option value="atbash">Atbash</option>
+          </optgroup>
+        </select>
+        <select class="kr-select" id="dec-input-fmt" style="margin-left:.5rem">
+          <option value="auto">Input: Auto-detect</option>
+          <option value="b64">Input: Base64</option>
+          <option value="hex">Input: Hex</option>
+          <option value="raw">Input: Raw text</option>
+        </select>
+      </div>
+      <div class="kr-row" id="key-row">
+        <span class="kr-lbl">Key</span>
+        <input type="text" class="kr-input" id="dec-key" placeholder="AES key: hex (e.g. 1d8e45ca…) or UTF-8 string (e.g. eORYfyqe…)">
+        <select class="kr-select" id="key-fmt">
+          <option value="auto">Auto</option>
+          <option value="utf8">UTF-8 string</option>
+          <option value="hex">Hex</option>
+          <option value="b64">Base64</option>
+        </select>
+      </div>
+      <div class="kr-row" id="iv-row">
+        <span class="kr-lbl">IV / Nonce</span>
+        <input type="text" class="kr-input" id="dec-iv" placeholder="16-byte IV: UTF-8 string or hex (e.g. 5366113792925655)">
+        <select class="kr-select" id="iv-fmt">
+          <option value="auto">Auto</option>
+          <option value="utf8">UTF-8 string</option>
+          <option value="hex">Hex</option>
+        </select>
+      </div>
+      <div class="kr-row" id="shift-row" style="display:none">
+        <span class="kr-lbl">Shift / Key</span>
+        <input type="text" class="kr-input" id="dec-shift" placeholder="Caesar: 1-25 | Vigenère: keyword (e.g. SECRET)">
+      </div>
+    </div>
+    <div class="kr-hint" id="algo-hint">Select an algorithm above or use Auto-detect. For AES: provide 16, 24, or 32-byte key + 16-byte IV.</div>
+  </div>
+
+  <div class="pgbar" id="dec-pg"><div class="pgfill"></div></div>
+  <div id="dec-output"></div>
+
+</div>
+
+<!-- ══════════════════════════════════════ ENCODE TAB -->
+<div class="pane" id="pane-enc">
+
+  <div class="lbl">Text to encode / encrypt</div>
+  <div class="box" style="border-color:var(--border)">
+    <textarea id="enc-input" rows="3" placeholder="Type or paste plaintext here…" spellcheck="false" oninput="onEncInput()"></textarea>
+    <div class="bfoot">
+      <div class="bmeta"><span id="enc-chars">0 chars</span></div>
+      <div class="acts">
+        <button class="btn btn-ghost btn-sm" onclick="encSample()">▷ Sample</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearEnc()">✕</button>
+        <button class="btn btn-run" style="background:var(--violet);border-color:var(--violet)" onclick="encodeAll()">📦 Encode with ALL</button>
       </div>
     </div>
   </div>
 
   <div class="mode-strip">
-    <button class="msbtn active" id="msAuto" onclick="setDM('auto')">⚡ Auto Magic</button>
-    <button class="msbtn" id="msManual" onclick="setDM('manual')">⚙ Manual</button>
-    <button class="msbtn" id="msBrute" onclick="setDM('brute')">💥 Brute All</button>
+    <button class="ms-btn on" id="em-single" onclick="setEncMode('single')">⚙ Single Method</button>
+    <button class="ms-btn" id="em-all" onclick="setEncMode('all')">📦 All Encodings</button>
   </div>
 
-  <div class="pgbar" id="dpg"><div class="pgfill" id="dpf"></div></div>
-  <div id="auto-det-bar" style="display:none;margin-bottom:.6rem;display:none;align-items:center;gap:.4rem;flex-wrap:wrap;padding:.4rem .7rem;background:var(--s2);border:1px solid var(--b1);border-radius:5px">
-    <span style="font-family:var(--mono);font-size:.48rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em">Detected →</span>
-    <span id="det-tags"></span>
-  </div>
-
-  <div id="auto-out"></div>
-  <div class="no-res" id="no-res">
-    <div class="nr-t">No confident plaintext decode found</div>
-    <div class="nr-s">The input may be: a hash (irreversible) · a keyed cipher (needs a key) · encrypted data (AES/RSA)<br>Use <b>Brute All</b> to see all possible interpretations, or switch to <b>🔐 Crypto Decrypt</b> tab if you have a key.</div>
-  </div>
-
-  <!-- MANUAL -->
-  <div id="man-panel" style="display:none">
-    <div class="lbl">Choose operation</div>
-    <div class="op-grid" id="man-op-grid"></div>
-    <div class="manual-opts" id="man-opts"></div>
-    <div class="acts" style="margin-bottom:.6rem;flex-wrap:wrap;gap:.35rem">
-      <button class="btn btn-g btn-sm" onclick="runMan()">⚡ Decode</button>
-      <button class="btn btn-ghost btn-sm" onclick="revIn();runMan()">⇄ Reverse first</button>
-      <span style="font-family:var(--mono);font-size:.5rem;color:var(--dim)">Iterations:</span>
-      <div id="man-iter-btns" style="display:flex;gap:2px"></div>
+  <!-- Single method panel -->
+  <div id="enc-single-panel">
+    <div class="lbl" style="margin-bottom:.45rem">Method</div>
+    <div class="method-row" id="enc-method-row"></div>
+    <div class="enc-opts" id="enc-opts-row"></div>
+    <div class="iters">
+      <label>Iterations (layers):</label>
+      <div id="enc-iter-btns" style="display:flex;gap:2px"></div>
+      <span id="enc-iter-info" style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--dim);margin-left:.3rem"></span>
     </div>
-    <div id="man-out"></div>
-  </div>
-
-  <!-- BRUTE -->
-  <div id="brute-panel" style="display:none">
-    <div class="acts" style="margin-bottom:.5rem;flex-wrap:wrap;gap:.35rem">
-      <button class="btn btn-sm btn-y" onclick="runBrute(false)">💥 Try all (forward)</button>
-      <button class="btn btn-sm" style="border-color:rgba(6,182,212,.3);color:var(--C)" onclick="runBrute(true)">⇄ Try reversed too</button>
-      <button class="btn btn-ghost btn-sm" onclick="runCaesarAll()">🔡 All 25 Caesar</button>
-    </div>
-    <div id="brute-out"></div>
-  </div>
-
-</div>
-
-<!-- ════════════════ ENCODER PANE ════════════════ -->
-<div class="pane" id="pane-enc">
-  <div class="lbl">Text to encode</div>
-  <div class="field enc-focus">
-    <textarea id="ei" rows="2" placeholder="Type or paste text to encode…" spellcheck="false" oninput="onEI()"></textarea>
-    <div class="foot">
-      <div class="meta"><span id="eic">0 chars</span></div>
-      <div class="acts">
-        <button class="btn btn-ghost btn-sm" onclick="eSmp()">▷ Sample</button>
-        <button class="btn btn-ghost btn-sm" onclick="clEnc()">✕</button>
-        <button class="btn btn-p" onclick="encodeAll()">🔐 Encode with ALL</button>
+    <div class="enc-result" id="enc-result">
+      <div class="er-hdr">
+        <span class="er-title" id="enc-result-title">Encoded output</span>
+        <button class="btn btn-ghost btn-xs" onclick="copyEncResult()">Copy</button>
       </div>
+      <div id="enc-result-rows"></div>
     </div>
   </div>
 
-  <div class="mode-strip" style="margin-bottom:.75rem">
-    <button class="msbtn active" id="emRecipe" onclick="setEM('recipe')" style="color:var(--P)">🍳 Recipe Builder</button>
-    <button class="msbtn" id="emAll" onclick="setEM('all')">🔐 All Encodings</button>
-  </div>
-
-  <!-- Recipe -->
-  <div id="recipe-panel">
-    <div class="recipe-wrap">
-      <div class="op-browser">
-        <div class="ob-search"><input id="obs" placeholder="Search ops…" oninput="filterObs()"></div>
-        <div class="ob-list" id="ob-list"></div>
-      </div>
-      <div class="recipe-area">
-        <div class="recipe-steps" id="rsteps"><div class="recipe-empty" id="rempty">← Click an operation to add it<br>Drag to reorder steps</div></div>
-        <div class="recipe-foot">
-          <span class="chip cd" id="rcnt">0 steps</span>
-          <button class="btn btn-ghost btn-sm" onclick="clRecipe()">Clear</button>
-          <button class="btn btn-p btn-sm" onclick="bake()">🍳 Bake</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportR()">Export JSON</button>
-        </div>
-      </div>
-    </div>
-    <div class="bake-out" id="bake-out">
-      <div class="bo-head">
-        <span class="bo-title" id="bo-title">Recipe output</span>
-        <div style="display:flex;gap:.3rem">
-          <button class="btn btn-ghost btn-xs" onclick="cpBake()">Copy</button>
-          <button class="btn btn-ghost btn-xs" onclick="bakeToDec()">→ Decode</button>
-        </div>
-      </div>
-      <div class="bo-steps" id="bo-steps"></div>
-    </div>
-  </div>
-
-  <!-- All encodings -->
-  <div id="all-panel" style="display:none">
+  <!-- All encodings panel -->
+  <div id="enc-all-panel" style="display:none">
     <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;flex-wrap:wrap">
-      <span class="chip cp" id="all-cnt">0 encodings</span>
-      <button class="btn btn-ghost btn-sm" onclick="cpAllJSON()">Copy all (JSON)</button>
+      <span class="chip" style="background:rgba(167,139,250,.07);color:var(--violet);border-color:rgba(167,139,250,.2)" id="all-count">0 results</span>
+      <button class="btn btn-ghost btn-sm" onclick="copyAllJSON()">Copy as JSON</button>
     </div>
     <div class="all-grid" id="all-grid"></div>
   </div>
-</div>
-
-<!-- ════════════════ CRYPTO DECRYPT PANE ════════════════ -->
-<div class="pane" id="pane-crypto">
-
-  <div class="info-box">
-    <b>⚠ Important:</b> Cryptographic hashes (SHA-256, SHA-512, MD5, HMAC) are <b>mathematically one-way</b> — they cannot be reversed by any tool.<br>
-    This tab handles <b>reversible</b> symmetric encryption: AES-CBC, AES-CTR, XOR, and hash verification.<br>
-    For RSA or asymmetric crypto you need the private key — not supported client-side.
-  </div>
-
-  <div class="lbl">Ciphertext / Encoded input</div>
-  <div class="field">
-    <textarea id="ci" rows="3" placeholder="Paste ciphertext here… (hex, base64, or raw)" spellcheck="false" oninput="onCI()"></textarea>
-    <div class="foot">
-      <div class="meta"><span id="cic">0 chars</span><span id="ci-type" style="display:none"></span></div>
-      <div class="acts">
-        <button class="btn btn-ghost btn-sm" onclick="loadCryptoSample()">▷ Sample</button>
-        <button class="btn btn-ghost btn-sm" onclick="clCrypto()">✕</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="lbl">Key (optional — leave blank to attempt keyless methods)</div>
-  <div class="field key-focus">
-    <input type="text" id="ckey" placeholder="Hex key (e.g. 1d8e45ca...) or plain-text key — leave blank for keyless analysis" oninput="onCKey()">
-  </div>
-
-  <div class="lbl">Options</div>
-  <div class="crypto-opts">
-    <div class="og"><label>Mode</label>
-      <select id="cmode">
-        <option value="auto">Auto-detect</option>
-        <option value="xor">XOR (key=byte or hex string)</option>
-        <option value="aes-cbc">AES-CBC (key+IV in hex)</option>
-        <option value="aes-ctr">AES-CTR (key+nonce)</option>
-        <option value="aes-ecb">AES-ECB (key only)</option>
-        <option value="hash-verify">Hash Verify (HMAC/SHA)</option>
-        <option value="brute-xor">Brute XOR (all 256 keys)</option>
-      </select>
-    </div>
-    <div class="og"><label>IV / Nonce (hex)</label>
-      <input type="text" id="civ" placeholder="16 bytes for AES-CBC" style="min-width:160px">
-    </div>
-    <div class="og"><label>Input format</label>
-      <select id="cfmt">
-        <option value="auto">Auto</option>
-        <option value="hex">Hex</option>
-        <option value="b64">Base64</option>
-        <option value="raw">Raw text</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="acts" style="margin-bottom:.8rem;gap:.4rem;flex-wrap:wrap">
-    <button class="btn btn-b" onclick="runCrypto()">🔐 Decrypt / Analyse</button>
-    <button class="btn btn-ghost btn-sm" onclick="runHashIdent()">🔍 Identify Hash</button>
-    <button class="btn btn-ghost btn-sm" onclick="runBruteXOR()">💥 Brute XOR</button>
-  </div>
-
-  <!-- Hash identify result -->
-  <div id="hash-ident-out"></div>
-
-  <!-- Crypto result -->
-  <div class="crypto-result" id="crypto-result">
-    <div class="cr-head">
-      <span class="cr-title" id="cr-title">Decryption result</span>
-      <div style="display:flex;gap:.3rem">
-        <span class="chip" id="cr-chip"></span>
-        <button class="btn btn-ghost btn-xs" onclick="cpCrypto()">Copy</button>
-      </div>
-    </div>
-    <div class="cr-body" id="cr-body"></div>
-    <div class="cr-foot">
-      <span class="rb-stat" id="cr-stat"></span>
-      <button class="btn btn-ghost btn-xs" onclick="sendCryptoToDec()">→ Decode further</button>
-    </div>
-  </div>
-
-  <!-- Verify section -->
-  <div id="verify-section" style="display:none">
-    <div class="lbl">Verify hash — enter the original message</div>
-    <div class="field">
-      <input type="text" id="verify-msg" placeholder="Enter the original plaintext message to verify against the hash…" oninput="runVerify()">
-    </div>
-    <div class="verify-result" id="verify-result"></div>
-  </div>
-
-  <!-- Brute XOR results -->
-  <div id="bxor-out"></div>
 
 </div>
-
-</div><!-- /app -->
+</div><!-- /shell -->
 
 <script>
 'use strict';
+
+/* ═══════════════════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════════════════ */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function cp(t,b){navigator.clipboard.writeText(t||'').catch(()=>{});if(!b)return;const o=b.textContent;b.textContent='✓';b.classList.add('flash');setTimeout(()=>{b.textContent=o;b.classList.remove('flash')},1300)}
-const LC=['#00e5a0','#06b6d4','#a855f7','#f59e0b','#ef4444','#f97316','#6ee7b7','#f9a8d4','#7dd3fc','#fef08a'];
+function switchTab(name,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));el.classList.add('on');$('pane-'+name).classList.add('on')}
+function pg(id,on){$(id).classList.toggle('run',on)}
+const LC=['#00e8a2','#22d3ee','#a78bfa','#f59e0b','#f472b6','#3b82f6','#34d399','#f97316'];
 const lc=i=>LC[i%LC.length];
 
-// ══════════════════════════════════════════════════════
-// SCORING — Chi-squared + dictionary (Ciphey approach)
-// ══════════════════════════════════════════════════════
+/* bytes helpers */
+const ENC8=s=>new TextEncoder().encode(s);
+const DEC8=(b,f=true)=>{try{return new TextDecoder('utf-8',{fatal:f}).decode(b)}catch{return null}};
+const sb64=s=>{try{return atob(s)}catch{return null}};
+function hexToBytes(s){const c=s.replace(/\s/g,'');if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2)return null;const b=new Uint8Array(c.length/2);for(let i=0;i<c.length;i+=2)b[i/2]=parseInt(c.slice(i,i+2),16);return b}
+function b64ToBytes(s){try{const raw=atob(s.trim());return new Uint8Array(raw.length).map((_,i)=>raw.charCodeAt(i))}catch{return null}}
+function bytesToHex(b){return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('')}
+function printable(s){return typeof s==='string'&&/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s)}
+
+/* parse bytes from user input using selected format */
+function parseBytes(str, fmt='auto'){
+  const t=str.trim();
+  if(fmt==='utf8') return ENC8(t);
+  if(fmt==='hex')  return hexToBytes(t);
+  if(fmt==='b64')  return b64ToBytes(t);
+  // auto
+  if(/^[0-9a-fA-F\s]+$/.test(t)&&t.replace(/\s/g,'').length%2===0&&t.length>=4){const b=hexToBytes(t);if(b)return b;}
+  try{const b=b64ToBytes(t);if(b)return b}catch{}
+  return ENC8(t);
+}
+
+/* ═══════════════════════════════════════════════════════
+   LANGUAGE SCORING (Chi-squared + dictionary)
+═══════════════════════════════════════════════════════ */
 const EN_F={a:.08167,b:.01492,c:.02782,d:.04253,e:.12702,f:.02228,g:.02015,h:.06094,i:.06966,j:.00153,k:.00772,l:.04025,m:.02406,n:.06749,o:.07507,p:.01929,q:.00095,r:.05987,s:.06327,t:.09056,u:.02758,v:.00978,w:.02360,x:.00150,y:.01974,z:.00074};
-const DICT=new Set(('the be to of and a in that have it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us here hello world secret message attack defend key data file send receive flag password').split(' '));
+const DICT=new Set('the be to of and a in that have it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us hello world secret message attack defend key data flag password send receive'.split(' '));
 function chiSq(s){const L=s.toLowerCase().replace(/[^a-z]/g,'');if(L.length<4)return 9999;const f={};for(const c of L)f[c]=(f[c]||0)+1;let ch=0;for(const c in EN_F){const o=(f[c]||0)/L.length;ch+=((o-EN_F[c])**2)/EN_F[c];}return ch}
 function dictSc(s){const w=(s.toLowerCase().match(/[a-z]{2,}/g)||[]);return w.length?w.filter(x=>DICT.has(x)).length/w.length:0}
-function shan(s){if(!s.length)return 0;const f={};for(const c of s)f[c]=(f[c]||0)+1;let h=0;for(const k in f){const p=f[k]/s.length;h-=p*Math.log2(p);}return +h.toFixed(3)}
 function langScore(s){
-  if(!s||!s.trim())return 0;
-  if(!/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s))return 0;
+  if(!s||!s.trim()||!printable(s))return 0;
   const letters=(s.match(/[a-zA-Z]/g)||[]).length/s.length;
   const spaces=(s.match(/\s/g)||[]).length/s.length;
   const chi=chiSq(s),dict=dictSc(s);
   const chiSc=Math.max(0,1-chi/9);
   return Math.min(1,dict*.65+chiSc*.25+(spaces>.08&&spaces<.3?.05:0)+(letters>.45?.05:0));
 }
-function printable(s){return typeof s==='string'&&/^[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]*$/.test(s)}
+function shan(s){if(!s.length)return 0;const f={};for(const c of s)f[c]=(f[c]||0)+1;let h=0;for(const k in f){const p=f[k]/s.length;h-=p*Math.log2(p);}return +h.toFixed(3)}
 
-// ══════════════════════════════════════════════════════
-// HASH IDENTIFIER (350+ types like dCode Haiti db)
-// ══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
+   HASH DATABASE (identified by length + prefix)
+═══════════════════════════════════════════════════════ */
 const HASH_DB=[
-  // length-based hex hashes
-  {len:8,  names:['CRC-32','Adler-32'],     cat:'Checksum',  note:'32-bit checksum'},
-  {len:16, names:['MySQL 3.x','Half-MD5'], cat:'Hash',      note:'64-bit hash'},
-  {len:32, names:['MD5','MD4','NTLM','LM','RipeMD-128','Tiger-128','Haval-128','Snefru-128'],cat:'Hash',note:'128-bit hash — one-way, cannot be reversed'},
-  {len:40, names:['SHA-1','RipeMD-160','Tiger-160','Haval-160'],cat:'Hash',note:'160-bit hash — one-way'},
-  {len:48, names:['Tiger-192','Haval-192'],cat:'Hash',note:'192-bit hash — one-way'},
-  {len:56, names:['SHA-224','Haval-224','RipeMD-224'],cat:'Hash',note:'224-bit hash — one-way'},
-  {len:64, names:['SHA-256','RipeMD-256','BLAKE2s-256','Haval-256','GOST R 34.11-94'],cat:'Hash',note:'256-bit hash — one-way, cannot be reversed'},
-  {len:80, names:['SHA-320'],cat:'Hash',note:'320-bit hash — one-way'},
-  {len:96, names:['SHA-384','RipeMD-384'],cat:'Hash',note:'384-bit hash — one-way'},
-  {len:128,names:['SHA-512','SHA3-512','BLAKE2b-512','Whirlpool','RipeMD-512'],cat:'Hash',note:'512-bit hash — one-way, CANNOT be reversed'},
-  // prefix-based
-  {prefix:/^\$2[ayb]\$/,   names:['bcrypt'],         cat:'Password Hash',note:'bcrypt — designed to be slow, cannot be reversed'},
-  {prefix:/^\$6\$/,        names:['SHA-512-crypt'],   cat:'Password Hash',note:'Unix SHA-512 crypt — one-way'},
-  {prefix:/^\$5\$/,        names:['SHA-256-crypt'],   cat:'Password Hash',note:'Unix SHA-256 crypt — one-way'},
-  {prefix:/^\$1\$/,        names:['MD5-crypt'],       cat:'Password Hash',note:'Unix MD5 crypt — one-way'},
-  {prefix:/^\$apr1\$/,     names:['Apache MD5'],      cat:'Password Hash',note:'Apache MD5 — one-way'},
-  {prefix:/^\$argon2/,     names:['Argon2'],          cat:'Password Hash',note:'Argon2 — memory-hard, one-way'},
-  {prefix:/^\$scrypt\$/,   names:['scrypt'],          cat:'Password Hash',note:'scrypt — memory-hard, one-way'},
-  {prefix:/^\$pbkdf2/i,    names:['PBKDF2'],          cat:'Password Hash',note:'PBKDF2 — key derivation, one-way'},
-  {prefix:/^\{SHA\}/i,     names:['SHA-1 (LDAP)'],   cat:'LDAP',         note:'LDAP SHA-1 — one-way'},
-  {prefix:/^\{SSHA\}/i,    names:['SSHA (LDAP)'],    cat:'LDAP',         note:'LDAP salted SHA-1 — one-way'},
-  {prefix:/^[0-9a-f]{32}:[0-9a-f]{32}$/i,names:['MD5:Salt'],cat:'Hash',note:'Salted MD5 — one-way'},
+  {len:8,  name:'CRC-32',          cat:'Checksum', reversible:false},
+  {len:32, name:'MD5 / NTLM / MD4',cat:'Hash',     reversible:false, note:'128-bit — one-way'},
+  {len:40, name:'SHA-1',           cat:'Hash',     reversible:false, note:'160-bit — one-way'},
+  {len:56, name:'SHA-224',         cat:'Hash',     reversible:false, note:'224-bit — one-way'},
+  {len:64, name:'SHA-256 / BLAKE2s',cat:'Hash',    reversible:false, note:'256-bit — one-way'},
+  {len:96, name:'SHA-384',         cat:'Hash',     reversible:false, note:'384-bit — one-way'},
+  {len:128,name:'SHA-512 / BLAKE2b',cat:'Hash',    reversible:false, note:'512-bit — one-way'},
+  {prefix:/^\$2[ayb]\$/,   name:'bcrypt',         cat:'Password Hash',reversible:false},
+  {prefix:/^\$6\$/,        name:'SHA-512crypt',   cat:'Password Hash',reversible:false},
+  {prefix:/^\$5\$/,        name:'SHA-256crypt',   cat:'Password Hash',reversible:false},
+  {prefix:/^\$1\$/,        name:'MD5crypt',       cat:'Password Hash',reversible:false},
+  {prefix:/^\$argon2/,     name:'Argon2',         cat:'Password Hash',reversible:false},
+  {prefix:/^\$pbkdf2/i,    name:'PBKDF2',         cat:'Password Hash',reversible:false},
+];
+function identHash(s){
+  const t=s.trim();
+  if(/^[0-9a-fA-F]+$/.test(t)){const m=HASH_DB.find(h=>h.len&&h.len===t.length);if(m)return m;}
+  return HASH_DB.find(h=>h.prefix&&h.prefix.test(t))||null;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORMAT DETECTORS
+   Returns {type, subtype, confidence, details}
+═══════════════════════════════════════════════════════ */
+function detectFormat(raw){
+  const s=raw.trim();
+  if(!s) return null;
+
   // JWT
-  {prefix:/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,names:['JWT (JSON Web Token)'],cat:'Token',note:'Base64URL-encoded header.payload.signature — can be decoded (not encrypted)'},
-];
+  if(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s))
+    return {type:'encoding',subtype:'JWT',conf:0.98,cat:'Token',
+      desc:'JSON Web Token: Base64URL header.payload.signature',
+      reversible:true, needsKey:false};
 
-function identifyHash(s){
-  const t=s.trim();
-  const isHex=/^[0-9a-fA-F]+$/.test(t);
-  const results=[];
-  if(isHex){
-    const match=HASH_DB.find(h=>h.len&&t.length===h.len&&!h.prefix);
-    if(match)results.push(match);
-    // also check for possible multi-hash
-    const half=HASH_DB.find(h=>h.len&&t.length===h.len*2&&!h.prefix);
-    if(half)results.push({...half,names:half.names.map(n=>n+' × 2'),note:'Two concatenated '+half.names[0]+' hashes'});
+  // UUencode
+  if(s.startsWith('begin ')&&s.includes('end'))
+    return {type:'encoding',subtype:'UUencode',conf:0.95,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Base85 Ascii85
+  if(s.startsWith('<~')&&s.endsWith('~>'))
+    return {type:'encoding',subtype:'Base85 (Ascii85)',conf:0.97,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Morse
+  if(/^[\s.\-/]+$/.test(s)&&/[.\-]/.test(s)&&s.length>=3)
+    return {type:'cipher',subtype:'Morse Code',conf:0.96,cat:'Cipher',reversible:true,needsKey:false};
+
+  // NATO
+  const natoW=s.trim().toUpperCase().split(/[\s,\-]+/);
+  const natoSet=new Set(['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY','XRAY','YANKEE','ZULU']);
+  if(natoW.length>=3&&natoW.filter(w=>natoSet.has(w)).length/natoW.length>0.7)
+    return {type:'cipher',subtype:'NATO Phonetic',conf:0.94,cat:'Cipher',reversible:true,needsKey:false};
+
+  // Binary
+  const binC=s.replace(/\s/g,'');
+  if(/^[01]+$/.test(binC)&&binC.length%8===0&&binC.length>=8)
+    return {type:'encoding',subtype:'Binary (8-bit)',conf:0.93,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Octal
+  const octT=s.trim().split(/\s+/);
+  if(octT.length>=2&&octT.every(x=>/^[0-7]{3}$/.test(x)))
+    return {type:'encoding',subtype:'Octal',conf:0.88,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Decimal ASCII
+  const decT=s.trim().split(/[\s,]+/);
+  if(decT.length>=3&&decT.every(x=>/^\d+$/.test(x)&&+x>=32&&+x<=126))
+    return {type:'encoding',subtype:'Decimal ASCII',conf:0.86,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Pure hex string (even length, all hex chars)
+  const hexC=s.replace(/[\s:,]/g,'');
+  if(/^[0-9a-fA-F]+$/.test(hexC)&&hexC.length%2===0&&hexC.length>=4){
+    // Check if it's a hash
+    const hashM=identHash(hexC);
+    if(hashM) return {type:'hash',subtype:hashM.name,conf:0.95,cat:hashM.cat,
+      reversible:false,needsKey:false,note:hashM.note||'One-way — cannot be reversed'};
+    // Check if decoding gives printable text
+    let decodedHex='';try{for(let i=0;i<hexC.length;i+=2)decodedHex+=String.fromCharCode(parseInt(hexC.slice(i,i+2),16));}catch{}
+    if(printable(decodedHex))
+      return {type:'encoding',subtype:'Hexadecimal',conf:0.90,cat:'Encoding',reversible:true,needsKey:false,decodedPreview:decodedHex.slice(0,40)};
+    // Non-printable hex — could be encrypted bytes
+    return {type:'crypto',subtype:'Encrypted bytes (hex)',conf:0.70,cat:'Encryption',
+      reversible:true,needsKey:true,keyNeeds:'Encryption key (AES/XOR/etc.)',
+      note:'Hex-encoded binary data — likely AES ciphertext. Length: '+hexC.length/2+' bytes'};
   }
-  for(const h of HASH_DB){
-    if(h.prefix&&h.prefix.test(t))results.push(h);
+
+  // URL encoded
+  if(/%[0-9a-fA-F]{2}/.test(s))
+    return {type:'encoding',subtype:'URL Encoding',conf:0.92,cat:'Encoding',reversible:true,needsKey:false};
+
+  // HTML entities
+  if(/&[#a-zA-Z][a-zA-Z0-9]*;/.test(s))
+    return {type:'encoding',subtype:'HTML Entities',conf:0.91,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Unicode escapes
+  if(/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}/.test(s))
+    return {type:'encoding',subtype:'Unicode Escapes',conf:0.90,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Bacon's cipher
+  if(/^[abAB\s]+$/i.test(s)&&s.replace(/\s/g,'').length%5===0&&s.length>=10)
+    return {type:'cipher',subtype:"Bacon's Cipher",conf:0.87,cat:'Cipher',reversible:true,needsKey:false};
+
+  // A1Z26
+  const a1T=s.trim().split(/[\s,\-]+/);
+  if(a1T.length>=3&&a1T.every(x=>/^\d+$/.test(x)&&+x>=1&&+x<=26))
+    return {type:'cipher',subtype:'A1Z26',conf:0.85,cat:'Cipher',reversible:true,needsKey:false};
+
+  // Polybius
+  const polyC=s.replace(/\s/g,'');
+  if(/^[1-5]+$/.test(polyC)&&polyC.length%2===0&&polyC.length>=6)
+    return {type:'cipher',subtype:'Polybius Square',conf:0.82,cat:'Cipher',reversible:true,needsKey:false};
+
+  // Base64 — try decode
+  const b64t=s.replace(/\s/g,'');
+  if(/^[A-Za-z0-9+/]+=*$/.test(b64t)&&b64t.length%4===0){
+    let pad=b64t;while(pad.length%4)pad+='=';
+    const raw2=sb64(pad);
+    if(raw2!==null){
+      // What does the decoded content look like?
+      const rawBytes=new Uint8Array(raw2.length).map((_,i)=>raw2.charCodeAt(i));
+      let decoded='';try{decoded=new TextDecoder('utf-8',{fatal:true}).decode(rawBytes)}catch{}
+      if(decoded&&printable(decoded)){
+        // It decoded to readable text — might be another encoding layer
+        return {type:'encoding',subtype:'Base64',conf:0.92,cat:'Encoding',
+          reversible:true,needsKey:false,
+          decodedPreview:decoded.slice(0,50),
+          innerFormat:detectFormat(decoded)};
+      } else {
+        // Decoded to binary/non-printable — likely encrypted
+        const byteCount=rawBytes.length;
+        const isProbAES=byteCount%16===0;
+        // Check if it's a hash when decoded as hex
+        const decodedHexStr=bytesToHex(rawBytes);
+        const hashMatch=identHash(decodedHexStr);
+        if(hashMatch){
+          return {type:'encoding',subtype:'Base64',conf:0.92,cat:'Encoding',
+            reversible:true,needsKey:false,
+            decodedPreview:'['+byteCount+' bytes → '+hashMatch.name+' hash]',
+            innerFormat:{type:'hash',subtype:hashMatch.name,conf:0.95,cat:hashMatch.cat,reversible:false,needsKey:false,note:hashMatch.note}};
+        }
+        return {type:'encoding',subtype:'Base64',conf:0.92,cat:'Encoding',
+          reversible:true,needsKey:false,
+          decodedPreview:'['+byteCount+' binary bytes'+(isProbAES?' — '+byteCount/16+' AES blocks, likely AES-CBC/CTR':'')+']',
+          innerFormat:{type:'crypto',subtype:isProbAES?'AES Ciphertext ('+byteCount+' bytes, '+byteCount/16+' blocks)':'Encrypted binary data',
+            conf:isProbAES?0.82:0.65,cat:'Encryption',reversible:true,needsKey:true,
+            keyNeeds:'AES key (16/24/32 bytes) + IV (16 bytes for CBC)',
+            note:'Decoded to '+byteCount+' bytes. '+(isProbAES?'Length is multiple of 16 → AES block size matches.':'')}};
+      }
+    }
   }
-  return results;
+
+  // Base64URL
+  if(/^[A-Za-z0-9_-]{4,}$/.test(s.replace(/\s/g,''))){
+    let t2=s.replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');
+    while(t2.length%4)t2+='=';
+    const raw3=sb64(t2);
+    if(raw3!==null&&raw3.length>2){
+      let decoded2='';try{decoded2=decodeURIComponent(escape(raw3))}catch{}
+      if(decoded2&&printable(decoded2))
+        return {type:'encoding',subtype:'Base64URL',conf:0.88,cat:'Encoding',reversible:true,needsKey:false,decodedPreview:decoded2.slice(0,50)};
+    }
+  }
+
+  // Base32
+  if(/^[A-Z2-7]+=*$/i.test(s)&&s.length>=8)
+    return {type:'encoding',subtype:'Base32',conf:0.87,cat:'Encoding',reversible:true,needsKey:false};
+
+  // Misplaced padding (= at start)
+  if(s.startsWith('=')){
+    const fixed=s.replace(/^=+/,'')+s.match(/^=+/)[0];
+    if(/^[A-Za-z0-9+/]+=*$/.test(fixed)&&fixed.length%4===0)
+      return {type:'encoding',subtype:'Base64 (misplaced padding)',conf:0.88,cat:'Encoding',
+        reversible:true,needsKey:false,note:'The = padding is at the start instead of end. Fix: move = to end.',
+        fix:fixed};
+  }
+
+  // Already plain text?
+  const sc=langScore(s);
+  if(sc>0.25)
+    return {type:'plaintext',subtype:'Plain text',conf:sc,cat:'Plaintext',
+      reversible:false,needsKey:false,note:'This appears to be readable plaintext (lang score: '+(sc*100).toFixed(0)+'%)'};
+
+  // Could be Vigenère or Caesar — check IC
+  const letters=s.toUpperCase().replace(/[^A-Z]/g,'');
+  if(letters.length>=20){
+    const f={};for(const c of letters)f[c]=(f[c]||0)+1;
+    let ic=0;for(const k in f)ic+=f[k]*(f[k]-1);ic/=letters.length*(letters.length-1);
+    if(ic<0.063&&ic>0.038&&letters.length>30)
+      return {type:'cipher',subtype:'Polyalphabetic cipher (Vigenère?)',conf:0.65,cat:'Cipher',
+        reversible:true,needsKey:true,keyNeeds:'Keyword (e.g. SECRET)',
+        note:'Index of coincidence: '+ic.toFixed(4)+' — suggests polyalphabetic cipher. IC < 0.065 (English) → likely Vigenère.'};
+    if(ic>0.055&&letters.length>10)
+      return {type:'cipher',subtype:'Monoalphabetic cipher (Caesar/ROT/Atbash)',conf:0.60,cat:'Cipher',
+        reversible:true,needsKey:false,
+        note:'IC: '+ic.toFixed(4)+' — close to English (~0.065). Likely simple substitution (Caesar, ROT, Atbash).'};
+  }
+
+  // Large Base64-like with non-printable result
+  if(s.length>40&&/^[A-Za-z0-9+/=]+$/.test(s.replace(/\s/g,'')))
+    return {type:'crypto',subtype:'Likely AES-CBC ciphertext (Base64)',conf:0.70,cat:'Encryption',
+      reversible:true,needsKey:true,keyNeeds:'AES key (16/24/32 bytes) + IV (16 bytes)',
+      note:'Long Base64 string that decodes to non-UTF-8 binary. Pattern consistent with AES-CBC output.'};
+
+  return {type:'unknown',subtype:'Unknown format',conf:0,cat:'Unknown',reversible:false,needsKey:false,
+    note:'Could not identify the format. Try Brute Force in Decode tab, or check if it needs a key.'};
 }
 
-// ══════════════════════════════════════════════════════
-// BASE-N ENGINE
-// ══════════════════════════════════════════════════════
-const B58A='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-const B62A='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const B36A='0123456789abcdefghijklmnopqrstuvwxyz';
-const B92A=(()=>{let a='';for(let i=33;i<=126;i++)if(i!==92&&i!==34)a+=String.fromCharCode(i);return a})();
-const ENC8=s=>new TextEncoder().encode(s);
-const DEC8=(b,f=true)=>{try{return new TextDecoder('utf-8',{fatal:f}).decode(b)}catch{return null}};
-const sb64=s=>{try{return atob(s)}catch{return null}};
-function bEncB(bytes,alpha){if(!bytes.length)return alpha[0];let z=0;while(z<bytes.length&&bytes[z]===0)z++;let n=BigInt(0);for(const b of bytes)n=n*256n+BigInt(b);let r='';while(n>0n){r=alpha[Number(n%BigInt(alpha.length))]+r;n/=BigInt(alpha.length);}return alpha[0].repeat(z)+r}
-function bDecB(str,alpha){const m={};for(let i=0;i<alpha.length;i++)m[alpha[i]]=i;const s=str.trim();let z=0;while(z<s.length&&s[z]===alpha[0])z++;let n=BigInt(0);for(const c of s){if(!(c in m))return null;n=n*BigInt(alpha.length)+BigInt(m[c]);}const b=[];while(n>0n){b.unshift(Number(n%256n));n/=256n;}const out=new Uint8Array(z+b.length);out.set(b,z);return out}
-function b85e(s){const by=ENC8(s),pad=(4-by.length%4)%4;const p=new Uint8Array(by.length+pad);p.set(by);let o='<~';for(let i=0;i<p.length;i+=4){let v=((p[i]<<24)|(p[i+1]<<16)|(p[i+2]<<8)|p[i+3])>>>0;if(v===0&&i+4<=by.length){o+='z';continue;}const c=[];for(let j=4;j>=0;j--){c[j]=String.fromCharCode(v%85+33);v=Math.floor(v/85);}const n=i+4>by.length?by.length-i+1:5;o+=c.slice(0,n).join('');}return o+'~>'}
-function b85d(s){const t=s.trim().replace(/^<~/,'').replace(/~>$/,'').replace(/\s/g,'');const b=[];let i=0;while(i<t.length){if(t[i]==='z'){b.push(0,0,0,0);i++;continue;}const g=t.slice(i,i+5);i+=5;let v=0;for(let j=0;j<g.length;j++)v=v*85+(g.charCodeAt(j)-33);if(g.length<5)for(let j=g.length;j<5;j++)v=v*85+84;b.push((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);if(g.length<5)b.splice(b.length-(5-g.length));}return DEC8(new Uint8Array(b))}
-const B91T='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
-function b91e(s){const d=ENC8(s);let b=0,n=0,o='';for(const byte of d){b|=byte<<n;n+=8;if(n>13){let v=b&8191;if(v>88){b>>=13;n-=13}else{v=b&16383;b>>=14;n-=14}o+=B91T[v%91]+B91T[Math.floor(v/91)];}}if(n){o+=B91T[b%91];if(n>7||b>90)o+=B91T[Math.floor(b/91)];}return o}
-function b91d(s){const T={};for(let i=0;i<91;i++)T[B91T[i]]=i;let v=-1,b=0,n=0;const out=[];for(const c of s.trim()){if(!(c in T))continue;const p=T[c];if(v<0){v=p}else{v+=p*91;b|=v<<n;n+=(v&8191)>88?13:14;v=-1;do{out.push(b&255);b>>=8;n-=8;}while(n>7);};}if(v>-1)out.push((b|v<<n)&255);return DEC8(new Uint8Array(out))}
-function uue(s){const by=ENC8(s);let o='begin 644 f\n';for(let i=0;i<by.length;i+=45){const c=by.slice(i,i+45),l=c.length;let ln=String.fromCharCode(l+32);for(let j=0;j<c.length;j+=3){const a=c[j]||0,b2=c[j+1]||0,b3=c[j+2]||0;ln+=String.fromCharCode(((a>>2)&63)+32,(((a<<4)|(b2>>4))&63)+32,(((b2<<2)|(b3>>6))&63)+32,(b3&63)+32);}o+=ln+'\n';}return o+'`\nend'}
-function uud(s){const ls=s.trim().split('\n'),d=[];for(const ln of ls){if(!ln||ln.startsWith('begin')||ln==='end'||ln==='`')continue;for(let i=1;i+3<ln.length;){const a=(ln.charCodeAt(i++)-32)&63,b2=(ln.charCodeAt(i++)-32)&63,c=(ln.charCodeAt(i++)-32)&63,dv=(ln.charCodeAt(i++)-32)&63;d.push((a<<2)|(b2>>4),(b2<<4)|(c>>2),(c<<6)|dv);}}while(d.length&&d[d.length-1]===0)d.pop();return DEC8(new Uint8Array(d),false)||null}
+/* ═══════════════════════════════════════════════════════
+   IDENTIFY ENGINE — peels layers recursively
+═══════════════════════════════════════════════════════ */
+function peelAllLayers(input){
+  const layers=[];
+  let current=input;
+  const seen=new Set([current.trim()]);
+  const MAX=12;
 
-// ══════════════════════════════════════════════════════
-// ALL OPERATIONS
-// ══════════════════════════════════════════════════════
-const OPS=[
- {id:'b64',n:'Base64',cat:'BaseN',pri:90,opts:[],
-  enc:s=>{try{return btoa(unescape(encodeURIComponent(s)))}catch{return null}},
-  dec(s){try{let t=s.trim().replace(/\s/g,'');while(t.length%4)t+='=';const r=sb64(t);if(!r)return null;try{return decodeURIComponent(escape(r))}catch{return printable(r)?r:null}}catch{return null}}},
- {id:'b64u',n:'Base64URL',cat:'BaseN',pri:88,opts:[],
-  enc:s=>{try{return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}catch{return null}},
-  dec(s){try{let t=s.trim().replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const r=sb64(t);if(!r)return null;try{return decodeURIComponent(escape(r))}catch{return printable(r)?r:null}}catch{return null}}},
- {id:'b32',n:'Base32',cat:'BaseN',pri:86,opts:[],
-  enc(s){const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return o},
-  dec(s){try{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';const inp=s.trim().toUpperCase().replace(/=/g,'');let bits='',o='';for(const c of inp){const i=a.indexOf(c);if(i<0)return null;bits+=i.toString(2).padStart(5,'0');}for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));return printable(o)?o:null}catch{return null}}},
- {id:'hex',n:'Hex/Base16',cat:'BaseN',pri:89,opts:[{id:'s',l:'Sep',t:'sel',ch:['space','none','colon'],d:'space'}],
-  enc:(s,o)=>{const sep={'space':' ','none':'','colon':':'}[o.s||'space'];return[...s].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep)},
-  dec(s){try{const c=s.trim().replace(/0x/gi,'').replace(/[\s:,]/g,'');if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2)return null;let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));return printable(o)?o:null}catch{return null}}},
- {id:'b85',n:'Base85',cat:'BaseN',pri:93,opts:[],enc:s=>{try{return b85e(s)}catch{return null}},dec(s){if(!s.trim().startsWith('<~'))return null;try{return b85d(s)}catch{return null}}},
- {id:'b91',n:'Base91',cat:'BaseN',pri:72,opts:[],enc:s=>b91e(s),dec:s=>{try{return b91d(s)}catch{return null}}},
- {id:'b92',n:'Base92',cat:'BaseN',pri:69,opts:[],enc:s=>bEncB([...ENC8(s)],B92A),dec:s=>{try{const b=bDecB(s.trim(),B92A);return b?DEC8(b):null}catch{return null}}},
- {id:'b58',n:'Base58',cat:'BaseN',pri:75,opts:[],enc:s=>bEncB([...ENC8(s)],B58A),dec:s=>{try{const b=bDecB(s.trim(),B58A);return b?DEC8(b):null}catch{return null}}},
- {id:'b62',n:'Base62',cat:'BaseN',pri:62,opts:[],enc:s=>bEncB([...ENC8(s)],B62A),dec:s=>{try{const b=bDecB(s.trim(),B62A);return b?DEC8(b):null}catch{return null}}},
- {id:'b36',n:'Base36',cat:'BaseN',pri:55,opts:[],enc:s=>bEncB([...ENC8(s)],B36A),dec:s=>{try{const b=bDecB(s.trim().toLowerCase(),B36A);return b?DEC8(b):null}catch{return null}}},
- {id:'bin',n:'Binary',cat:'Encoding',pri:92,opts:[],enc:s=>[...s].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' '),dec(s){try{const c=s.trim().replace(/\s/g,'');if(!/^[01]+$/.test(c)||c.length%8)return null;let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));return printable(o)?o:null}catch{return null}}},
- {id:'oct',n:'Octal',cat:'Encoding',pri:84,opts:[],enc:s=>[...s].map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' '),dec(s){try{const t=s.trim().split(/\s+/);if(!t.every(x=>/^[0-7]{1,3}$/.test(x)))return null;const o=t.map(x=>String.fromCharCode(parseInt(x,8))).join('');return printable(o)?o:null}catch{return null}}},
- {id:'dec',n:'Decimal',cat:'Encoding',pri:83,opts:[],enc:s=>[...s].map(c=>c.charCodeAt(0)).join(' '),dec(s){try{const t=s.trim().split(/[\s,]+/);if(!t.every(x=>/^\d+$/.test(x)&&+x>=32&&+x<=126))return null;return t.map(x=>String.fromCharCode(+x)).join('')}catch{return null}}},
- {id:'url',n:'URL %enc',cat:'Encoding',pri:91,opts:[],enc:s=>encodeURIComponent(s),dec(s){try{const r=decodeURIComponent(s.trim());return r!==s.trim()&&printable(r)?r:null}catch{return null}}},
- {id:'html',n:'HTML Entities',cat:'Encoding',pri:89,opts:[{id:'m',l:'Mode',t:'sel',ch:['named','decimal','hex'],d:'named'}],
-  enc:(s,o)=>{const nm={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};if((o.m||'named')==='named')return s.replace(/[&<>"']/g,c=>nm[c]||c);if(o.m==='decimal')return[...s].map(c=>`&#${c.charCodeAt(0)};`).join('');return[...s].map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('')},
-  dec(s){if(!/&[#a-zA-Z]/.test(s))return null;const el=document.createElement('textarea');el.innerHTML=s;return el.value!==s?el.value:null}},
- {id:'uni',n:'Unicode \\u',cat:'Encoding',pri:88,opts:[],enc:s=>[...s].map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join(''),dec(s){if(!/\\u[0-9a-fA-F]{4}/.test(s))return null;let r=s.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));r=r.replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));return r!==s?r:null}},
- {id:'uu',n:'UUencode',cat:'Encoding',pri:90,opts:[],enc:s=>uue(s),dec(s){if(!s.trim().startsWith('begin '))return null;try{return uud(s)}catch{return null}}},
- // Ciphers
- {id:'rot13',n:'ROT13',cat:'Cipher',pri:20,opts:[],enc:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65)),dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))}},
- {id:'rot47',n:'ROT47',cat:'Cipher',pri:18,opts:[],enc:s=>s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94))),dec(s){return s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))}},
- {id:'rot5',n:'ROT5',cat:'Cipher',pri:15,opts:[],enc:s=>s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48)),dec(s){return s.replace(/[0-9]/g,c=>String.fromCharCode(((c.charCodeAt(0)-48+5)%10)+48))}},
- {id:'atbash',n:'Atbash',cat:'Cipher',pri:14,opts:[],enc:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65))),dec(s){return s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))}},
- {id:'caesar',n:'Caesar',cat:'Cipher',pri:25,opts:[{id:'n',l:'Shift',t:'range',min:1,max:25,d:'3'}],
-  enc:(s,o)=>{const n=+(o.n||3);return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65))},
-  dec:(s,o)=>{const n=+(o.n||3);return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65))}},
- {id:'vig',n:'Vigenère',cat:'Cipher',pri:22,opts:[{id:'k',l:'Key',t:'txt',pl:'SECRET',d:'KEY'}],
-  enc:(s,o)=>{const k=((o.k||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key');let i=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b+sh)%26)+b)})},
-  dec:(s,o)=>{const k=((o.k||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key');let i=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)})}},
- {id:'xorb',n:'XOR (byte key)',cat:'Cipher',pri:12,opts:[{id:'k',l:'Key(0-255)',t:'num',min:0,max:255,d:'42'}],
-  enc:(s,o)=>{const k=+o.k||42;return[...s].map(c=>(c.charCodeAt(0)^k).toString(16).padStart(2,'0')).join(' ')},
-  dec:(s,o)=>{const k=+o.k||42;const h=s.trim().replace(/\s/g,'');if(!/^[0-9a-fA-F]+$/.test(h)||h.length%2)return null;const bytes=[];for(let i=0;i<h.length;i+=2)bytes.push(parseInt(h.slice(i,i+2),16));const r=bytes.map(b=>String.fromCharCode(b^k)).join('');return printable(r)?r:null}},
- {id:'morse',n:'Morse',cat:'Cipher',pri:95,opts:[],
-  enc(s){const M={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};return s.toUpperCase().split('').map(c=>M[c]||'').filter(Boolean).join(' ')},
-  dec(s){if(!/^[\s.\-/]+$/.test(s))return null;const M={'.-':'A','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-.....':'6','--....':'7','---..':'8','----.':'9','-----':'0'};return s.trim().split(/\s{2,}|\s*\/\s*/).map(w=>w.trim().split(/\s+/).map(sym=>M[sym]||'?').join('')).join(' ')||null}},
- {id:'bacon',n:"Bacon's",cat:'Cipher',pri:87,opts:[],
-  enc(s){const M={A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'};return s.toUpperCase().split('').map(c=>M[c]||c).join(' ')},
-  dec(s){if(!/^[abAB\s]+$/i.test(s.trim()))return null;const M={AAAAA:'A',AAAAB:'B',AAABA:'C',AAABB:'D',AABAA:'E',AABAB:'F',AABBA:'G',AABBB:'H',ABAAA:'I',ABAAB:'J',ABABA:'K',ABABB:'L',ABBAA:'M',ABBAB:'N',ABBBA:'O',ABBBB:'P',BAAAA:'Q',BAAAB:'R',BAABA:'S',BAABB:'T',BABAA:'U',BABAB:'V',BABBA:'W',BABBB:'X',BBAAA:'Y',BBAAB:'Z'};const c=s.trim().toUpperCase().replace(/\s/g,'');let o='';for(let i=0;i+5<=c.length;i+=5)o+=M[c.slice(i,i+5)]||'?';return/[A-Z]/.test(o)?o:null}},
- {id:'a1z26',n:'A1Z26',cat:'Cipher',pri:85,opts:[],enc:s=>s.toUpperCase().split('').map(c=>{const n=c.charCodeAt(0)-64;return n>=1&&n<=26?n:c}).join(' '),dec(s){const t=s.trim().split(/[\s,\-]+/);if(!t.every(x=>/^\d+$/.test(x)&&+x>=1&&+x<=26))return null;return t.map(x=>String.fromCharCode(+x+64)).join('')}},
- {id:'polybius',n:'Polybius',cat:'Cipher',pri:80,opts:[],enc(s){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];return s.toUpperCase().replace(/J/g,'I').split('').map(c=>{for(let r=0;r<5;r++){const ci=G[r].indexOf(c);if(ci>=0)return`${r+1}${ci+1}`;}return c}).join(' ')},dec(s){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];const c=s.trim().replace(/\s/g,'');if(!/^[1-5]+$/.test(c)||c.length%2)return null;let o='';for(let i=0;i+1<c.length;i+=2){const r=+c[i]-1,cl=+c[i+1]-1;if(r>=0&&r<5&&cl>=0&&cl<5)o+=G[r][cl];}return o||null}},
- {id:'nato',n:'NATO Phonetic',cat:'Cipher',pri:93,opts:[],
-  enc(s){const M={A:'Alpha',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliet',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'Xray',Y:'Yankee',Z:'Zulu'};return s.toUpperCase().split('').map(c=>M[c]||c).join('-')},
-  dec(s){const N=new Set(['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY','XRAY','YANKEE','ZULU']);const M={ALPHA:'A',BRAVO:'B',CHARLIE:'C',DELTA:'D',ECHO:'E',FOXTROT:'F',GOLF:'G',HOTEL:'H',INDIA:'I',JULIET:'J',KILO:'K',LIMA:'L',MIKE:'M',NOVEMBER:'N',OSCAR:'O',PAPA:'P',QUEBEC:'Q',ROMEO:'R',SIERRA:'S',TANGO:'T',UNIFORM:'U',VICTOR:'V',WHISKEY:'W',XRAY:'X',YANKEE:'Y',ZULU:'Z'};const W=s.trim().toUpperCase().split(/[\s,\-]+/);if(W.filter(w=>N.has(w)).length/W.length<.5)return null;return W.map(w=>M[w]||w).join('')}},
- {id:'rev',n:'Reversed',cat:'Cipher',pri:10,opts:[],enc:s=>s.split('').reverse().join(''),dec:s=>s.split('').reverse().join('')},
- {id:'leet',n:'Leetspeak',cat:'Cipher',pri:8,opts:[],enc(s){const M={a:'4',e:'3',i:'1',o:'0',s:'5',t:'7',l:'|',g:'9'};return s.toLowerCase().replace(/[aeiostlg]/g,c=>M[c]||c)},dec(s){const M={'0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','!':'i','$':'s','|':'l'};return s.replace(/[013457@!$|]/g,c=>M[c]||c)}},
- {id:'jwt',n:'JWT',cat:'Token',pri:97,opts:[],
-  enc(s){try{const h={alg:'HS256',typ:'JWT'},e=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');return e(h)+'.'+e(JSON.parse(s))+'.[signature]'}catch{const h={alg:'HS256',typ:'JWT'},e=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');return e(h)+'.'+e({data:s,iat:Math.floor(Date.now()/1e3)})+'.[signature]'}},
-  dec(s){if(!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s.trim()))return null;try{const p=s.trim().split('');return null}catch{return null};try{const p=s.trim().split('.');const d=x=>{let t=x.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return JSON.stringify(JSON.parse(atob(t)),null,2)};return`HEADER:\n${d(p[0])}\n\nPAYLOAD:\n${d(p[1])}\n\nSIG: ${p[2]}`}catch{return null}}},
-];
-// Fix JWT dec
-OPS.find(o=>o.id==='jwt').dec=function(s){
-  if(!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s.trim()))return null;
-  try{const p=s.trim().split('.');const d=x=>{let t=x.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return JSON.stringify(JSON.parse(atob(t)),null,2)};return`HEADER:\n${d(p[0])}\n\nPAYLOAD:\n${d(p[1])}\n\nSIG: ${p[2]}`}catch{return null}
-};
-
-// ══════════════════════════════════════════════════════
-// VIGENÈRE IC AUTO-CRACK
-// ══════════════════════════════════════════════════════
-function vigIC(t){if(t.length<2)return 0;const f={};for(const c of t)f[c]=(f[c]||0)+1;let s=0;for(const k in f)s+=f[k]*(f[k]-1);return s/(t.length*(t.length-1))}
-function vigKL(L){let b=1,bi=0;for(let len=2;len<=Math.min(20,Math.floor(L.length/4));len++){const st=Array.from({length:len},(_,i)=>L.split('').filter((_,j)=>j%len===i).join(''));const avg=st.reduce((s,x)=>s+vigIC(x),0)/len;if(avg>bi){bi=avg;b=len;}}return b}
-function vigKey(L,len){let k='';for(let i=0;i<len;i++){const st=L.split('').filter((_,j)=>j%len===i).join('');const f=Array(26).fill(0);for(const c of st)f[c.charCodeAt(0)-65]++;const tot=st.length||1;let b=0,bs=-Infinity;for(let sh=0;sh<26;sh++){let sc=0;for(let j=0;j<26;j++)sc+=(EN_F[String.fromCharCode(97+j)]||0)*(f[(j+sh)%26]/tot);if(sc>bs){bs=sc;b=sh;}}k+=String.fromCharCode(65+b);}return k}
-function vigDec(s,key){const k=key.toLowerCase();let ki=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)})}
-function tryVig(s){
-  const t=s.trim().replace(/\s/g,'');
-  if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null;
-  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null;
-  if(langScore(s)>0.15)return null;
-  const L=s.toUpperCase().replace(/[^A-Z]/g,'');
-  if(L.length<30)return null;
-  const ic=vigIC(L);
-  if(ic>0.063||ic<0.040)return null;
-  const kl=vigKL(L);if(kl<2)return null;
-  const key=vigKey(L,kl);
-  const dec=vigDec(s,key);
-  const sc=langScore(dec);
-  if(sc<0.20)return null;
-  return{r:dec,key,kl,sc}
-}
-function tryCaesar(s){
-  const t=s.trim().replace(/\s/g,'');
-  if(/^[A-Za-z0-9+/]+=*$/.test(t)&&t.length%4===0)return null;
-  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return null;
-  if(/^[A-Z2-7]+=*$/i.test(t))return null;
-  if(langScore(s)>0.15)return null;
-  const L=s.toUpperCase().replace(/[^A-Z]/g,'');
-  if(L.length<8)return null;
-  let best=null,bs=-Infinity;
-  for(let n=1;n<=25;n++){const dec=s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));const sc=langScore(dec);if(sc>bs){bs=sc;best={dec,n,sc};}}
-  return best&&best.sc>0.32?best:null;
+  for(let i=0;i<MAX;i++){
+    const fmt=detectFormat(current);
+    if(!fmt)break;
+    layers.push({input:current,fmt});
+    // Can we automatically peel this layer?
+    if(fmt.type==='plaintext'||fmt.type==='hash'||fmt.type==='unknown'||fmt.needsKey)break;
+    // Try to decode
+    const next=tryDecode(current,fmt);
+    if(!next||next===current||seen.has(next.trim()))break;
+    seen.add(next.trim());
+    current=next;
+  }
+  return layers;
 }
 
-// ══════════════════════════════════════════════════════
-// SPECULATIVE ENGINE — no loops, proper stop conditions
-// ══════════════════════════════════════════════════════
-const AMBIG=new Set(['rot13','rot47','rot5','atbash','rev','leet']);
-
-function tryMisplacedPad(s){
+function tryDecode(s,fmt){
+  if(!fmt||fmt.needsKey)return null;
   const t=s.trim();
-  if(t.startsWith('=')){const fixed=t.replace(/^=+/,'')+'='.repeat((t.match(/^=+/)||[''])[0].length);return fixed;}
+  try{
+    if(fmt.subtype==='Base64'||fmt.subtype==='Base64 (misplaced padding)'){
+      const fixed=fmt.fix||t;
+      let p=fixed.replace(/\s/g,'');while(p.length%4)p+='=';
+      const r=sb64(p);if(!r)return null;
+      try{return decodeURIComponent(escape(r))}catch{return printable(r)?r:null}
+    }
+    if(fmt.subtype==='Base64URL'){let p=t.replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');while(p.length%4)p+='=';const r=sb64(p);if(!r)return null;try{return decodeURIComponent(escape(r))}catch{return null}}
+    if(fmt.subtype==='Base32'){const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';const inp=t.toUpperCase().replace(/=/g,'');let bits='',o='';for(const c of inp){const i=a.indexOf(c);if(i<0)return null;bits+=i.toString(2).padStart(5,'0');}for(let i=0;i+8<=bits.length;i+=8)o+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));return printable(o)?o:null}
+    if(fmt.subtype==='Hexadecimal'){const c=t.replace(/[\s:,]/g,'');let o='';for(let i=0;i<c.length;i+=2)o+=String.fromCharCode(parseInt(c.slice(i,i+2),16));return printable(o)?o:null}
+    if(fmt.subtype==='Binary (8-bit)'){const c=t.replace(/\s/g,'');let o='';for(let i=0;i<c.length;i+=8)o+=String.fromCharCode(parseInt(c.slice(i,i+8),2));return printable(o)?o:null}
+    if(fmt.subtype==='Octal'){return t.split(/\s+/).map(x=>String.fromCharCode(parseInt(x,8))).join('')}
+    if(fmt.subtype==='Decimal ASCII'){return t.split(/[\s,]+/).map(x=>String.fromCharCode(+x)).join('')}
+    if(fmt.subtype==='URL Encoding'){return decodeURIComponent(t)}
+    if(fmt.subtype==='HTML Entities'){const el=document.createElement('textarea');el.innerHTML=t;return el.value}
+    if(fmt.subtype==='Unicode Escapes'){return t.replace(/\\u([0-9a-fA-F]{4})/g,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/\\x([0-9a-fA-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)))}
+    if(fmt.subtype==='Morse Code'){const M={'.-':'A','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-.....':'6','--....':'7','---..':'8','----.':'9','-----':'0'};return t.trim().split(/\s{2,}|\s*\/\s*/).map(w=>w.trim().split(/\s+/).map(sym=>M[sym]||'?').join('')).join(' ')}
+    if(fmt.subtype==='NATO Phonetic'){const M={ALPHA:'A',BRAVO:'B',CHARLIE:'C',DELTA:'D',ECHO:'E',FOXTROT:'F',GOLF:'G',HOTEL:'H',INDIA:'I',JULIET:'J',KILO:'K',LIMA:'L',MIKE:'M',NOVEMBER:'N',OSCAR:'O',PAPA:'P',QUEBEC:'Q',ROMEO:'R',SIERRA:'S',TANGO:'T',UNIFORM:'U',VICTOR:'V',WHISKEY:'W',XRAY:'X',YANKEE:'Y',ZULU:'Z'};return t.toUpperCase().split(/[\s,\-]+/).map(w=>M[w]||w).join('')}
+    if(fmt.subtype==="Bacon's Cipher"){const M={AAAAA:'A',AAAAB:'B',AAABA:'C',AAABB:'D',AABAA:'E',AABAB:'F',AABBA:'G',AABBB:'H',ABAAA:'I',ABAAB:'J',ABABA:'K',ABABB:'L',ABBAA:'M',ABBAB:'N',ABBBA:'O',ABBBB:'P',BAAAA:'Q',BAAAB:'R',BAABA:'S',BAABB:'T',BABAA:'U',BABAB:'V',BABBA:'W',BABBB:'X',BBAAA:'Y',BBAAB:'Z'};const c=t.toUpperCase().replace(/\s/g,'');let o='';for(let i=0;i+5<=c.length;i+=5)o+=M[c.slice(i,i+5)]||'?';return o}
+    if(fmt.subtype==='A1Z26'){return t.split(/[\s,\-]+/).map(x=>String.fromCharCode(+x+64)).join('')}
+    if(fmt.subtype==='Polybius Square'){const G=['ABCDE','FGHIJ','LMNOP','QRSTU','VWXYZ'];const c=t.replace(/\s/g,'');let o='';for(let i=0;i+1<c.length;i+=2){const r=+c[i]-1,cl=+c[i+1]-1;if(r>=0&&r<5&&cl>=0&&cl<5)o+=G[r][cl];}return o}
+    if(fmt.subtype==='JWT'){try{const p=t.split('.');const d=x=>{let v=x.replace(/-/g,'+').replace(/_/g,'/');while(v.length%4)v+='=';return JSON.stringify(JSON.parse(atob(v)),null,2)};return'HEADER:\n'+d(p[0])+'\n\nPAYLOAD:\n'+d(p[1])+'\n\nSIG: '+p[2]}catch{return null}}
+  }catch{return null}
   return null;
 }
 
-function speculativePass(s,usedOps){
-  const branches=[];
-  // Misplaced padding
-  const padFixed=tryMisplacedPad(s);
-  if(padFixed&&!usedOps.has('pad-fix')){
-    const b64op=OPS.find(o=>o.id==='b64');
-    if(b64op){try{const r=b64op.dec(padFixed);if(r&&printable(r))branches.push({op:'Fix-padding→Base64',id:'pad-fix+b64',r,sc:langScore(r)});}catch{}}
-  }
-  // All non-ambiguous ops
-  for(const op of [...OPS].sort((a,b)=>(b.pri||0)-(a.pri||0))){
-    if(AMBIG.has(op.id)||usedOps.has(op.id))continue;
-    let r=null;try{r=op.dec(s,{})}catch{}
-    if(r&&r!==s&&printable(r)&&!usedOps.has(r.trim()))branches.push({op:op.n,id:op.id,r,sc:langScore(r)});
-  }
-  // Reversed input through structural ops
-  if(!usedOps.has('rev')){
-    const rev=s.split('').reverse().join('');
-    for(const op of OPS.filter(o=>!AMBIG.has(o.id)&&o.cat!=='Cipher'&&!usedOps.has('rev+'+o.id))){
-      let r=null;try{r=op.dec(rev,{})}catch{}
-      if(r&&r!==s&&printable(r))branches.push({op:`Reverse→${op.n}`,id:'rev+'+op.id,r,sc:langScore(r)});
-    }
-  }
-  // Vigenère (once)
-  if(!usedOps.has('vig-auto')&&langScore(s)<0.12){
-    const vig=tryVig(s);
-    if(vig)branches.push({op:`Vigenère(key:"${vig.key}")`,id:'vig-auto',r:vig.r,sc:vig.sc});
-  }
-  // Caesar (once)
-  if(!usedOps.has('caesar-auto')&&langScore(s)<0.12){
-    const cae=tryCaesar(s);
-    if(cae)branches.push({op:`Caesar+${cae.n}`,id:'caesar-auto',r:cae.dec,sc:cae.sc});
-  }
-  // Ambiguous — only if very high score AND not already used
-  for(const op of OPS.filter(o=>AMBIG.has(o.id)&&!usedOps.has(o.id))){
-    let r=null;try{r=op.dec(s,{})}catch{}
-    if(r&&r!==s&&printable(r)){const sc=langScore(r);if(sc>0.32&&langScore(s)<0.12)branches.push({op:op.n,id:op.id,r,sc});}
-  }
-  return branches.sort((a,b)=>b.sc-a.sc);
-}
+/* ═══════════════════════════════════════════════════════
+   IDENTIFY UI
+═══════════════════════════════════════════════════════ */
+function onIdInput(){const v=$('id-input').value;$('id-chars').textContent=v.length+' chars';}
+function clearId(){$('id-input').value='';$('id-output').innerHTML='';$('id-chars').textContent='0 chars';}
 
-function specExecute(input){
-  const seen=new Set([input.trim()]);
-  let bestPath=null,bestScore=-1;
-  function recurse(s,path,depth,usedOps){
-    if(depth>=15)return;
-    const curSc=langScore(s);
-    const branches=speculativePass(s,usedOps).slice(0,3);
-    for(const b of branches){
-      if(seen.has(b.r.trim()))continue;
-      seen.add(b.r.trim());
-      const newPath=[...path,{op:b.op,id:b.id,in:s,out:b.r,sc:b.sc}];
-      const sc=langScore(b.r);
-      const newUsed=new Set([...usedOps,b.id]);
-      if(sc>bestScore){bestScore=sc;bestPath=newPath;}
-      if(sc>0.40)continue;
-      if(sc>curSc+0.02||sc<0.12)recurse(b.r,newPath,depth+1,newUsed);
-    }
-  }
-  recurse(input,[],0,new Set());
-  return bestPath&&bestScore>0.05?{path:bestPath,final:bestPath[bestPath.length-1].out,sc:bestScore}:null;
-}
+const TYPE_COLORS={encoding:'lc-enc',cipher:'lc-cip',crypto:'lc-cry',hash:'lc-has',plaintext:'lc-enc',unknown:'lc-unk'};
+const TYPE_ICONS={encoding:'📦',cipher:'🔀',crypto:'🔐',hash:'#️⃣',plaintext:'✅',unknown:'❓'};
+const CAT_CHIPS={encoding:'c-enc',cipher:'c-cip',crypto:'c-cry',hash:'c-has',plaintext:'c-enc',unknown:'c-unk'};
 
-// ══════════════════════════════════════════════════════
-// DECODER UI
-// ══════════════════════════════════════════════════════
-let decMode='auto',manOpId=OPS[0].id,manOpts={},manIter=1;
-function pg(on){$('dpg').classList.toggle('run',on)}
-function onDI(){
-  const v=$('di').value;
-  $('dic').textContent=v.length+' chars';
-  if(v.trim()){$('dient').style.display='';$('dev').textContent=shan(v);$('discr').style.display='';$('dsc').textContent=chiSq(v).toFixed(1);}
-}
-function setDM(m){
-  decMode=m;
-  ['Auto','Manual','Brute'].forEach(x=>$('ms'+x).classList.toggle('active',x.toLowerCase()===m));
-  $('man-panel').style.display=m==='manual'?'block':'none';
-  $('brute-panel').style.display=m==='brute'?'block':'none';
-  $('auto-out').style.display=m==='auto'?'block':'none';
-  $('no-res').style.display='none';
-  if(m==='auto'&&$('di').value.trim())magic();
-  if(m==='brute'&&$('di').value.trim())runBrute(false);
-}
-function revIn(){$('di').value=$('di').value.split('').reverse().join('');onDI()}
-function clDec(){$('di').value='';clDecOut();$('dic').textContent='0 chars';$('dient').style.display='none';$('discr').style.display='none';}
-function clDecOut(){$('auto-out').innerHTML='';$('man-out').innerHTML='';$('brute-out').innerHTML='';$('no-res').style.display='none';$('auto-det-bar').style.display='none';}
-
-function magic(){
-  const inp=$('di').value;
-  if(!inp.trim()){clDecOut();return}
-  pg(true);$('auto-out').style.display='block';
-  $('auto-out').innerHTML='<div style="font-family:var(--mono);font-size:.56rem;color:var(--dim);padding:.4rem 0">⚡ Speculative branching…</div>';
-
+function runIdentify(){
+  const input=$('id-input').value;
+  if(!input.trim()){$('id-output').innerHTML='';return}
+  pg('id-pg',true);
   setTimeout(()=>{
+    const layers=peelAllLayers(input);
+    pg('id-pg',false);
+    if(!layers.length){$('id-output').innerHTML='<div class="warn-box"><div class="wt">⚠ Could not identify</div>Paste a longer or different input and try again.</div>';return}
+    renderLayers(layers,input);
+  },30);
+}
+
+function renderLayers(layers,originalInput){
+  let html='';
+
+  // Pipeline summary
+  if(layers.length>1){
+    html+=`<div class="pipeline"><span class="pipe-lbl">Pipeline →</span>`;
+    layers.forEach((l,i)=>{
+      html+=`<span class="pipe-step" style="border-color:${lc(i)};color:${lc(i)}">${esc(l.fmt.subtype)}</span>`;
+      if(i<layers.length-1)html+=`<span class="pipe-arrow">→</span>`;
+    });
+    html+=`</div>`;
+  }
+
+  layers.forEach((layer,i)=>{
+    const f=layer.fmt;
+    const colorClass=TYPE_COLORS[f.type]||'lc-unk';
+    const icon=TYPE_ICONS[f.type]||'❓';
+    const chipClass=CAT_CHIPS[f.type]||'c-unk';
+    const decoded=(!f.needsKey&&f.type!=='hash'&&f.type!=='unknown'&&f.type!=='plaintext')?tryDecode(layer.input,f):null;
+
+    html+=`<div class="layer-card ${colorClass}">
+      <div class="lc-hdr">
+        <span class="lc-icon">${icon}</span>
+        <span class="lc-title">${layers.length>1?`Layer ${i+1}: `:''}${esc(f.subtype)}</span>
+        <span class="chip ${chipClass}">${esc(f.cat)}</span>
+        ${f.conf>0?`<span class="chip c-ok">${(f.conf*100).toFixed(0)}% conf</span>`:''}
+        ${f.reversible&&!f.needsKey?'<span class="chip c-ok">✓ can decode</span>':''}
+        ${f.reversible&&f.needsKey?'<span class="chip" style="background:rgba(59,130,246,.07);color:var(--blue);border-color:rgba(59,130,246,.2)">🔑 needs key</span>':''}
+        ${!f.reversible?'<span class="chip" style="background:rgba(245,158,11,.07);color:var(--amber);border-color:rgba(245,158,11,.2)">one-way</span>':''}
+      </div>
+      <div class="lc-body">`;
+
+    html+=`<div class="lc-row"><span class="lc-key">Type:</span><span class="lc-val">${esc(f.type.toUpperCase())} — ${esc(f.cat)}</span></div>`;
+    if(f.note)html+=`<div class="lc-row"><span class="lc-key">Note:</span><span class="lc-val warn">${esc(f.note)}</span></div>`;
+    if(f.keyNeeds)html+=`<div class="lc-row"><span class="lc-key">Key needed:</span><span class="lc-val hint">${esc(f.keyNeeds)}</span></div>`;
+    if(f.fix)html+=`<div class="lc-row"><span class="lc-key">Fix:</span><span class="lc-val good">Move = sign from start to end: ${esc(f.fix)}</span></div>`;
+    if(f.decodedPreview)html+=`<div class="lc-row"><span class="lc-key">Decodes to:</span><span class="lc-val good">${esc(f.decodedPreview)}</span></div>`;
+
+    // Inner format description
+    if(f.innerFormat){
+      const inf=f.innerFormat;
+      html+=`<div class="lc-row"><span class="lc-key">Inner layer:</span><span class="lc-val" style="color:${lc(i+1)}">${esc(inf.subtype)}</span></div>`;
+      if(inf.note)html+=`<div class="lc-row"><span class="lc-key">↳ Note:</span><span class="lc-val warn">${esc(inf.note)}</span></div>`;
+      if(inf.keyNeeds)html+=`<div class="lc-row"><span class="lc-key">↳ Key needed:</span><span class="lc-val hint">${esc(inf.keyNeeds)}</span></div>`;
+    }
+
+    // Hash special info
+    if(f.type==='hash'){
+      html+=`<div style="margin-top:.5rem;padding:.5rem .7rem;background:rgba(245,158,11,.05);border-radius:4px;border:1px solid rgba(245,158,11,.15);font-size:.62rem;line-height:1.6">
+        <b style="color:var(--amber)">⚠ Hashes are mathematically irreversible.</b> No tool can recover the original plaintext.<br>
+        You can <b>verify</b> a hash if you know the original: use the Decode tab → Hash Verify.<br>
+        For common passwords try: <a href="https://crackstation.net" target="_blank" style="color:var(--blue)">crackstation.net</a>
+      </div>`;
+    }
+
+    // Crypto special info
+    if(f.type==='crypto'){
+      html+=`<div style="margin-top:.5rem;padding:.5rem .7rem;background:rgba(59,130,246,.04);border-radius:4px;border:1px solid rgba(59,130,246,.15);font-size:.62rem;line-height:1.6">
+        <b style="color:var(--blue)">🔐 Encrypted data needs a key.</b> Switch to the <b>Decode / Decrypt</b> tab, select the algorithm, and enter your key + IV.
+      </div>`;
+    }
+
+    html+=`</div>`;
+
+    // Actions
+    html+=`<div class="lc-actions">`;
+    if(!f.needsKey&&decoded){
+      html+=`<button class="btn btn-run btn-sm" onclick="sendToDecodeWithResult(${JSON.stringify(layer.input)},${JSON.stringify(decoded)})">⚡ Decode this layer</button>`;
+    }
+    if(f.needsKey||f.type==='crypto'){
+      html+=`<button class="btn btn-sec btn-sm" onclick="sendToDecode(${JSON.stringify(layer.input)})">🔑 Decrypt in Decode tab</button>`;
+    }
+    html+=`<button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(layer.input)},this)">Copy input</button>`;
+    if(decoded)html+=`<button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(decoded)},this)">Copy decoded</button>`;
+    html+=`</div></div>`;
+
+    if(i<layers.length-1)html+=`<div class="layer-arrow">↓ decoded to</div>`;
+  });
+
+  // Final layer result
+  const lastLayer=layers[layers.length-1];
+  const lastFmt=lastLayer.fmt;
+  if(lastFmt.type!=='hash'&&lastFmt.type!=='unknown'&&!lastFmt.needsKey){
+    const finalDecoded=tryDecode(lastLayer.input,lastFmt);
+    if(finalDecoded&&langScore(finalDecoded)>0.1){
+      html+=`<div style="margin-top:.5rem">
+        <div class="result-box">
+          <div class="rb-hdr"><span class="rb-title">✓ Final plaintext result</span>
+            <div style="display:flex;gap:.3rem">
+              <span class="chip c-ok">lang score ${(langScore(finalDecoded)*100).toFixed(0)}%</span>
+              <button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(finalDecoded)},this)">Copy</button>
+            </div>
+          </div>
+          <div class="rb-body">${esc(finalDecoded)}</div>
+          <div class="rb-foot"><span class="rb-stat">entropy ${shan(finalDecoded)}</span></div>
+        </div>
+      </div>`;
+    }
+  }
+
+  $('id-output').innerHTML=html;
+}
+
+function sendToDecodeWithResult(input,decoded){
+  $('dec-input').value=input;
+  $('dec-output').innerHTML=buildResultHTML(decoded,[{op:'Auto-decode',out:decoded}]);
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab')[1].classList.add('on');
+  $('pane-dec').classList.add('on');
+}
+function sendToDecode(input){
+  $('dec-input').value=input;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab')[1].classList.add('on');
+  $('pane-dec').classList.add('on');
+}
+
+/* ═══════════════════════════════════════════════════════
+   DECODE / DECRYPT
+═══════════════════════════════════════════════════════ */
+function onDecInput(){$('dec-chars').textContent=$('dec-input').value.length+' chars';}
+function onAlgoChange(){
+  const algo=$('dec-algo').value;
+  const hints={
+    'auto':'Auto-detect will try all methods. For encrypted data, select a specific algorithm.',
+    'aes-cbc':'AES-CBC: needs 16/24/32-byte key + 16-byte IV. Both can be UTF-8 string or hex.',
+    'aes-ctr':'AES-CTR: needs 16/24/32-byte key + nonce (IV field).',
+    'aes-ecb':'AES-ECB: needs 16/24/32-byte key only. No IV needed.',
+    'aes-gcm':'AES-GCM: needs key + 12-byte nonce/IV. Last 16 bytes of ciphertext are auth tag.',
+    'xor-byte':'XOR with single byte (0–255). Enter 0–255 in key field.',
+    'xor-str':'XOR with repeating key string or hex. Enter key in key field.',
+    'xor-brute':'Brute force XOR with all 256 single-byte keys. No key needed.',
+    'rc4':'RC4 stream cipher. Enter key as text or hex.',
+    'caesar':'Caesar: enter shift number (1–25) in shift field.',
+    'vigenere':'Vigenère: enter keyword (e.g. SECRET) in shift field.',
+    'rot13':'ROT13: symmetric, no key needed.',
+    'rot47':'ROT47: symmetric, no key needed.',
+    'atbash':'Atbash: symmetric, no key needed.',
+  };
+  $('algo-hint').textContent=hints[algo]||'';
+  const needsShift=['caesar','vigenere'].includes(algo);
+  const noIV=['aes-ecb','xor-byte','xor-str','xor-brute','rc4','caesar','vigenere','rot13','rot47','atbash'].includes(algo);
+  $('shift-row').style.display=needsShift?'flex':'none';
+  $('iv-row').style.display=noIV?'none':'flex';
+  $('key-row').style.display=['rot13','rot47','atbash','xor-brute'].includes(algo)?'none':'flex';
+}
+function revDecInput(){$('dec-input').value=$('dec-input').value.split('').reverse().join('');onDecInput()}
+function clearDec(){$('dec-input').value='';$('dec-output').innerHTML='';$('dec-chars').textContent='0 chars';}
+
+async function runDecode(){
+  const input=$('dec-input').value.trim();
+  if(!input){$('dec-output').innerHTML='';return}
+  pg('dec-pg',true);
+  try{await _runDecode(input);}
+  catch(e){$('dec-output').innerHTML=`<div class="warn-box"><div class="wt">Error</div>${esc(e.message)}</div>`;}
+  pg('dec-pg',false);
+}
+
+async function _runDecode(input){
+  const algo=$('dec-algo').value;
+  const keyStr=$('dec-key').value.trim();
+  const ivStr=$('dec-iv').value.trim();
+  const shiftStr=$('dec-shift').value.trim();
+  const keyFmt=$('key-fmt').value;
+  const ivFmt=$('iv-fmt').value;
+  const inputFmt=$('dec-input-fmt').value;
+
+  // Parse ciphertext bytes
+  function getCTBytes(){
+    const s=input;
+    if(inputFmt==='hex')return hexToBytes(s);
+    if(inputFmt==='b64')return b64ToBytes(s);
+    if(inputFmt==='raw')return ENC8(s);
+    // auto
+    const ct=s.replace(/\s/g,'');
+    if(/^[A-Za-z0-9+/]+=*$/.test(ct)&&ct.length%4===0){const b=b64ToBytes(s);if(b)return b;}
+    if(/^[0-9a-fA-F]+$/.test(ct)&&ct.length%2===0){const b=hexToBytes(ct);if(b)return b;}
+    return ENC8(s);
+  }
+  function getKeyBytes(){if(!keyStr)return null;return parseBytes(keyStr,keyFmt)}
+  function getIVBytes(){if(!ivStr)return null;return parseBytes(ivStr,ivFmt)}
+
+  // AUTO-DETECT: try all encodings first
+  if(algo==='auto'){
+    const fmt=detectFormat(input);
+    if(fmt&&!fmt.needsKey&&fmt.type!=='hash'&&fmt.type!=='unknown'&&fmt.type!=='plaintext'){
+      // Try to fully peel
+      const layers=peelAllLayers(input);
+      const steps=[];
+      let cur=input;
+      for(const layer of layers){
+        const d=tryDecode(layer.input,layer.fmt);
+        if(d&&d!==cur){steps.push({op:layer.fmt.subtype,out:d});cur=d;}
+        if(layer.fmt.needsKey||layer.fmt.type==='hash')break;
+      }
+      if(steps.length>0){$('dec-output').innerHTML=buildResultHTML(cur,steps);return}
+    }
+    // No key provided and couldn't auto-decode — show what we know
+    if(!keyStr){
+      const fmtInfo=fmt?`Format detected: <b style="color:var(--cyan)">${fmt.subtype}</b>. `:'';
+      const needsKey=fmt?.needsKey||fmt?.type==='crypto';
+      $('dec-output').innerHTML=`<div class="info-box">
+        <div class="it">ℹ ${needsKey?'Decryption key required':'Auto-decode result'}</div>
+        ${fmtInfo}${needsKey?'This appears to be encrypted data. Select the algorithm above and enter your key.':'Could not auto-decode to readable text. Try selecting a specific method above.'}
+      </div>`;
+      return;
+    }
+  }
+
+  // Classical ciphers (no async)
+  if(['rot13','rot47','atbash','caesar','vigenere'].includes(algo)){
+    let r=input;
+    if(algo==='rot13')r=input.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65));
+    else if(algo==='rot47')r=input.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)));
+    else if(algo==='atbash')r=input.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)));
+    else if(algo==='caesar'){const n=parseInt(shiftStr)||3;r=input.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));}
+    else if(algo==='vigenere'){const k=(shiftStr||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key';let ki=0;r=input.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b-sh+26)%26)+b)});}
+    $('dec-output').innerHTML=buildResultHTML(r,[{op:algo.toUpperCase(),out:r}]);
+    return;
+  }
+
+  // XOR brute force
+  if(algo==='xor-brute'){
+    const ct=getCTBytes();if(!ct){showDecErr('Cannot parse ciphertext');return}
+    const results=[];
+    for(let k=0;k<=255;k++){
+      const out=new Uint8Array(ct.length).map((_,i)=>ct[i]^k);
+      const s=DEC8(out,false);
+      if(s&&printable(s)){const sc=langScore(s);if(sc>0.05)results.push({k,s,sc});}
+    }
+    results.sort((a,b)=>b.sc-a.sc);
+    if(!results.length){showDecErr('No printable XOR results found for keys 0–255');return}
+    let html=`<div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--dim);margin-bottom:.4rem">XOR brute force — ${results.length} printable results, sorted by language score:</div>`;
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.4rem">`;
+    results.slice(0,20).forEach((r,i)=>{
+      const sc=r.sc;
+      html+=`<div style="background:var(--layer);border:1px solid var(--border${i===0?'2':''});border-radius:6px;overflow:hidden${i===0?';border-color:rgba(0,232,162,.3)':''}">
+        <div style="display:flex;align-items:center;gap:.4rem;padding:.28rem .6rem;border-bottom:1px solid var(--border);background:var(--card)">
+          <span style="font-family:'DM Mono',monospace;font-size:.54rem;font-weight:600;flex:1;color:${lc(i)}">Key=0x${r.k.toString(16).padStart(2,'0')} (${r.k})</span>
+          <span class="chip ${sc>0.25?'c-ok':sc>0.1?'c-has':'c-unk'}">${(sc*100).toFixed(0)}%</span>
+          <button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.s)},this)">Copy</button>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:.62rem;padding:.3rem .6rem;word-break:break-all;max-height:50px;overflow:hidden;color:var(--text)">${esc(r.s)}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+    $('dec-output').innerHTML=html;
+    return;
+  }
+
+  // XOR with key
+  if(algo==='xor-byte'||algo==='xor-str'){
+    const ct=getCTBytes();if(!ct){showDecErr('Cannot parse ciphertext');return}
+    const k=algo==='xor-byte'?parseInt(keyStr)||0:null;
+    const kBytes=k!==null?[k]:getKeyBytes();
+    if(!kBytes||!kBytes.length){showDecErr('Enter XOR key');return}
+    const out=new Uint8Array(ct.length).map((_,i)=>ct[i]^kBytes[i%kBytes.length]);
+    const s=DEC8(out,false)||bytesToHex(out);
+    $('dec-output').innerHTML=buildResultHTML(s,[{op:'XOR',out:s}]);
+    return;
+  }
+
+  // RC4
+  if(algo==='rc4'){
+    const ct=getCTBytes();if(!ct){showDecErr('Cannot parse ciphertext');return}
+    const kb=getKeyBytes();if(!kb){showDecErr('Enter RC4 key');return}
+    const S=Array.from({length:256},(_,i)=>i);
+    let j=0;for(let i=0;i<256;i++){j=(j+S[i]+kb[i%kb.length])&255;[S[i],S[j]]=[S[j],S[i]];}
+    let i2=0;j=0;
+    const out=new Uint8Array(ct.length).map(b=>{i2=(i2+1)&255;j=(j+S[i2])&255;[S[i2],S[j]]=[S[j],S[i2]];return b^S[(S[i2]+S[j])&255];});
+    const s=DEC8(out,false)||bytesToHex(out);
+    $('dec-output').innerHTML=buildResultHTML(s,[{op:'RC4',out:s}]);
+    return;
+  }
+
+  // AES
+  if(algo.startsWith('aes')){
+    const ct=getCTBytes();
+    if(!ct){showDecErr('Cannot parse ciphertext. Check the Input Format selector.');return}
+    const keyBytes=getKeyBytes();
+    if(!keyBytes||![16,24,32].includes(keyBytes.length)){
+      showDecErr(`AES key must be 16, 24, or 32 bytes. Got: ${keyBytes?.length||0} bytes.\n\nTips:\n• UTF-8 string "eORYfyqentWL4tpxRg69S7Ti5LEGtbzQ" = 32 bytes ✓\n• Hex key must be 32, 48, or 64 hex chars\n• Select the correct Key Format (UTF-8/Hex)`);return;
+    }
+    const modeMap={'aes-cbc':'AES-CBC','aes-ctr':'AES-CTR','aes-ecb':'AES-ECB','aes-gcm':'AES-GCM'};
+    const wcMode=modeMap[algo];
     try{
-      // 1. First: identify if it's a hash — stop immediately if so
-      const hashIds=identifyHash(inp.trim());
-      // Check if base64 decodes to a hex string that is a hash
-      let secondLayerHashIds=[];
-      try{
-        const b64dec=OPS.find(o=>o.id==='b64').dec(inp);
-        if(b64dec){
-          const hexCheck=b64dec.trim();
-          if(/^[0-9a-fA-F]+$/.test(hexCheck)){
-            secondLayerHashIds=identifyHash(hexCheck);
-          }
+      const cryptoKey=await crypto.subtle.importKey('raw',keyBytes,{name:algo==='aes-ctr'?'AES-CTR':algo==='aes-gcm'?'AES-GCM':'AES-CBC'},false,['decrypt']);
+      let params;
+      if(algo==='aes-cbc'){
+        let iv=getIVBytes();
+        if(!iv&&ct.length>16){iv=ct.slice(0,16);}
+        if(!iv){showDecErr('AES-CBC requires a 16-byte IV. Enter it in the IV field, or if it is prepended to the ciphertext, it will be auto-detected.');return}
+        if(iv.length!==16){showDecErr(`IV must be exactly 16 bytes. Got: ${iv.length} bytes.`);return}
+        const ctBody=ivStr?ct:ct.slice(16);
+        params={name:'AES-CBC',iv};
+        const result=await crypto.subtle.decrypt(params,cryptoKey,ctBody);
+        const txt=DEC8(new Uint8Array(result))||bytesToHex(new Uint8Array(result));
+        $('dec-output').innerHTML=buildResultHTML(txt,[{op:'AES-CBC decrypt',out:txt}]);
+      } else if(algo==='aes-ctr'){
+        const ivBytes=getIVBytes()||new Uint8Array(16);
+        params={name:'AES-CTR',counter:ivBytes.slice(0,16).length<16?new Uint8Array([...ivBytes,...new Uint8Array(16-ivBytes.length)]):ivBytes.slice(0,16),length:64};
+        const result=await crypto.subtle.decrypt(params,cryptoKey,ct);
+        const txt=DEC8(new Uint8Array(result))||bytesToHex(new Uint8Array(result));
+        $('dec-output').innerHTML=buildResultHTML(txt,[{op:'AES-CTR decrypt',out:txt}]);
+      } else if(algo==='aes-ecb'){
+        // ECB via CBC with zero IV, block by block
+        const blocks=[];
+        for(let i=0;i<ct.length;i+=16){
+          const blk=ct.slice(i,i+16);
+          const fakeKey=await crypto.subtle.importKey('raw',keyBytes,{name:'AES-CBC'},false,['decrypt']);
+          const r=await crypto.subtle.decrypt({name:'AES-CBC',iv:new Uint8Array(16)},fakeKey,new Uint8Array([...blk,...new Uint8Array(16)]));
+          blocks.push(new Uint8Array(r));
         }
-      }catch{}
-
-      if(hashIds.length>0||secondLayerHashIds.length>0){
-        pg(false);
-        renderHashResult(inp,hashIds,secondLayerHashIds);
-        return;
+        const combined=new Uint8Array(blocks.reduce((s,b)=>s+b.length,0));
+        let off=0;for(const b of blocks){combined.set(b,off);off+=b.length;}
+        const txt=DEC8(combined,false)||bytesToHex(combined);
+        $('dec-output').innerHTML=buildResultHTML(txt,[{op:'AES-ECB decrypt',out:txt}]);
+      } else if(algo==='aes-gcm'){
+        const nonce=getIVBytes()||ct.slice(0,12);
+        const ctBody=ivStr?ct:ct.slice(12);
+        const result=await crypto.subtle.decrypt({name:'AES-GCM',iv:nonce},cryptoKey,ctBody);
+        const txt=DEC8(new Uint8Array(result))||bytesToHex(new Uint8Array(result));
+        $('dec-output').innerHTML=buildResultHTML(txt,[{op:'AES-GCM decrypt',out:txt}]);
       }
-
-      // 2. Detect bar
-      const dets=OPS.filter(op=>{try{const r=op.dec(inp,{});return r&&r!==inp}catch{return false}}).map(o=>o.n);
-      const db=$('auto-det-bar');
-      if(dets.length){
-        $('det-tags').innerHTML=dets.slice(0,8).map(n=>`<span class="chip cb">${esc(n)}</span>`).join(' ');
-        db.style.display='flex';
-      }
-
-      // 3. Speculative decode
-      const res=specExecute(inp);
-      pg(false);
-      if(!res){$('auto-out').innerHTML='';$('no-res').style.display='block';return;}
-      $('no-res').style.display='none';
-      renderAutoResult(inp,res);
-    }catch(e){pg(false);console.error(e);}
-  },50);
-}
-
-function renderHashResult(inp,hashIds,secondLayerHashIds){
-  const all=[...hashIds,...secondLayerHashIds];
-  const firstMatch=all[0];
-  let stepsHtml='';
-  if(secondLayerHashIds.length>0&&hashIds.length===0){
-    stepsHtml=`<div class="hw-row"><span class="hw-label">Layer 1:</span><span style="color:var(--dim)">Base64 encoding</span></div>
-    <div class="hw-row"><span class="hw-label">Layer 2 (hex):</span><span class="hw-val">${esc(OPS.find(o=>o.id==='b64').dec(inp)||'')}</span></div>`;
+    }catch(e){
+      showDecErr(`AES decryption failed: ${e.message}\n\nCommon causes:\n• Wrong key or IV\n• Wrong key format (try switching UTF-8 ↔ Hex)\n• Wrong IV format (string "5366113792925655" is 16 UTF-8 bytes = valid)\n• Padding error — ciphertext may be corrupted\n• Wrong algorithm mode (try AES-CBC, then AES-ECB, then AES-CTR)`);
+    }
+    return;
   }
-  const layerNote=secondLayerHashIds.length>0?'Base64 → Hex → Hash':'Direct hex hash';
-  $('auto-out').innerHTML=`
-    <div class="hash-warn">
-      <div class="hw-title">⚠ This is a Cryptographic Hash — One-Way Operation</div>
-      <div class="hw-body">
-        This data is <b>not encoded text</b> — it is a cryptographic hash output.<br>
-        Hashes are <b>mathematically irreversible</b>. No tool on earth (CyberChef, Ciphey, dCode.fr, or anything else) can recover the original plaintext from a hash.<br><br>
-        <b>What you can do:</b><br>
-        → Switch to the <b>🔐 Crypto Decrypt</b> tab to verify this hash against a known plaintext<br>
-        → Use rainbow tables (only works for common passwords: <a href="https://crackstation.net" target="_blank" style="color:var(--B)">crackstation.net</a>)<br>
-        → If this is HMAC: you can verify with the key, but cannot reverse it<br><br>
-        <div class="hw-row"><span class="hw-label">Structure:</span><span style="color:var(--C)">${esc(layerNote)}</span></div>
-        <div class="hw-row"><span class="hw-label">Hash type(s):</span><span class="hw-val">${all.map(h=>h.names[0]).join(' | ')}</span></div>
-        <div class="hw-row"><span class="hw-label">Category:</span><span style="color:var(--Y)">${esc(firstMatch?.cat||'Hash')}</span></div>
-        <div class="hw-row"><span class="hw-label">Bit length:</span><span style="color:var(--G)">${(firstMatch?.len||0)*4} bits (${firstMatch?.len||0} hex chars)</span></div>
-        <div class="hw-row"><span class="hw-label">Note:</span><span style="color:var(--Y)">${esc(firstMatch?.note||'One-way — cannot be reversed')}</span></div>
-        ${stepsHtml}
-        <div class="hw-row"><span class="hw-label">Raw value:</span><span class="hw-val" style="font-size:.55rem">${esc(inp)}</span></div>
-      </div>
-    </div>
-    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="sw('crypto',document.querySelectorAll('.tab')[2]);setTimeout(()=>{$('ci').value=${JSON.stringify(inp)};onCI()},100)">→ Open in Crypto tab</button>
-      <button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(inp)},this)">Copy hash</button>
-    </div>`;
+
+  showDecErr('Select a specific decoding method from the Algorithm dropdown.');
 }
 
-function renderAutoResult(inp,res){
-  const{path,final,sc}=res;
-  const scChip=sc>0.35?'cg':sc>0.18?'cy':'cd';
-  const ops=path.map(p=>p.op).join(' → ');
-  let chainHtml='';
-  if(path.length>0){
-    chainHtml=`<div style="margin-top:.5rem">
-      <button class="chain-toggle" id="ctog" onclick="togChain()">
-        <span class="ct-arr">▶</span>
-        <span id="ctlbl">Show decode chain (${path.length} step${path.length>1?'s':''})</span>
-      </button>
-      <div class="chain-body" id="cbody">
-        ${layHtml(-1,'original',inp,'var(--dim)',false)}
-        ${path.map((p,i)=>`
-          <div style="padding:.08rem 0 .08rem 11px;font-family:var(--mono);font-size:.46rem;color:${lc(i)}">↓ ${esc(p.op)}${p.sc>0?` (${(p.sc*100).toFixed(0)}%)`:''}</div>
-          ${layHtml(i,p.op,p.out,lc(i),i===path.length-1)}
-        `).join('')}
-      </div>
-    </div>`;
-  }
-  $('auto-out').innerHTML=`
-    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap">
-      <span style="font-weight:700">${path.length>1?`${path.length} layers peeled`:'Decoded'}</span>
-      <span class="chip cg">✓ ${esc(ops.length>80?ops.slice(0,80)+'…':ops)}</span>
-      <span class="chip ${scChip}">lang ${(sc*100).toFixed(0)}%</span>
-    </div>
-    <div class="res-box">
-      <div class="rb-head">
-        <span class="rb-title">✓ plain text result${path.length>1?` · ${path.length}× peeled`:''}</span>
-        <div style="display:flex;gap:.3rem;align-items:center">
-          <span class="chip cd">${final.length} chars</span>
-          <button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(final)},this)">Copy</button>
-        </div>
-      </div>
-      <div class="rb-text">${esc(final)}</div>
-      <div class="rb-foot">
-        <span class="rb-stat">entropy ${shan(final)} · chi² ${chiSq(final).toFixed(2)} · score ${(sc*100).toFixed(0)}%</span>
-        <div style="display:flex;gap:.3rem">
-          <button class="btn btn-ghost btn-sm" onclick="reuse(${JSON.stringify(final)})">Re-decode</button>
-          <button class="btn btn-ghost btn-sm" onclick="revReuse(${JSON.stringify(final)})">⇄ Reverse & re-decode</button>
-        </div>
+function buildResultHTML(final,steps){
+  const sc=langScore(final);
+  const scChip=sc>0.3?'c-ok':sc>0.1?'c-has':'c-unk';
+  const stepsHTML=steps.length>1?steps.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.3rem .85rem;border-top:1px solid var(--border)">
+      <span style="font-family:'DM Mono',monospace;font-size:.46rem;color:${lc(i)};min-width:100px">${esc(s.op)}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--dim);word-break:break-all;flex:1">${esc(s.out.length>80?s.out.slice(0,80)+'…':s.out)}</span>
+      <button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(s.out)},this)">Copy</button>
+    </div>`).join(''):'';
+  return `<div class="result-box">
+    <div class="rb-hdr">
+      <span class="rb-title">✓ Decoded / Decrypted</span>
+      <div style="display:flex;gap:.3rem;align-items:center">
+        <span class="chip ${scChip}">lang ${(sc*100).toFixed(0)}%</span>
+        <span class="chip c-unk">${final.length} chars</span>
+        <button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(final)},this)">Copy</button>
+        <button class="btn btn-ghost btn-sm" onclick="sendBackToIdentify(${JSON.stringify(final)})">→ Identify</button>
       </div>
     </div>
-    ${chainHtml}`;
+    <div class="rb-body">${esc(final)}</div>
+    <div class="rb-foot">
+      <span class="rb-stat">entropy ${shan(final)}</span>
+      ${steps.length>1?`<button class="btn btn-ghost btn-xs" id="steps-tog" onclick="toggleSteps()">Show steps</button>`:''}
+    </div>
+  </div>
+  <div id="steps-detail" style="display:none;background:var(--layer);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:.3rem">${stepsHTML}</div>`;
 }
-function layHtml(i,name,text,col,isFinal){return`<div class="clayer"><div class="cl-side"><div class="cl-dot" style="border-color:${col};${isFinal?'background:'+col:''}"></div>${!isFinal?'<div class="cl-line"></div>':''}</div><div class="cl-card" style="${isFinal?'border-color:'+col:''}"><div class="clh"><span class="cln" style="color:${col}">${i<0?'input':`step ${i+1}`}</span><span class="clname" style="color:${col}">${esc(name)}</span><span class="cllen">${text.length}ch</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(text)},this)">Copy</button></div><div class="clbody">${esc(text)}</div></div></div>`}
-function togChain(){const b=$('cbody'),btn=$('ctog'),lbl=$('ctlbl');b.classList.toggle('open');btn.classList.toggle('ct-open');lbl.textContent=b.classList.contains('open')?'Hide chain':'Show decode chain';}
-function reuse(t){$('di').value=t;onDI();magic()}
-function revReuse(t){$('di').value=t.split('').reverse().join('');onDI();magic()}
+function toggleSteps(){const d=$('steps-detail');const b=$('steps-tog');const show=d.style.display==='none';d.style.display=show?'block':'none';b.textContent=show?'Hide steps':'Show steps';}
+function showDecErr(msg){$('dec-output').innerHTML=`<div class="warn-box"><div class="wt">⚠ Could not decrypt</div><pre style="white-space:pre-wrap;font-family:inherit;font-size:inherit">${esc(msg)}</pre></div>`;}
+function sendBackToIdentify(t){$('id-input').value=t;onIdInput();document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab')[0].classList.add('on');$('pane-id').classList.add('on');runIdentify();}
 
-// MANUAL
-function buildManGrid(){
-  const g=$('man-op-grid');const cats=[...new Set(OPS.map(o=>o.cat))];let h='';
-  cats.forEach(cat=>{h+=`<span class="cat-sep">${cat}</span>`;OPS.filter(o=>o.cat===cat).forEach(o=>h+=`<button class="mc${o.id===manOpId?' sel':''}" id="mop-${o.id}" onclick="selMOP('${o.id}')">${o.n}</button>`);});
+/* ═══════════════════════════════════════════════════════
+   ENCODER
+═══════════════════════════════════════════════════════ */
+const ENC_METHODS=[
+  {id:'b64',n:'Base64',cat:'BaseN',opts:[],e:s=>{try{return btoa(unescape(encodeURIComponent(s)))}catch{return null}}},
+  {id:'b64u',n:'Base64URL',cat:'BaseN',opts:[],e:s=>{try{return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}catch{return null}}},
+  {id:'b32',n:'Base32',cat:'BaseN',opts:[],e(s){const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return o}},
+  {id:'hex',n:'Hex',cat:'BaseN',opts:[{id:'s',l:'Sep',t:'sel',ch:['space','none','colon'],d:'space'}],e:(s,o)=>{const sep={'space':' ','none':'','colon':':'}[o.s||'space'];return[...s].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(sep)}},
+  {id:'bin',n:'Binary',cat:'Encoding',opts:[],e:s=>[...s].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ')},
+  {id:'oct',n:'Octal',cat:'Encoding',opts:[],e:s=>[...s].map(c=>c.charCodeAt(0).toString(8).padStart(3,'0')).join(' ')},
+  {id:'dec',n:'Decimal',cat:'Encoding',opts:[],e:s=>[...s].map(c=>c.charCodeAt(0)).join(' ')},
+  {id:'url',n:'URL %enc',cat:'Encoding',opts:[],e:s=>encodeURIComponent(s)},
+  {id:'html',n:'HTML Ents',cat:'Encoding',opts:[{id:'m',l:'Mode',t:'sel',ch:['named','decimal','hex'],d:'named'}],e:(s,o)=>{const nm={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};if((o.m||'named')==='named')return s.replace(/[&<>"']/g,c=>nm[c]||c);if(o.m==='decimal')return[...s].map(c=>`&#${c.charCodeAt(0)};`).join('');return[...s].map(c=>`&#x${c.charCodeAt(0).toString(16)};`).join('')}},
+  {id:'uni',n:'Unicode',cat:'Encoding',opts:[],e:s=>[...s].map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join('')},
+  {id:'rot13',n:'ROT13',cat:'Cipher',opts:[],e:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+13)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+13)%26)+65))},
+  {id:'rot47',n:'ROT47',cat:'Cipher',opts:[],e:s=>s.replace(/[\x21-\x7E]/g,c=>String.fromCharCode(33+((c.charCodeAt(0)-33+47)%94)))},
+  {id:'atbash',n:'Atbash',cat:'Cipher',opts:[],e:s=>s.replace(/[a-z]/g,c=>String.fromCharCode(122-(c.charCodeAt(0)-97))).replace(/[A-Z]/g,c=>String.fromCharCode(90-(c.charCodeAt(0)-65)))},
+  {id:'caesar',n:'Caesar',cat:'Cipher',opts:[{id:'n',l:'Shift',t:'range',min:1,max:25,d:'3'}],e:(s,o)=>{const n=+o.n||3;return s.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+n)%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+n)%26)+65))}},
+  {id:'vig',n:'Vigenère',cat:'Cipher',opts:[{id:'k',l:'Key',t:'txt',pl:'SECRET',d:'KEY'}],e:(s,o)=>{const k=((o.k||'KEY').toLowerCase().replace(/[^a-z]/g,'')||'key');let i=0;return s.replace(/[a-zA-Z]/g,c=>{const b=c>='a'?97:65,sh=k[i++%k.length].charCodeAt(0)-97;return String.fromCharCode(((c.charCodeAt(0)-b+sh)%26)+b)})}},
+  {id:'xor',n:'XOR',cat:'Cipher',opts:[{id:'k',l:'Key(0-255)',t:'num',min:0,max:255,d:'42'}],e:(s,o)=>{const k=+o.k||42;return[...s].map(c=>(c.charCodeAt(0)^k).toString(16).padStart(2,'0')).join(' ')}},
+  {id:'morse',n:'Morse',cat:'Cipher',opts:[],e(s){const M={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};return s.toUpperCase().split('').map(c=>M[c]||'').filter(Boolean).join(' ')}},
+  {id:'bacon',n:"Bacon's",cat:'Cipher',opts:[],e(s){const M={A:'AAAAA',B:'AAAAB',C:'AAABA',D:'AAABB',E:'AABAA',F:'AABAB',G:'AABBA',H:'AABBB',I:'ABAAA',J:'ABAAB',K:'ABABA',L:'ABABB',M:'ABBAA',N:'ABBAB',O:'ABBBA',P:'ABBBB',Q:'BAAAA',R:'BAAAB',S:'BAABA',T:'BAABB',U:'BABAA',V:'BABAB',W:'BABBA',X:'BABBB',Y:'BBAAA',Z:'BBAAB'};return s.toUpperCase().split('').map(c=>M[c]||c).join(' ')}},
+  {id:'a1z26',n:'A1Z26',cat:'Cipher',opts:[],e:s=>s.toUpperCase().split('').map(c=>{const n=c.charCodeAt(0)-64;return n>=1&&n<=26?n:c}).join(' ')},
+  {id:'nato',n:'NATO',cat:'Cipher',opts:[],e(s){const M={A:'Alpha',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliet',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'Xray',Y:'Yankee',Z:'Zulu'};return s.toUpperCase().split('').map(c=>M[c]||c).join('-')}},
+  {id:'rev',n:'Reversed',cat:'Cipher',opts:[],e:s=>s.split('').reverse().join('')},
+];
+
+let curEncId=ENC_METHODS[0].id,encOpts={},encIter=1,encMode='single';
+function setEncMode(m){encMode=m;$('em-single').classList.toggle('on',m==='single');$('em-all').classList.toggle('on',m==='all');$('enc-single-panel').style.display=m==='single'?'block':'none';$('enc-all-panel').style.display=m==='all'?'block':'none';if(m==='all'&&$('enc-input').value.trim())encodeAll();}
+function buildEncMethods(){
+  const g=$('enc-method-row');const cats=[...new Set(ENC_METHODS.map(m=>m.cat))];let h='';
+  cats.forEach(cat=>{h+=`<span class="cat-lbl">${cat}</span>`;ENC_METHODS.filter(m=>m.cat===cat).forEach(m=>h+=`<button class="mchip${m.id===curEncId?' on':''}" id="em-${m.id}" onclick="selEncM('${m.id}')">${m.n}</button>`);});
   g.innerHTML=h;
 }
-function selMOP(id){manOpId=id;manOpts={};document.querySelectorAll('#man-op-grid .mc').forEach(b=>b.classList.remove('sel'));const b=$(`mop-${id}`);if(b)b.classList.add('sel');buildManOpts();}
-function buildManOpts(){
-  const op=OPS.find(o=>o.id===manOpId);const w=$('man-opts');
-  if(!op||!op.opts.length){w.innerHTML='';return}
-  w.innerHTML=op.opts.map(o=>{const v=manOpts[o.id]||o.d;let ctrl='';
-    if(o.t==='sel')ctrl=`<select onchange="manOpts['${o.id}']=this.value">${o.ch.map(c=>`<option value="${c}"${c===v?'selected':''}>${c}</option>`).join('')}</select>`;
-    else if(o.t==='range')ctrl=`<input type="range" min="${o.min}" max="${o.max}" value="${v}" oninput="manOpts['${o.id}']=this.value;this.nextSibling.textContent=this.value"><span class="sv">${v}</span>`;
-    else if(o.t==='num')ctrl=`<input type="number" min="${o.min}" max="${o.max}" value="${v}" oninput="manOpts['${o.id}']=this.value">`;
-    else ctrl=`<input type="text" value="${manOpts[o.id]||''}" placeholder="${o.pl||''}" oninput="manOpts['${o.id}']=this.value">`;
+function selEncM(id){curEncId=id;encOpts={};document.querySelectorAll('.mchip').forEach(b=>b.classList.remove('on'));const b=$('em-'+id);if(b)b.classList.add('on');buildEncOpts();runEncode();}
+function buildEncOpts(){
+  const m=ENC_METHODS.find(x=>x.id===curEncId);const w=$('enc-opts-row');
+  if(!m||!m.opts.length){w.innerHTML='';return}
+  w.innerHTML=m.opts.map(o=>{const v=encOpts[o.id]||o.d;let ctrl='';
+    if(o.t==='sel')ctrl=`<select onchange="encOpts['${o.id}']=this.value;runEncode()">${o.ch.map(c=>`<option value="${c}"${c===v?' selected':''}>${c}</option>`).join('')}</select>`;
+    else if(o.t==='range')ctrl=`<input type="range" min="${o.min}" max="${o.max}" value="${v}" oninput="encOpts['${o.id}']=this.value;this.nextSibling.textContent=this.value;runEncode()"><span class="sv">${v}</span>`;
+    else if(o.t==='num')ctrl=`<input type="number" min="${o.min}" max="${o.max}" value="${v}" oninput="encOpts['${o.id}']=this.value;runEncode()">`;
+    else ctrl=`<input type="text" value="${encOpts[o.id]||''}" placeholder="${o.pl||''}" oninput="encOpts['${o.id}']=this.value;runEncode()">`;
     return`<div class="og"><label>${o.l}</label>${ctrl}</div>`;
   }).join('');
 }
-function buildIterBtns(){const w=$('man-iter-btns');w.innerHTML='';[1,2,3,5].forEach(n=>{const b=document.createElement('button');b.className='btn btn-ghost btn-sm'+(n===manIter?' cg':'');b.style.padding='3px 7px';b.textContent=n+'×';b.onclick=()=>{manIter=n;buildIterBtns()};w.appendChild(b);});}
-function runMan(){
-  const inp=$('di').value.trim();if(!inp)return;
-  const op=OPS.find(o=>o.id===manOpId);if(!op)return;
-  let cur=inp;const steps=[];
-  for(let i=0;i<manIter;i++){try{const r=op.dec(cur,manOpts);if(!r){steps.push({n:op.n,out:cur,sc:0,fail:true});break;}steps.push({n:op.n,out:r,sc:langScore(r)});cur=r;}catch(e){steps.push({n:op.n,out:'[error]',sc:0,fail:true});break;}}
-  const fin=steps[steps.length-1];const sc=fin.sc;const cls=sc>0.3?'cg':sc>0.1?'cy':'cd';
-  $('man-out').innerHTML=`<div class="res-box" style="${fin.fail?'border-color:rgba(239,68,68,.2)':''}">
-    <div class="rb-head"><span class="rb-title" style="color:var(--P)">⚙ Manual: ${esc(op.n)} × ${manIter}</span>
-    <div style="display:flex;gap:.3rem"><span class="chip ${cls}">${(sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(cur)},this)">Copy</button></div></div>
-    <div class="rb-text" style="color:#e0b0ff">${esc(cur)}</div>
-    <div class="rb-foot"><span class="rb-stat">entropy ${shan(cur)} · chi² ${chiSq(cur).toFixed(2)}</span><button class="btn btn-ghost btn-sm" onclick="reuse(${JSON.stringify(cur)})">Re-decode</button></div>
-  </div>`;
-}
-
-// BRUTE FORCE
-function runBrute(useRev){
-  const inp=useRev?$('di').value.trim().split('').reverse().join(''):$('di').value.trim();
-  if(!inp)return;
-  const res=[];
-  for(let n=1;n<=25;n++){const dec=inp.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));res.push({n:`Caesar+${n}`,v:dec,sc:langScore(dec)});}
-  for(const op of OPS){try{const r=op.dec(inp,{});if(r&&r!==inp&&printable(r))res.push({n:op.n,v:r,sc:langScore(r)})}catch{}}
-  const vig=tryVig(inp);if(vig)res.push({n:`Vigenère(key:"${vig.key}")`,v:vig.r,sc:vig.sc});
-  const h=inp.trim().replace(/\s/g,'');
-  if(/^[0-9a-fA-F]+$/.test(h)&&h.length%2===0){for(let k=1;k<=255;k++){const bytes=[];for(let i=0;i<h.length;i+=2)bytes.push(parseInt(h.slice(i,i+2),16));const r=bytes.map(b=>String.fromCharCode(b^k)).join('');if(printable(r)){const sc=langScore(r);if(sc>0.08)res.push({n:`XOR key=${k}`,v:r,sc});}}}
-  res.sort((a,b)=>b.sc-a.sc);
-  $('brute-out').innerHTML=`<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;flex-wrap:wrap">
-    <span style="font-family:var(--mono);font-size:.52rem;font-weight:700;color:var(--Y)">💥 ${useRev?'Reversed':'Forward'} — ${res.length} candidates</span>
-    <span class="chip cy">sorted by language score</span>
-  </div>
-  <div class="bf-grid">${res.slice(0,24).map((r,i)=>{const cls=r.sc>0.25?'cg':r.sc>0.1?'cy':'cd';return`<div class="bf-card${i===0?' best':''}"><div class="bfc-head"><span class="bfc-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip ${cls}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div><div class="bfc-body">${esc(r.v)}</div></div>`}).join('')}</div>`;
-}
-function runCaesarAll(){
-  const inp=$('di').value.trim();if(!inp)return;
-  const res=[];for(let n=1;n<=25;n++){const dec=inp.replace(/[a-z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-97+(26-n))%26)+97)).replace(/[A-Z]/g,c=>String.fromCharCode(((c.charCodeAt(0)-65+(26-n))%26)+65));res.push({n:`Shift+${n}`,v:dec,sc:langScore(dec)});}
-  res.sort((a,b)=>b.sc-a.sc);
-  $('brute-out').innerHTML=`<div class="bf-grid">${res.map((r,i)=>`<div class="bf-card${i===0?' best':''}"><div class="bfc-head"><span class="bfc-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip ${r.sc>0.25?'cg':r.sc>0.1?'cy':'cd'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div><div class="bfc-body">${esc(r.v)}</div></div>`).join('')}</div>`;
-}
-
-// ══════════════════════════════════════════════════════
-// CRYPTO DECRYPT (AES via WebCrypto, XOR)
-// ══════════════════════════════════════════════════════
-function onCI(){
-  const v=$('ci').value;$('cic').textContent=v.length+' chars';
-  const t=$('ci-type');
-  const hids=identifyHash(v.trim());
-  if(hids.length){t.style.display='';t.innerHTML=hids.map(h=>`<span class="chip cy">${esc(h.names[0])}</span>`).join(' ');}
-  else t.style.display='none';
-}
-function onCKey(){/* live feedback possible */}
-
-function hexToBytes(s){const c=s.replace(/\s/g,'').replace(/^0x/i,'');if(!/^[0-9a-fA-F]+$/.test(c)||c.length%2)return null;const b=new Uint8Array(c.length/2);for(let i=0;i<c.length;i+=2)b[i/2]=parseInt(c.slice(i,i+2),16);return b}
-function b64ToBytes(s){try{const r=atob(s.trim().replace(/-/g,'+').replace(/_/g,'/'));return new Uint8Array(r.length).map((_,i)=>r.charCodeAt(i))}catch{return null}}
-function autoBytes(s,fmt){
-  if(fmt==='hex')return hexToBytes(s);
-  if(fmt==='b64')return b64ToBytes(s);
-  if(fmt==='raw')return ENC8(s);
-  // auto
-  const t=s.trim();
-  if(/^[0-9a-fA-F\s]+$/.test(t)&&t.replace(/\s/g,'').length%2===0)return hexToBytes(t);
-  try{const b=b64ToBytes(t);if(b)return b}catch{}
-  return ENC8(s);
-}
-function parseKey(keyStr){
-  const t=keyStr.trim();
-  if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return hexToBytes(t);
-  return ENC8(t);
-}
-
-async function runCrypto(){
-  const ctStr=$('ci').value.trim();const keyStr=$('ckey').value.trim();
-  const mode=$('cmode').value;const ivStr=$('civ').value.trim();const fmt=$('cfmt').value;
-  if(!ctStr){alert('Enter ciphertext first');return}
-
-  const outBox=$('crypto-result');outBox.style.display='block';
-  $('cr-body').textContent='Processing…';$('cr-chip').className='chip cd';$('cr-chip').textContent='…';
-
-  try{
-    // Parse ciphertext
-    const ctBytes=autoBytes(ctStr,fmt);
-    if(!ctBytes){showCryptoErr('Could not parse ciphertext. Check format (hex/base64/raw).');return}
-
-    // XOR
-    if(mode==='xor'||mode==='auto'){
-      if(keyStr){
-        const keyBytes=parseKey(keyStr);
-        if(keyBytes){
-          const out=new Uint8Array(ctBytes.length).map((_,i)=>ctBytes[i]^keyBytes[i%keyBytes.length]);
-          const outStr=DEC8(out,false)||Array.from(out).map(b=>b.toString(16).padStart(2,'0')).join(' ');
-          if(mode==='xor'){showCryptoOk('XOR decryption',outStr,'XOR');return}
-          if(printable(outStr)&&langScore(outStr)>0.1){showCryptoOk('XOR decryption',outStr,'XOR');return}
-        }
-      }
-      if(mode==='xor'){showCryptoErr('XOR requires a key. Enter hex or text key.');return}
-    }
-
-    // AES
-    if(mode.startsWith('aes')||mode==='auto'){
-      if(!keyStr){
-        if(mode!=='auto')showCryptoErr('AES decryption requires a key. Enter 16, 24, or 32-byte hex key.');
-      } else {
-        const keyBytes=parseKey(keyStr);
-        if(!keyBytes||![16,24,32].includes(keyBytes.length)){
-          showCryptoErr(`AES key must be 16, 24, or 32 bytes. Got ${keyBytes?.length} bytes.`);return;
-        }
-        const cryptoKey=await crypto.subtle.importKey('raw',keyBytes,{name:mode==='aes-ctr'?'AES-CTR':'AES-CBC'},false,['decrypt']);
-        let dec;
-        if(mode==='aes-cbc'||mode==='auto'){
-          let iv=ivStr?hexToBytes(ivStr):null;
-          if(!iv){
-            // try first 16 bytes as IV
-            if(ctBytes.length>16){iv=ctBytes.slice(0,16);}
-            else{showCryptoErr('AES-CBC needs a 16-byte IV. Provide it in the IV field or prepend it to ciphertext.');return}
-          }
-          const ct2=ivStr?ctBytes:ctBytes.slice(16);
-          try{const result=await crypto.subtle.decrypt({name:'AES-CBC',iv},cryptoKey,ct2);
-            dec=DEC8(new Uint8Array(result),false)||null;
-            if(dec)showCryptoOk('AES-CBC decryption',dec,'AES-CBC');
-            else showCryptoErr('AES-CBC: decrypted but result is not valid UTF-8 text.');return;
-          }catch(e){if(mode==='aes-cbc'){showCryptoErr('AES-CBC failed: '+e.message);return;}}
-        }
-        if(mode==='aes-ecb'){
-          // WebCrypto doesn't support ECB natively — manual implementation
-          const k=await crypto.subtle.importKey('raw',keyBytes,{name:'AES-CBC'},false,['decrypt']);
-          const blocks=[];
-          for(let i=0;i<ctBytes.length;i+=16){
-            const blk=ctBytes.slice(i,i+16);
-            const fakect=new Uint8Array([...blk,...new Uint8Array(16)]);
-            try{const r=await crypto.subtle.decrypt({name:'AES-CBC',iv:new Uint8Array(16)},k,fakect);blocks.push(new Uint8Array(r));}
-            catch(e){showCryptoErr('AES-ECB block failed: '+e.message);return;}
-          }
-          const combined=new Uint8Array(blocks.reduce((s,b)=>s+b.length,0));let off=0;for(const b of blocks){combined.set(b,off);off+=b.length;}
-          dec=DEC8(combined,false)||Array.from(combined).map(b=>b.toString(16).padStart(2,'0')).join(' ');
-          showCryptoOk('AES-ECB decryption',dec,'AES-ECB');return;
-        }
-      }
-    }
-
-    // Hash verify mode
-    if(mode==='hash-verify'){runHashIdent();runVerify();return}
-
-    // Brute XOR mode
-    if(mode==='brute-xor'){runBruteXOR();return}
-
-    // Auto with no key — show hash identification
-    if(mode==='auto'&&!keyStr){
-      runHashIdent();
-    }
-  }catch(e){showCryptoErr('Error: '+e.message);}
-}
-
-function showCryptoOk(title,text,method){
-  const outBox=$('crypto-result');outBox.style.display='block';
-  $('cr-title').textContent=title;
-  $('cr-body').textContent=text;
-  $('cr-chip').className='chip cg';$('cr-chip').textContent='✓ '+method;
-  const sc=langScore(text);
-  $('cr-stat').textContent=`entropy ${shan(text)} · lang score ${(sc*100).toFixed(0)}%`;
-}
-function showCryptoErr(msg){
-  const outBox=$('crypto-result');outBox.style.display='block';
-  $('cr-title').textContent='Error';
-  $('cr-body').textContent=msg;
-  $('cr-chip').className='chip cr';$('cr-chip').textContent='✗ failed';
-  $('cr-stat').textContent='';
-}
-function cpCrypto(){cp($('cr-body').textContent,null)}
-function sendCryptoToDec(){const t=$('cr-body').textContent;if(t){$('di').value=t;onDI();sw('dec',document.querySelector('.tab'));magic();}}
-
-// HASH IDENTIFY
-function runHashIdent(){
-  const s=$('ci').value.trim();
-  const out=$('hash-ident-out');
-  if(!s){out.innerHTML='';return}
-  // Try raw and base64-decoded
-  let allIds=[...identifyHash(s)];
-  try{const b64=OPS.find(o=>o.id==='b64').dec(s);if(b64&&/^[0-9a-fA-F]+$/.test(b64.trim()))allIds=[...allIds,...identifyHash(b64.trim()).map(h=>({...h,note:'(after Base64 decode) '+h.note}))];}catch{}
-  if(!allIds.length){out.innerHTML=`<div class="info-box"><b>Not a recognised hash format.</b> Input does not match any known hash signature. It may be cipher text, encoded data, or a custom format.</div>`;return}
-  out.innerHTML=`<div class="hash-warn">
-    <div class="hw-title">🔍 Hash Identified (${allIds.length} match${allIds.length>1?'es':''})</div>
-    <div class="hw-body">
-      <b>One-way operation</b> — hashes cannot be reversed. Possible hash types:
-      <table style="margin-top:.4rem;border-collapse:collapse;width:100%">
-        <tr><th style="text-align:left;padding:3px 8px;font-size:.5rem;color:var(--dim);border-bottom:1px solid var(--b2)">Type</th><th style="text-align:left;padding:3px 8px;font-size:.5rem;color:var(--dim);border-bottom:1px solid var(--b2)">Category</th><th style="text-align:left;padding:3px 8px;font-size:.5rem;color:var(--dim);border-bottom:1px solid var(--b2)">Note</th></tr>
-        ${allIds.map(h=>`<tr><td style="padding:3px 8px;font-family:var(--mono);font-size:.58rem;color:var(--G)">${esc(h.names.slice(0,3).join(' | '))}</td><td style="padding:3px 8px;font-family:var(--mono);font-size:.55rem;color:var(--Y)">${esc(h.cat)}</td><td style="padding:3px 8px;font-family:var(--mono);font-size:.53rem;color:var(--dim)">${esc(h.note)}</td></tr>`).join('')}
-      </table>
-      <div style="margin-top:.5rem;font-size:.58rem;color:var(--text)">
-        <b>To crack common passwords:</b> try <a href="https://crackstation.net" target="_blank" style="color:var(--B)">crackstation.net</a> (rainbow tables) or <a href="https://hashes.com/en/decrypt/hash" target="_blank" style="color:var(--B)">hashes.com</a>
-      </div>
-    </div>
-  </div>
-  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">
-    <button class="btn btn-ghost btn-sm" onclick="$('verify-section').style.display='block'">Verify against known plaintext</button>
-    <button class="btn btn-ghost btn-sm" onclick="cp(${JSON.stringify(s)},this)">Copy hash</button>
-  </div>`;
-}
-
-// HASH VERIFY
-async function runVerify(){
-  const hash=$('ci').value.trim();const msg=$('verify-msg').value;const key=$('ckey').value.trim();
-  const vr=$('verify-result');
-  if(!hash||!msg){vr.style.display='none';return}
-  vr.style.display='block';
-  try{
-    const enc=new TextEncoder();
-    const tests=[
-      ['SHA-256',32],['SHA-512',64],['SHA-1',20],['SHA-384',48]
-    ];
-    let matched=false;
-    const hashBytes=hexToBytes(hash);
-    // Try SHA hashes
-    for(const[alg,len]of tests){
-      const buf=await crypto.subtle.digest(alg,enc.encode(msg));
-      const computed=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-      if(computed.toLowerCase()===hash.toLowerCase()){vr.className='verify-result vr-ok';vr.textContent=`✓ VERIFIED: Hash matches ${alg} of "${msg}"`;matched=true;break;}
-    }
-    // Try HMAC
-    if(!matched&&key){
-      const keyBytes=parseKey(key);
-      for(const[alg,len]of[['SHA-256',32],['SHA-512',64]]){
-        try{
-          const cryptoKey=await crypto.subtle.importKey('raw',keyBytes,{name:'HMAC',hash:alg},false,['sign']);
-          const buf=await crypto.subtle.sign('HMAC',cryptoKey,enc.encode(msg));
-          const computed=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-          if(computed.toLowerCase()===hash.toLowerCase()){vr.className='verify-result vr-ok';vr.textContent=`✓ VERIFIED: HMAC-${alg} of "${msg}" with given key matches.`;matched=true;break;}
-        }catch{}
-      }
-    }
-    if(!matched){vr.className='verify-result vr-fail';vr.textContent=`✗ NOT MATCHED: Hash does not match SHA-1/256/384/512 of "${msg}"${key?' (also tried HMAC with key)':''}.`;}
-  }catch(e){vr.className='verify-result vr-fail';vr.textContent='Error: '+e.message;}
-}
-
-// BRUTE XOR (from crypto tab)
-function runBruteXOR(){
-  const ctStr=$('ci').value.trim();const fmt=$('cfmt').value;
-  const ctBytes=autoBytes(ctStr,fmt);
-  if(!ctBytes){$('bxor-out').innerHTML='<div class="err-box">Cannot parse ciphertext for XOR brute force</div>';return}
-  const results=[];
-  for(let k=0;k<=255;k++){
-    const out=new Uint8Array(ctBytes.length).map((_,i)=>ctBytes[i]^k);
-    const s=DEC8(out,false);
-    if(s&&printable(s)){const sc=langScore(s);if(sc>0.05)results.push({k,s,sc});}
-  }
-  results.sort((a,b)=>b.sc-a.sc);
-  if(!results.length){$('bxor-out').innerHTML='<div class="err-box">No printable XOR results found (key 0–255)</div>';return}
-  $('bxor-out').innerHTML=`<div style="margin-bottom:.4rem"><span style="font-family:var(--mono);font-size:.52rem;font-weight:700;color:var(--Y)">💥 XOR brute force — ${results.length} printable results</span></div>
-  <div class="bf-grid">${results.slice(0,20).map((r,i)=>`<div class="bf-card${i===0?' best':''}"><div class="bfc-head"><span class="bfc-name" style="color:${lc(i)}">Key=0x${r.k.toString(16).padStart(2,'0')} (${r.k})</span><span class="chip ${r.sc>0.25?'cg':r.sc>0.1?'cy':'cd'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.s)},this)">Copy</button></div><div class="bfc-body">${esc(r.s)}</div></div>`).join('')}</div>`;
-}
-
-function clCrypto(){$('ci').value='';$('ckey').value='';$('civ').value='';$('crypto-result').style.display='none';$('hash-ident-out').innerHTML='';$('verify-section').style.display='none';$('bxor-out').innerHTML='';$('cic').textContent='0 chars';}
-function loadCryptoSample(){
-  $('ci').value='ZjJiMWQzMGRhMjczYTE3MDc3OTljODRlNDM1YjY0M2UxMWZjMjBjZWM3Mzc0NzQ2NDc0YTEwMzU5N2ZkMjc3ZjM2ZjI2M2E2NTdmNzE3ZDRhMTllMjcwOThiYmJjYzBmYjM0MzU2YWM5ODFhNTE3NmQ3ZTUwNjc1ZmFkOWM0MjY';
-  $('ckey').value='1d8e45ca9abf562083fc58e2fef46d9ab5e4435863c731adf548f4fbdc7ec9ca';
-  onCI();
-}
-
-// ══════════════════════════════════════════════════════
-// ENCODER — RECIPE BUILDER
-// ══════════════════════════════════════════════════════
-let recipe=[],encMode='recipe',dragFrom=-1;
-function setEM(m){encMode=m;$('emRecipe').classList.toggle('active',m==='recipe');$('emAll').classList.toggle('active',m==='all');$('recipe-panel').style.display=m==='recipe'?'block':'none';$('all-panel').style.display=m==='all'?'block':'none';if(m==='all'&&$('ei').value.trim())encodeAll();}
-function buildObList(){
-  const list=$('ob-list');const cats=[...new Set(OPS.map(o=>o.cat))];let h='';
-  cats.forEach(cat=>{h+=`<div class="ob-cat">${cat}</div>`;OPS.filter(o=>o.cat===cat).forEach(o=>h+=`<div class="ob-item" data-n="${o.n.toLowerCase()}" onclick="addStep('${o.id}')">${o.n}</div>`);});
-  list.innerHTML=h;
-}
-function filterObs(){const q=$('obs').value.toLowerCase();document.querySelectorAll('.ob-item').forEach(el=>el.style.display=el.dataset.n.includes(q)?'':'none');}
-function addStep(id){const op=OPS.find(o=>o.id===id);if(!op)return;const defs={};(op.opts||[]).forEach(o=>defs[o.id]=o.d||'');recipe.push({opId:id,opts:defs});renderRecipe();if($('ei').value.trim())bake();}
-function removeStep(i){recipe.splice(i,1);renderRecipe();if($('ei').value.trim())bake();}
-function setSO(i,k,v){if(recipe[i])recipe[i].opts[k]=v;if($('ei').value.trim())bake();}
-function renderRecipe(){
-  $('rcnt').textContent=`${recipe.length} step${recipe.length!==1?'s':''}`;
-  if(!recipe.length){$('rsteps').innerHTML='<div class="recipe-empty" id="rempty">← Click an operation to add it<br>Drag steps to reorder</div>';return}
-  $('rsteps').innerHTML=recipe.map((step,i)=>{
-    const op=OPS.find(o=>o.id===step.opId);const col=lc(i);
-    const optsHtml=(op.opts||[]).map(o=>{const v=step.opts[o.id]||o.d;let ctrl='';
-      if(o.t==='sel')ctrl=`<select onchange="setSO(${i},'${o.id}',this.value)">${o.ch.map(c=>`<option value="${c}"${c===v?'selected':''}>${c}</option>`).join('')}</select>`;
-      else if(o.t==='range')ctrl=`<input type="range" min="${o.min}" max="${o.max}" value="${v}" oninput="setSO(${i},'${o.id}',this.value);this.nextSibling.textContent=this.value"><span class="sv">${v}</span>`;
-      else if(o.t==='num')ctrl=`<input type="number" min="${o.min}" max="${o.max}" value="${v}" oninput="setSO(${i},'${o.id}',this.value)">`;
-      else ctrl=`<input type="text" value="${step.opts[o.id]||''}" placeholder="${o.pl||''}" oninput="setSO(${i},'${o.id}',this.value)">`;
-      return`<label>${o.l}</label>${ctrl}`;
-    }).join('');
-    return`<div class="step-card" draggable="true" ondragstart="dragFrom=${i};this.style.opacity='.4'" ondragend="this.style.opacity='1';document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('drag-over'))" ondragover="event.preventDefault();document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('drag-over'));this.classList.add('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');if(dragFrom!==${i}){const m=recipe.splice(dragFrom,1)[0];recipe.splice(${i},0,m);renderRecipe();bake();}">
-      <div class="sh"><span class="snum" style="color:${col}">${i+1}</span><span class="sname" style="color:${col}">${esc(op?op.n:'?')}</span><button class="sdel" onclick="removeStep(${i})">✕</button></div>
-      ${optsHtml?`<div class="sopts">${optsHtml}</div>`:''}
-    </div>`;
-  }).join('');
-}
-function bake(){
-  const inp=$('ei').value;const box=$('bake-out');
-  if(!inp.trim()||!recipe.length){box.style.display='none';return}
+function buildIterBtns(){const w=$('enc-iter-btns');w.innerHTML='';[1,2,3,4,5].forEach(n=>{const b=document.createElement('button');b.className='iter-btn'+(n===encIter?' on':'');b.textContent=n+'×';b.onclick=()=>{encIter=n;buildIterBtns();runEncode()};w.appendChild(b);});$('enc-iter-info').textContent=encIter>1?`${encIter} passes in sequence`:'single pass';}
+function onEncInput(){$('enc-chars').textContent=$('enc-input').value.length+' chars';if(encMode==='single')runEncode();else encodeAll();}
+function runEncode(){
+  const t=$('enc-input').value;const box=$('enc-result');
+  if(!t.trim()){box.style.display='none';return}
+  const m=ENC_METHODS.find(x=>x.id===curEncId);if(!m){box.style.display='none';return}
+  let cur=t;const rows=[];
+  for(let i=0;i<encIter;i++){try{const r=m.e(cur,encOpts);if(r===null)break;rows.push({n:i+1,v:r});cur=r;}catch{break}}
   box.style.display='block';
-  let cur=inp;const outs=[];
-  for(const step of recipe){const op=OPS.find(o=>o.id===step.opId);if(!op){outs.push('[unknown op]');break;}try{const r=op.enc(cur,step.opts);if(r===null){outs.push('[encode failed]');break;}outs.push(r);cur=r;}catch(e){outs.push('[error: '+e.message+']');break;}}
-  $('bo-title').textContent=`Recipe output (${recipe.length} step${recipe.length!==1?'s':''})`;
-  $('bo-steps').innerHTML=outs.map((o,i)=>{const op=OPS.find(x=>x.id===recipe[i]?.opId);return`<div style="border-top:${i?'1px solid var(--b1)':'none'};padding:${i?'.3rem 0 0':0}"><span style="font-size:.44rem;color:${lc(i)};margin-right:.35rem">step ${i+1}: ${esc(op?.n||'?')}</span>${esc(o)}</div>`;}).join('');
+  $('enc-result-title').textContent=`${m.n} × ${encIter}`;
+  $('enc-result-rows').innerHTML=rows.map((r,i)=>`<div class="er-row" style="${i===rows.length-1?'background:rgba(167,139,250,.03)':''}">${encIter>1?`<span class="er-step-lbl">pass ${r.n}</span>`:''}${esc(r.v)}<button class="btn btn-ghost btn-xs" style="margin-left:8px;vertical-align:middle" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div>`).join('');
 }
-function cpBake(){const el=$('bo-steps').lastChild;if(el){const clone=el.cloneNode(true);clone.querySelectorAll('span').forEach((s,i)=>{if(i===0)s.remove();});cp(clone.textContent.trim(),null);}}
-function bakeToDec(){const el=$('bo-steps').lastChild;if(el){const clone=el.cloneNode(true);clone.querySelectorAll('span').forEach((s,i)=>{if(i===0)s.remove();});$('di').value=clone.textContent.trim();onDI();sw('dec',document.querySelector('.tab'));magic();}}
-function clRecipe(){recipe=[];renderRecipe();$('bake-out').style.display='none';}
-function exportR(){cp(JSON.stringify(recipe.map(s=>({op:OPS.find(o=>o.id===s.opId)?.n,opts:s.opts})),null,2),null)}
+function copyEncResult(){const rows=document.querySelectorAll('.er-row');if(!rows.length)return;const last=rows[rows.length-1];const clone=last.cloneNode(true);clone.querySelectorAll('button').forEach(b=>b.remove());cp(clone.textContent.trim(),null)}
 function encodeAll(){
-  const t=$('ei').value.trim();if(!t){$('all-grid').innerHTML='';$('all-cnt').textContent='0 encodings';return}
-  const res=[];for(const op of OPS){try{const r=op.enc(t,{});if(r&&r!==t)res.push({n:op.n,cat:op.cat,v:r})}catch{}}
-  $('all-cnt').textContent=`${res.length} encodings`;
-  $('all-grid').innerHTML=res.map((r,i)=>`<div class="ae-card"><div class="ae-head"><span class="ae-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip cd" style="font-size:.44rem">${esc(r.cat)}</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div><div class="ae-body">${esc(r.v)}</div></div>`).join('');
+  const t=$('enc-input').value.trim();if(!t){$('all-grid').innerHTML='';$('all-count').textContent='0 results';return}
+  const res=[];for(const m of ENC_METHODS){try{const r=m.e(t,{});if(r&&r!==t)res.push({n:m.n,cat:m.cat,v:r})}catch{}}
+  $('all-count').textContent=`${res.length} encodings`;
+  $('all-grid').innerHTML=res.map((r,i)=>`<div class="ag-card"><div class="ag-hdr"><span class="ag-name" style="color:${lc(i)}">${esc(r.n)}</span><span class="chip c-unk" style="font-size:.44rem">${esc(r.cat)}</span><button class="btn btn-ghost btn-xs" onclick="cp(${JSON.stringify(r.v)},this)">Copy</button></div><div class="ag-body">${esc(r.v)}</div></div>`).join('');
 }
-function cpAllJSON(){const t=$('ei').value.trim();if(!t)return;const res={};for(const op of OPS){try{const r=op.enc(t,{});if(r)res[op.n]=r}catch{}}cp(JSON.stringify(res,null,2),null)}
-function onEI(){$('eic').textContent=$('ei').value.length+' chars';if(encMode==='recipe')bake();else encodeAll();}
-function eSmp(){$('ei').value='The quick brown fox jumps over the lazy dog';onEI();}
-function clEnc(){$('ei').value='';$('eic').textContent='0 chars';$('bake-out').style.display='none';$('all-grid').innerHTML='';}
+function copyAllJSON(){const t=$('enc-input').value.trim();if(!t)return;const res={};for(const m of ENC_METHODS){try{const r=m.e(t,{});if(r)res[m.n]=r}catch{}}cp(JSON.stringify(res,null,2),null)}
+function encSample(){$('enc-input').value='The quick brown fox jumps over the lazy dog';onEncInput();}
+function clearEnc(){$('enc-input').value='';$('enc-chars').textContent='0 chars';$('enc-result').style.display='none';$('all-grid').innerHTML='';}
 
-// ══════════════════════════════════════════════════════
-// TAB SWITCH
-// ══════════════════════════════════════════════════════
-function sw(name,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  $('pane-'+name).classList.add('active');
-}
+/* SAMPLES */
+const ID_SAMPLES=[
+  'TCAM41VSrIfLt+akv+JbARa8x/uFBJX8wwSyvN0KZnjUubEE0EVy5sSKHIu/Ik7lOSDSJj5IC5ZWCw0qf3PhK/O4Z905/oePqTPcrEp9hQwGtbYR1i+dZecdDpKYieHPrXtxuI21jhCEe2atcgA77TTVwc9s6bJDGAXSXe4e8rALR3uQaDqIFpnU6T9j8ey3FKGtMnjSVgXDW2/IDX0nf/5jzzDxcQV304pyi79AFF2X4dBM16CrITJ6bcKSi7p8TLnKxpANiCs7n8Q9ajtsfxW4/DcgsbDPKhGxCn0xE2V9HKwp5siHeco20GypQQtkvHujBOHkqfXXLdfL5bgGPzzC8cHhnNepnnG0aWuUrZySPqih0OdeVf59W16V4RwdpO2f3FzX6rwF4IctDiU2QP8PvWbnbS74nd+OPs/S2D4UPdbARjHZgklsgWhpln7E6xIxQbeE0uFQioHwp45o5P0qS1rrOV5+IeyqhDUlEDpCjf0oNB7elpwGjBCwZVAG6VlfpbWSh5VpThYDXCvBA/Yw+P7H+4MFjTPlicfxjCUDZymjsC0cdMzQ+MvpYosXQayLpEL6RKy6nPbFVo6PA+9dZQqs433amA+tZiRYyjayFhKAMvOq85dIfJH/nMpTMgOLhWSc/fPhKG8SUfEoLrMt/nSO3ETKu7bw+DLOEJJSYxK/tiLw0LmJV2Ui3BUOj2YxCwtjlrQGxGJ+f7ac5lqpcHxtX+eaOv9KP1DXVmJYyX5tuTIOEZspkmf0/p7466hPPrnGZrkxw1Hizj+mZNSWkxnccspQUxNe3EOrdFQXpfNDYPsQQTvgjo4r1+L929fh8fTQ8rYMq9ZdXjhkvQ==',
+  '=TlhYVUNVUlRG',
+  (()=>{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';const s='Hello World';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return btoa(btoa(o))})(),
+  '.... . .-.. .-.. ---  .-- --- .-. .-.. -..',
+  '01001000 01100101 01101100 01101100 01101111',
+  'ZjJiMWQzMGRhMjczYTE3MDc3OTljODRlNDM1YjY0M2UxMWZjMjBjZWM3Mzc0NzQ2NDc0YTEwMzU5N2ZkMjc3ZjM2ZjI2M2E2NTdmNzE3ZDRhMTllMjcwOThiYmJjYzBmYjM0MzU2YWM5ODFhNTE3NmQ3ZTUwNjc1ZmFkOWM0MjY',
+  'HOTEL-ECHO-LIMA-LIMA-OSCAR',
+  'SGVsbG8gV29ybGQ=',
+];
+let _si=0;
+function idSample(){$('id-input').value=ID_SAMPLES[_si++%ID_SAMPLES.length];onIdInput();}
 
-// ══════════════════════════════════════════════════════
-// SAMPLES
-// ══════════════════════════════════════════════════════
-const _b32=s=>{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=a[parseInt(bits.slice(i,i+5),2)];while(o.length%8)o+='=';return o};
-const _b64=s=>{try{return btoa(unescape(encodeURIComponent(s)))}catch{return s}};
-const DSamples=[
-  '=TlhYVUNVUlRG',                                           // challenge payload (fix pad → B64 → Vigenère)
-  (()=>{let s='Hello, Security Researcher!';s=_b32(s);s=_b64(s);s=_b64(s);s=b85e(s);s=b85e(s);return s})(), // Base32→B64×2→B85×2
-  _b64(_b64(_b64('CipherSense v8 decoder'))),                // triple base64
-  [..._b64('The quick brown fox')].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '), // hex of b64
-  '.... . .-.. .-.. ---  .-- --- .-. .-.. -..',             // morse
-  '01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 01110010 01101100 01100100', // binary
-  bEncB([...ENC8('The quick brown fox')],B58A),              // base58
-  b85e('CipherSense v8'),                                    // base85
-  _b64('Reversed input test').split('').reverse().join(''), // reversed base64
-  encodeURIComponent('Hello World! Security assessment #1'), // URL enc
-  '8 5 12 12 15  23 15 18 12 4',                            // A1Z26
+const DEC_SAMPLES=[
+  {t:'SGVsbG8gV29ybGQ=',algo:'auto'},
+  {t:'48 65 6c 6c 6f 20 57 6f 72 6c 64',algo:'auto'},
+  {t:'01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 01110010 01101100 01100100',algo:'auto'},
+  {t:'.... . .-.. .-.. ---',algo:'auto'},
 ];
 let _dsi=0;
-function dSample(){$('di').value=DSamples[_dsi++%DSamples.length];onDI();if(decMode==='auto')magic();}
+function decSample(){const s=DEC_SAMPLES[_dsi++%DEC_SAMPLES.length];$('dec-input').value=s.t;$('dec-algo').value=s.algo;onAlgoChange();onDecInput();}
 
-// ══════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════
-buildManGrid();buildManOpts();buildIterBtns();
-buildObList();renderRecipe();
-setDM('auto');$('auto-out').style.display='block';
+/* INIT */
+buildEncMethods();buildEncOpts();buildIterBtns();onAlgoChange();
 </script>
 </body>
 </html>
