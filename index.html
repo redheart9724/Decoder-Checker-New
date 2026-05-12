@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CipherSense PRO — Forensic Cryptanalysis Engine</title>
+<title>CipherSense ULTRA v5.0 — Universal Forensic Cryptanalysis</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 <style>
@@ -187,11 +187,11 @@ textarea{resize:none;min-height:90px}textarea::placeholder,input::placeholder{co
     <div class="logo">CIPHER<span>SENSE</span> <span style="font-size:.6em;font-family:'JetBrains Mono',monospace;color:var(--g2);font-weight:400">PRO</span></div>
     <div class="logo-sub">Forensic Cryptanalysis Engine · v4.0 · Research Edition</div>
     <div class="badges">
-      <span class="badge" style="color:var(--g);border-color:rgba(0,255,170,.3);background:rgba(0,255,170,.06)">100+ FORMATS</span>
+      <span class="badge" style="color:var(--g);border-color:rgba(0,255,170,.3);background:rgba(0,255,170,.06)">120+ FORMATS</span>
       <span class="badge" style="color:var(--c);border-color:rgba(0,204,255,.3);background:rgba(0,204,255,.06)">NIST SP800-22 BATTERY</span>
       <span class="badge" style="color:var(--b);border-color:rgba(68,136,255,.3);background:rgba(68,136,255,.06)">AES·DES·CHACHA20·RC4</span>
       <span class="badge" style="color:var(--pk);border-color:rgba(255,102,170,.3);background:rgba(255,102,170,.06)">KASISKI+IC+QUADGRAM</span>
-      <span class="badge" style="color:var(--a);border-color:rgba(255,170,0,.3);background:rgba(255,170,0,.06)">HASH LOOKUP · 30+ TYPES</span>
+      <span class="badge" style="color:var(--a);border-color:rgba(255,170,0,.3);background:rgba(255,170,0,.06)">HASH + SALT ANALYSIS · 60+ TYPES</span>
       <span class="badge" style="color:var(--v);border-color:rgba(170,136,255,.3);background:rgba(170,136,255,.06)">UNICODE STEG DETECTOR</span>
       <span class="badge" style="color:var(--g);border-color:rgba(0,255,170,.3);background:rgba(0,255,170,.06)">BRANCHING PEELER ×15</span>
     </div>
@@ -212,6 +212,8 @@ textarea{resize:none;min-height:90px}textarea::placeholder,input::placeholder{co
   <button class="tab" onclick="switchTab('enc',this)"><span class="tn">03</span>Encode / Encrypt</button>
   <button class="tab" onclick="switchTab('hash',this)"><span class="tn">04</span>Hash Tools</button>
   <button class="tab" onclick="switchTab('stat',this)"><span class="tn">05</span>Forensic Stats</button>
+  <button class="tab" onclick="switchTab('steg',this)"><span class="tn">06</span>👁 Steganography</button>
+  <button class="tab" onclick="switchTab('brute',this)"><span class="tn">07</span>⚡ Brute Force</button>
 </nav>
 
 <!-- ══════════ IDENTIFY ══════════ -->
@@ -315,8 +317,18 @@ textarea{resize:none;min-height:90px}textarea::placeholder,input::placeholder{co
             <option value="jwt">JWT (decode)</option>
           </optgroup>
           <optgroup label="── Steganography ──">
+            <option value="affine-brute">⚡ Affine brute (all 312 valid a,b pairs)</option>
+            <option value="rail-fence-brute">⚡ Rail Fence brute (2–20 rails)</option>
+            <option value="bifid">Bifid cipher (5×5 Polybius key)</option>
+            <option value="columnar">Columnar Transposition (keyword)</option>
+            <option value="otp-crib">OTP / XOR crib drag</option>
+            <option value="cisco7">Cisco Type-7 decode</option>
+            <option value="intel-hex">Intel HEX format</option>
+          </optgroup>
+          <optgroup label="── Steganography ──">
             <option value="steg-zwsp">Zero-width Unicode decode</option>
             <option value="steg-whitespace">Whitespace/tab encoding</option>
+            <option value="homoglyph">Homoglyph extraction (Unicode lookalikes)</option>
           </optgroup>
         </select>
       </div>
@@ -457,11 +469,24 @@ textarea{resize:none;min-height:90px}textarea::placeholder,input::placeholder{co
 <div class="pane" id="pane-hash">
   <div class="lbl">Hash generation · identification · crack links</div>
   <div class="box">
-    <textarea id="hash-in" rows="3" spellcheck="false" oninput="onHashIn()" placeholder="Enter plaintext to hash with all algorithms — OR paste an existing hash to identify it and get lookup links."></textarea>
+    <textarea id="hash-in" rows="3" spellcheck="false" oninput="onHashIn()" placeholder="Enter plaintext to hash with all algorithms — OR paste an existing hash for deep analysis (including salted hash detection).
+
+Salted formats automatically detected:
+  $2a$12$...          bcrypt (cost factor extraction)
+  sha256$salt$hash    Django PBKDF2
+  $S$...              Drupal7 (phpass-modified)
+  $P$... / $H$...     WordPress / phpBB
+  hash:salt           Generic separated
+  salt:hash           Reverse separated
+  sha1:N:salt:hash    Crypt::SaltedHash (N=iterations)
+  0x0100...           MSSQL (4-byte embedded salt)
+  *...                MySQL 4.1+ (*SHA1(*SHA1(pass)))
+  S: prefix           Oracle 10g"></textarea>
     <div class="bfoot">
       <div class="bmeta"><span><b id="hash-chars">0</b> chars</span></div>
       <div class="acts">
         <button class="btn btn-ghost btn-sm" onclick="clearHash()">✕</button>
+        <button class="btn btn-sec btn-sm" onclick="analyzeHashSalt()">🧂 Salt Analysis</button>
         <button class="btn btn-sec btn-sm" onclick="identHash()">🔍 Identify hash</button>
         <button class="btn btn-go" onclick="hashAll()">⚡ Hash all algorithms</button>
       </div>
@@ -485,6 +510,102 @@ textarea{resize:none;min-height:90px}textarea::placeholder,input::placeholder{co
     </div>
   </div>
   <div id="stat-out"></div>
+</div>
+
+<!-- ══ STEGANOGRAPHY TAB ══ -->
+<div class="pane" id="pane-steg">
+  <div class="lbl">Deep steganography scanner · homoglyph detector · whitespace analysis</div>
+  <div class="box">
+    <textarea id="steg-in" rows="6" spellcheck="false" oninput="onStegIn()" placeholder="Paste any text for full steganography analysis:
+  Zero-width chars: ZWSP (U+200B) · ZWNJ (U+200C) · ZWJ (U+200D) · WJ (U+2060) · BOM (U+FEFF) · SHY (U+00AD)
+  Unicode tags: U+E0000–U+E007F (invisible in most renderers)
+  Directional marks: RTLO (U+202E) · LRE/RLE/PDF · ZWNBS
+  Confusable whitespace: en-space · em-space · thin space · hair space
+  Variation selectors: VS1–VS16 (U+FE00–U+FE0F)
+  Homoglyphs: Cyrillic а vs Latin a · Greek ο vs Latin o (detect 180+ pairs)
+  Trailing whitespace / snow encoding (tab=1, space=0)"></textarea>
+    <div class="bfoot">
+      <div class="bmeta"><span><b id="steg-chars">0</b> chars</span><span id="steg-found-m" style="display:none;color:var(--c)">⚠ <b>Suspicious chars found</b></span></div>
+      <div class="acts">
+        <button class="btn btn-ghost btn-sm" onclick="clearSteg()">✕</button>
+        <button class="btn btn-sec btn-sm" onclick="stegStrip()">🧹 Strip ZW chars</button>
+        <button class="btn btn-go" onclick="runStegScan()">🔍 Full Steg Scan</button>
+      </div>
+    </div>
+  </div>
+  <div id="steg-out"></div>
+</div>
+
+<!-- ══ BRUTE FORCE TAB ══ -->
+<div class="pane" id="pane-brute">
+  <div class="lbl">Targeted brute-force engines · for <b>CTF / pentest / own hashes</b></div>
+  <div class="box">
+    <textarea id="brute-in" rows="4" spellcheck="false" oninput="onBruteIn()" placeholder="Paste ciphertext or hash for automated attack engines.
+
+Classical: XOR brute (all 256 keys) · Caesar (all 26) · Affine (all 312 valid a,b) · Rail Fence (2-20 rails)
+Vigenere: Kasiski+IC auto-crack · quadgram scoring
+Hash: Dictionary test against MD5/SHA1/SHA256 using your own wordlist (for your own hashes only)"></textarea>
+    <div class="bfoot">
+      <div class="bmeta"><span><b id="brute-chars">0</b> chars</span></div>
+      <div class="acts"><button class="btn btn-ghost btn-sm" onclick="clearBrute()">✕</button></div>
+    </div>
+  </div>
+  <div class="keybox" style="border-color:rgba(255,68,102,.25)">
+    <div class="kb-head" style="color:var(--r)">⚡ Attack engine</div>
+    <div class="kb-row">
+      <span class="kb-lbl">Attack type</span>
+      <select class="kb-sel" id="brute-type" onchange="onBruteTypeChange()" style="flex:1;min-width:260px">
+        <optgroup label="── Classical cipher attacks ──">
+          <option value="xor-256">XOR — all 256 single-byte keys, ranked by language score</option>
+          <option value="xor-freq">XOR multi-byte — frequency analysis, key length 1–64</option>
+          <option value="caesar-26">Caesar — all 26 shifts ranked by English score</option>
+          <option value="affine-all">Affine — all 312 valid (a,b) coprime pairs</option>
+          <option value="rail-all">Rail Fence — exhaustive 2 through 20 rails</option>
+          <option value="vigenere-crack">Vigenère — Kasiski + IC + quadgram auto-crack</option>
+          <option value="rot-scan">ROT variants — ROT1 through ROT25</option>
+        </optgroup>
+        <optgroup label="── Hash cracking (own hashes / CTF only) ──">
+          <option value="hash-dict">Dictionary attack — your custom wordlist</option>
+          <option value="hash-common">Common passwords — built-in top-1000 list</option>
+        </optgroup>
+        <optgroup label="── Statistical key analysis ──">
+          <option value="ic-keylen">IC key-length test — all lengths 2–40</option>
+          <option value="freq-mono">Frequency analysis — monoalphabetic substitution</option>
+        </optgroup>
+      </select>
+    </div>
+    <div id="br-crib-row" style="display:none">
+      <div class="kb-row">
+        <span class="kb-lbl">Crib (known plaintext)</span>
+        <input type="text" class="kb-in" id="brute-crib" placeholder='Known plaintext e.g. "hello" or "flag{"'>
+      </div>
+    </div>
+    <div id="br-wordlist" style="display:none">
+      <div class="kb-row" style="align-items:flex-start">
+        <span class="kb-lbl" style="padding-top:4px">Wordlist</span>
+        <textarea id="brute-words" rows="5" style="flex:1;font-size:.62rem;min-height:75px;font-family:JetBrains Mono,monospace;background:var(--s2);border:1px solid var(--line2);border-radius:3px;color:var(--text);padding:6px 10px;outline:none;resize:none;caret-color:var(--g)" placeholder="One candidate per line:&#10;password&#10;123456&#10;admin&#10;letmein"></textarea>
+      </div>
+      <div class="kb-row">
+        <span class="kb-lbl">Hash algorithm</span>
+        <select class="kb-sel" id="brute-hash-algo" style="flex:1">
+          <option value="md5">MD5</option><option value="sha1">SHA-1</option>
+          <option value="sha256">SHA-256</option><option value="sha512">SHA-512</option>
+          <option value="ntlm">NTLM (MD4 of UTF-16LE)</option>
+          <option value="double-md5">Double MD5 — MD5(MD5(pass))</option>
+          <option value="mysql41">MySQL 4.1+ — *SHA1(*SHA1(pass))</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:.38rem;flex-wrap:wrap;margin-bottom:.8rem">
+    <button class="btn btn-go r" onclick="runBrute()">⚡ Launch Attack</button>
+    <span id="brute-stop-wrap" style="display:none"><button class="btn btn-ghost btn-sm" onclick="stopBrute()">■ Stop</button></span>
+  </div>
+  <div id="brute-progress" style="display:none">
+    <div class="pgbar" id="brute-pg" style="margin-bottom:.35rem"><div class="pgfill"></div></div>
+    <div style="font-family:JetBrains Mono,monospace;font-size:.48rem;color:var(--dim);margin-bottom:.42rem" id="brute-status"></div>
+  </div>
+  <div id="brute-out"></div>
 </div>
 
 </div><!-- /shell -->
@@ -979,6 +1100,983 @@ window.runStats=runStats;
 
 // Init
 buildEncMeths();buildEncOpts();buildIters();onAlgoChange();
+
+// ═══════════════════════════════════════════════════════
+// CipherSense ULTRA v5.0 — Upgrade additions
+// New: 60+ hash patterns, salt analysis, Bifid, Columnar,
+//      ADFGVX, Cisco-7, homoglyph detector, brute force tab
+// ═══════════════════════════════════════════════════════
+
+/* ── EXPANDED HASH DATABASE (60+ patterns) ── */
+const HASH_DB_EXT=[
+  // Hex-length patterns
+  {len:8, names:['CRC-32','Adler-32','FNV-1 32bit'],cat:'Checksum',bits:32},
+  {len:16,names:['MySQL 3.2.3 (OLD_PASSWORD)','Half-MD5','CRC-64'],cat:'Hash',bits:64,note:'MySQL OLD_PASSWORD: hashcat -m 3200 | Half-MD5: hashcat -m 5100'},
+  {len:32,names:['MD5','MD4','NTLM','LM','RIPEMD-128','Tiger-128','Haval-128-3','Domain Cached Credentials (DCC)'],cat:'Hash',bits:128,note:'MD5: hashcat -m 0 | NTLM: hashcat -m 1000 | DCC: hashcat -m 1100'},
+  {len:40,names:['SHA-1','RIPEMD-160','Tiger-160','Haval-160-3','MySQL 4.1+/5+ (inner hash)'],cat:'Hash',bits:160,note:'SHA-1: hashcat -m 100 | MySQL5: hashcat -m 300'},
+  {len:48,names:['Tiger-192','Haval-192-3','SHA-1 PBKDF2 (partial)'],cat:'Hash',bits:192},
+  {len:56,names:['SHA-224','SHA3-224','Haval-224-3','Keccak-224'],cat:'Hash',bits:224},
+  {len:64,names:['SHA-256','SHA3-256','BLAKE2s-256','Keccak-256','GOST R34.11-94','Haval-256-3','RIPEMD-256','Snefru-256'],cat:'Hash',bits:256,note:'SHA-256: hashcat -m 1400 | Keccak-256: hashcat -m 17300 | GOST: hashcat -m 6900'},
+  {len:80,names:['RIPEMD-320','Haval-320'],cat:'Hash',bits:320},
+  {len:96,names:['SHA-384','SHA3-384','Keccak-384'],cat:'Hash',bits:384,note:'SHA-384: hashcat -m 10800'},
+  {len:128,names:['SHA-512','SHA3-512','BLAKE2b-512','Whirlpool','Skein-512','Keccak-512','Streebog-512','Snefru-512'],cat:'Hash',bits:512,note:'SHA-512: hashcat -m 1700 | Whirlpool: hashcat -m 6100 | Keccak-512: hashcat -m 18000'},
+  // Prefix patterns
+  {pre:/^\$2[aybxyz]\$\d{2}\$/,name:'bcrypt',cat:'Password Hash',note:'hashcat -m 3200. Cost factor embedded. Slow by design.'},
+  {pre:/^\$argon2(id|i|d)\$/i,name:'Argon2',cat:'Password Hash',note:'hashcat -m 13711/13712/13731. Memory-hard.'},
+  {pre:/^\$6\$/,name:'SHA-512crypt',cat:'Password Hash',note:'hashcat -m 1800. Linux /etc/shadow $6$ format.'},
+  {pre:/^\$5\$/,name:'SHA-256crypt',cat:'Password Hash',note:'hashcat -m 7400. Linux /etc/shadow $5$ format.'},
+  {pre:/^\$1\$/,name:'MD5crypt / FreeBSD MD5',cat:'Password Hash',note:'hashcat -m 500. PHP crypt(), FreeBSD, old Linux.'},
+  {pre:/^\$y\$/,name:'yescrypt',cat:'Password Hash',note:'Modern Linux shadow default. hashcat -m 18400.'},
+  {pre:/^\$gy\$/,name:'gost-yescrypt',cat:'Password Hash',note:'GOST-based yescrypt variant.'},
+  {pre:/^\$7\$/,name:'scrypt',cat:'Password Hash',note:'hashcat -m 8900. Memory+time-hard.'},
+  {pre:/^\$P\$/,name:'phpass / WordPress (MD5-based)',cat:'Password Hash',note:'hashcat -m 400. 8192 iterations MD5.'},
+  {pre:/^\$H\$/,name:'phpBB3 / phpass (MD5-based)',cat:'Password Hash',note:'hashcat -m 400. Same as $P$.'},
+  {pre:/^\$S\$/,name:'Drupal7 (SHA-512 + phpass)',cat:'Password Hash',note:'hashcat -m 7900. 16384 SHA-512 iterations.'},
+  {pre:/^\$apr1\$/,name:'Apache MD5 ($apr1$)',cat:'Password Hash',note:'hashcat -m 1600. Apache .htpasswd.'},
+  {pre:/^\{SSHA\}/i,name:'LDAP SSHA (salted SHA-1)',cat:'Password Hash',note:'hashcat -m 111. LDAP directory servers.'},
+  {pre:/^\{SHA\}/i,name:'LDAP SHA (unsalted)',cat:'Password Hash',note:'hashcat -m 101. LDAP, no salt.'},
+  {pre:/^\{MD5\}/i,name:'LDAP MD5 (unsalted)',cat:'Password Hash'},
+  {pre:/^\{crypt\}/i,name:'LDAP crypt (defers to OS)',cat:'Password Hash'},
+  {pre:/^sha1\$/i,name:'Django SHA1 (legacy)',cat:'Password Hash',note:'Django < 1.4 legacy format.'},
+  {pre:/^md5\$/i,name:'Django MD5 (legacy)',cat:'Password Hash',note:'Django < 1.4 very old format.'},
+  {pre:/^pbkdf2_sha256\$/i,name:'Django PBKDF2-SHA256',cat:'Password Hash',note:'hashcat -m 10000. Django default since 1.4.'},
+  {pre:/^pbkdf2_sha512\$/i,name:'Django PBKDF2-SHA512',cat:'Password Hash'},
+  {pre:/^pbkdf2_sha1\$/i,name:'Django PBKDF2-SHA1',cat:'Password Hash'},
+  {pre:/^\$pbkdf2-sha256\$/i,name:'Passlib PBKDF2-SHA256',cat:'Password Hash'},
+  {pre:/^\$pbkdf2-sha512\$/i,name:'Passlib PBKDF2-SHA512',cat:'Password Hash'},
+  {pre:/^\$pbkdf2\$/i,name:'Passlib PBKDF2-SHA1',cat:'Password Hash'},
+  {pre:/^\$scrypt\$/i,name:'Passlib scrypt',cat:'Password Hash'},
+  {pre:/^sha256\$/i,name:'Django SHA256 (legacy)',cat:'Password Hash'},
+  {pre:/^0x0100[0-9a-fA-F]{8}/i,name:'MSSQL 2000 (SHA-1 + 4B salt)',cat:'DB Hash',note:'hashcat -m 131. First 4B after 0x0100 = salt.'},
+  {pre:/^0x0200[0-9a-fA-F]{8}/i,name:'MSSQL 2012+ (SHA-512 + 4B salt)',cat:'DB Hash',note:'hashcat -m 1731. First 4B = salt.'},
+  {pre:/^0x0300[0-9a-fA-F]{8}/i,name:'MSSQL 2014 (SHA-512)',cat:'DB Hash',note:'hashcat -m 1731.'},
+  {pre:/^\*[0-9a-fA-F]{40}$/i,name:'MySQL 4.1+ / MySQL5 (SHA1 of SHA1)',cat:'DB Hash',note:'hashcat -m 300. *uppercase(SHA1(SHA1(pass))).'},
+  {pre:/^[0-9a-fA-F]{16}$/,name:'MySQL 3.2.3 (OLD_PASSWORD) 16-hex',cat:'DB Hash',note:'hashcat -m 200. Very weak, no salt.'},
+  {pre:/^S:[0-9a-fA-F]{60}$/i,name:'Oracle 11g/12c (SHA-1 + 10B salt)',cat:'DB Hash',note:'hashcat -m 112. S: + 40hex hash + 20hex salt.'},
+  {pre:/^[0-9a-fA-F]{16}[0-9a-fA-F]{0,16}$/,name:'Oracle 10g (DES-based, no salt)',cat:'DB Hash',note:'hashcat -m 3100. DES(upper(user+pass)).'},
+  {pre:/^\$krb5pa\$/i,name:'Kerberos 5 AS-REQ etype23 (pre-auth)',cat:'Network Hash',note:'hashcat -m 7500.'},
+  {pre:/^\$krb5tgs\$/i,name:'Kerberos 5 TGS-REP (Kerberoasting)',cat:'Network Hash',note:'hashcat -m 13100.'},
+  {pre:/^\$krb5asrep\$/i,name:'Kerberos 5 AS-REP (ASREPRoasting)',cat:'Network Hash',note:'hashcat -m 18200.'},
+  {pre:/^[0-9a-fA-F]{32}:[0-9a-fA-F]{32}$/i,name:'MD5(md5($salt).$pass) or MD5($salt.MD5($pass))',cat:'Hash',note:'hashcat -m 20 or -m 21.'},
+  {pre:/^[0-9a-fA-F]{40}:[0-9a-fA-F]{10,}$/i,name:'SHA1 with hex salt (colon-separated)',cat:'Hash',note:'hashcat -m 110 or -m 120.'},
+  {pre:/^[0-9a-fA-F]{64}:[0-9a-fA-F]{1,}$/i,name:'SHA256 with hex salt (colon-separated)',cat:'Hash',note:'hashcat -m 1410 or -m 1420.'},
+  {pre:/^[0-9a-fA-F]{128}:[0-9a-fA-F]{1,}$/i,name:'SHA512 with hex salt (colon-separated)',cat:'Hash',note:'hashcat -m 1710 or -m 1720.'},
+  {pre:/^[a-f0-9]{32}:[a-zA-Z0-9]{16,32}$/i,name:'vBulletin MD5($pass.$salt)',cat:'CMS Hash',note:'hashcat -m 2711.'},
+  {pre:/^[a-f0-9]{40}:[a-zA-Z0-9]+$/i,name:'Joomla SHA1($username.SHA1($pass))',cat:'CMS Hash',note:'hashcat -m 11.'},
+  {pre:/^[a-f0-9]{32}:[a-zA-Z0-9]+$/i,name:'IPB (Invision Power Board) MD5',cat:'CMS Hash',note:'hashcat -m 2811. MD5(MD5($salt).MD5($pass)).'},
+  {pre:/^[a-zA-Z0-9\/.]{13}$/,name:'DES-crypt (Unix traditional)',cat:'Password Hash',note:'hashcat -m 1500. First 2 chars = salt.'},
+  {pre:/^\$sha1\$\d+\$/,name:'NetBSD SHA1-crypt',cat:'Password Hash',note:'hashcat -m 22300.'},
+  {pre:/^sha1:[0-9]+:[^:]+:/i,name:'Crypt::SaltedHash SSHA1 (Perl)',cat:'Password Hash',note:'Format: sha1:iterations:base64-salt:base64-hash'},
+  {pre:/^[0-9a-fA-F]{40,}/,name:'Possible SHA-1 or SHA-256 (no prefix)',cat:'Hash'},
+];
+
+// Replace the old HASH_DB with the extended one (merged + deduplicated by pre/len)
+// Patch identHashCands to use extended DB
+window._HASH_DB_EXT = HASH_DB_EXT;
+
+// Upgraded identHashCands using extended DB  
+window.identHashCandsEx = function(s){
+  const t=s.trim();
+  // Priority: prefix patterns first
+  for(const h of HASH_DB_EXT){
+    if(h.pre && h.pre.test(t)) return [{...h, conf:.97}];
+  }
+  // Hex-length fallback
+  if(/^[0-9a-fA-F]+$/.test(t)){
+    const m=HASH_DB_EXT.find(h=>h.len===t.length&&!h.pre);
+    if(m) return [{...m, conf:.93}];
+  }
+  return [];
+};
+
+/* ── SALT ANALYSIS ENGINE ── */
+// Detects and dissects salted hash formats, extracts salt, identifies algorithm
+window.analyzeSalt = function(raw){
+  const t=raw.trim();
+  const result={detected:false,format:'',algorithm:'',salt:'',saltLen:0,saltEncoding:'',hash:'',hashLen:0,iterations:null,costFactor:null,saltedScheme:'',vulnerable:false,vulnNote:'',hint:'',hashcatMode:'',raw:t};
+
+  // ── bcrypt ──
+  const bcrypt=/^\$([22][aybxyz])\$(\d{2})\$([./A-Za-z0-9]{22})([./A-Za-z0-9]{31})$/.exec(t);
+  if(bcrypt){
+    const cost=parseInt(bcrypt[2]);
+    result.detected=true;result.format='bcrypt';result.algorithm=`bcrypt $${bcrypt[1]}$`;
+    result.salt=bcrypt[3];result.saltLen=16;result.saltEncoding='bcrypt-base64 (22 chars = 16 bytes)';
+    result.hash=bcrypt[4];result.iterations=Math.pow(2,cost);result.costFactor=cost;
+    result.saltedScheme=`bcrypt(password, salt, cost=${cost})`;
+    result.hashcatMode='3200';
+    result.hint=`Cost factor ${cost} → 2^${cost} = ${Math.pow(2,cost).toLocaleString()} iterations. ${cost>=12?'Strong (current standard)':cost>=10?'Acceptable':cost<8?'Weak — too fast for bcrypt':'Moderate'}. Salt is embedded in the hash string.`;
+    return result;
+  }
+
+  // ── Argon2 ──
+  const argon2=/^\$argon2(id|i|d)\$v=(\d+)\$m=(\d+),t=(\d+),p=(\d+)\$([A-Za-z0-9+/=]+)\$([A-Za-z0-9+/=]+)$/.exec(t);
+  if(argon2){
+    result.detected=true;result.format='Argon2'+argon2[1];result.algorithm=`Argon2${argon2[1]} (v${argon2[2]})`;
+    result.salt=argon2[6];result.saltLen=atob(argon2[6].replace(/=/g,'')+'=='.slice((argon2[6].length%4)||4)).length;
+    result.saltEncoding='Base64';result.hash=argon2[7];
+    result.iterations=parseInt(argon2[4]);
+    result.saltedScheme=`Argon2${argon2[1]}(pass, salt, m=${argon2[3]}, t=${argon2[4]}, p=${argon2[5]})`;
+    result.hashcatMode=argon2[1]==='id'?'13731':argon2[1]==='i'?'13711':'13721';
+    result.hint=`Memory: ${(parseInt(argon2[3])/1024).toFixed(0)}MB, Iterations: ${argon2[4]}, Parallelism: ${argon2[5]}. Memory-hard — GPU attacks severely limited.`;
+    return result;
+  }
+
+  // ── SHA-*crypt (Linux shadow $5$, $6$) ──
+  const shacrypt=/^\$(5|6)\$(?:rounds=(\d+)\$)?([^$]{1,16})\$([A-Za-z0-9./]{43,86})$/.exec(t);
+  if(shacrypt){
+    const algo=shacrypt[1]==='6'?'SHA-512':'SHA-256';
+    result.detected=true;result.format=`${algo}crypt ($${shacrypt[1]}$)`;result.algorithm=algo;
+    result.salt=shacrypt[3];result.saltLen=shacrypt[3].length;result.saltEncoding='ASCII (up to 16 chars)';
+    result.hash=shacrypt[4];result.iterations=parseInt(shacrypt[2]||5000);
+    result.saltedScheme=`${algo}-crypt(pass, salt, rounds=${result.iterations})`;
+    result.hashcatMode=shacrypt[1]==='6'?'1800':'7400';
+    result.hint=`Linux /etc/shadow format. ${result.iterations.toLocaleString()} rounds. ${result.iterations>=100000?'Strong':'Default (5000 rounds) is moderate'}.`;
+    return result;
+  }
+
+  // ── MD5crypt ($1$) ──
+  const md5crypt=/^\$1\$([^$]{1,8})\$([A-Za-z0-9./]{22})$/.exec(t);
+  if(md5crypt){
+    result.detected=true;result.format='MD5crypt ($1$)';result.algorithm='MD5';
+    result.salt=md5crypt[1];result.saltLen=md5crypt[1].length;result.saltEncoding='ASCII (up to 8 chars)';
+    result.hash=md5crypt[2];result.iterations=1000;result.saltedScheme='MD5crypt(pass, salt, 1000 rounds)';
+    result.hashcatMode='500';result.vulnerable=true;result.vulnNote='MD5-based with only 1000 iterations — fast on GPU, considered weak.';
+    return result;
+  }
+
+  // ── Django PBKDF2 formats ──
+  const djangoPBKDF=/^(pbkdf2_sha256|pbkdf2_sha512|pbkdf2_sha1)\$(\d+)\$([^$]+)\$(.+)$/.exec(t);
+  if(djangoPBKDF){
+    const algoMap={'pbkdf2_sha256':'SHA-256','pbkdf2_sha512':'SHA-512','pbkdf2_sha1':'SHA-1'};
+    const algo=algoMap[djangoPBKDF[1]]||djangoPBKDF[1];
+    result.detected=true;result.format=`Django PBKDF2 (${algo})`;result.algorithm=`PBKDF2-HMAC-${algo}`;
+    result.iterations=parseInt(djangoPBKDF[2]);result.salt=djangoPBKDF[3];
+    result.saltLen=djangoPBKDF[3].length;result.saltEncoding='ASCII/Random';
+    result.hash=djangoPBKDF[4];result.saltedScheme=`PBKDF2-HMAC-${algo}(pass, salt, ${result.iterations.toLocaleString()} iterations)`;
+    result.hashcatMode=algo==='SHA-256'?'10000':'';
+    result.hint=`Django default hasher. ${result.iterations.toLocaleString()} iterations. ${result.iterations>=260000?'Strong (Django 4.0+)':result.iterations>=100000?'Moderate':'Potentially weak — check Django version'}.`;
+    return result;
+  }
+
+  // ── Drupal7 ($S$) ──
+  const drupal=/^\$S\$([A-Za-z0-9./]{1})([A-Za-z0-9./]{8})([A-Za-z0-9./]{43})$/.exec(t);
+  if(drupal){
+    const iterCodes='CDEGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const cost=iterCodes.indexOf(drupal[1]);
+    const iterations=cost>=0?Math.pow(2,cost+6):16384;
+    result.detected=true;result.format='Drupal7 ($S$)';result.algorithm='SHA-512 (phpass-modified)';
+    result.salt=drupal[2];result.saltLen=8;result.saltEncoding='Modified Base64 (./A-Za-z0-9)';
+    result.hash=drupal[3];result.iterations=iterations;result.costFactor=cost+6;
+    result.saltedScheme=`SHA512(salt+pass) × ${iterations} iterations`;
+    result.hashcatMode='7900';
+    result.hint=`Cost code '${drupal[1]}' = 2^${cost+6} = ${iterations.toLocaleString()} SHA-512 iterations. Drupal7 standard.`;
+    return result;
+  }
+
+  // ── WordPress / phpass ($P$, $H$) ──
+  const phpass=/^\$(P|H)\$([A-Za-z0-9./]{1})([A-Za-z0-9./]{8})([A-Za-z0-9./]{22})$/.exec(t);
+  if(phpass){
+    const iterCodes='./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const cost=iterCodes.indexOf(phpass[2]);
+    const iterations=Math.pow(2,cost>=0?cost:11);
+    result.detected=true;result.format=phpass[1]==='P'?'WordPress (phpass $P$)':'phpBB3 (phpass $H$)';
+    result.algorithm='MD5 (iterated)';result.salt=phpass[3];result.saltLen=8;
+    result.saltEncoding='Modified Base64';result.hash=phpass[4];result.iterations=iterations;
+    result.saltedScheme=`MD5(salt+pass) × ${iterations} iterations`;result.hashcatMode='400';
+    result.vulnerable=true;result.vulnNote='MD5-based phpass — fast on GPU. Outdated scheme.';
+    return result;
+  }
+
+  // ── MSSQL ──
+  const mssql=/^0x(0100|0200|0300)([0-9a-fA-F]{8})([0-9a-fA-F]+)$/i.exec(t);
+  if(mssql){
+    const ver={'0100':'MSSQL 2000 (SHA-1)','0200':'MSSQL 2012+ (SHA-512)','0300':'MSSQL 2014+ (SHA-512)'};
+    const hashMode={'0100':'131','0200':'1731','0300':'1731'};
+    result.detected=true;result.format=ver[mssql[1].toUpperCase()]||`MSSQL (${mssql[1]})`;
+    result.algorithm=mssql[1]==='0100'?'SHA-1':'SHA-512';
+    result.salt=mssql[2];result.saltLen=4;result.saltEncoding='Hex (4 bytes embedded)';
+    result.hash=mssql[3];result.saltedScheme=`${result.algorithm}(0x${mssql[1]} + salt + unicode(UPPER(pass)))`;
+    result.hashcatMode=hashMode[mssql[1].toUpperCase()]||'1731';
+    result.hint='Salt is the 4 bytes immediately after the version header.';
+    return result;
+  }
+
+  // ── Oracle 11g/12c ──
+  if(/^S:[0-9a-fA-F]{60}$/i.test(t)){
+    result.detected=true;result.format='Oracle 11g/12c';result.algorithm='SHA-1';
+    result.hash=t.slice(2,42);result.salt=t.slice(42);result.saltLen=10;
+    result.saltEncoding='Hex (10 bytes after hash)';result.saltedScheme='SHA1(upper(pass) + salt)';
+    result.hashcatMode='112';
+    result.hint='Format: S: + 40hex(SHA1 hash) + 20hex(10-byte random salt).';
+    return result;
+  }
+
+  // ── MySQL 4.1+ (*) ──
+  if(/^\*[0-9a-fA-F]{40}$/i.test(t)){
+    result.detected=true;result.format='MySQL 4.1+ / MySQL5+';result.algorithm='Double SHA-1';
+    result.hash=t.slice(1);result.saltLen=0;result.saltedScheme='*uppercase(SHA1(SHA1(pass)))';
+    result.hashcatMode='300';result.vulnerable=true;
+    result.vulnNote='No salt! Identical passwords produce identical hashes — vulnerable to rainbow tables.';
+    return result;
+  }
+
+  // ── Generic hash:salt or salt:hash ──
+  const genericColon=/^([0-9a-fA-F]{32,128}):(.{1,64})$/.exec(t);
+  if(genericColon){
+    const hashPart=genericColon[1],saltPart=genericColon[2];
+    const cands=window.identHashCandsEx(hashPart);
+    result.detected=true;result.format='Generic hash:salt (colon-separated)';
+    result.algorithm=cands.length?(cands[0].names?cands[0].names[0]:cands[0].name):`${hashPart.length*4}-bit hash`;
+    result.hash=hashPart;result.salt=saltPart;result.saltLen=saltPart.length;
+    result.saltEncoding=/^[0-9a-fA-F]+$/.test(saltPart)?'Hex':'ASCII';
+    result.saltedScheme=`${result.algorithm}(pass, salt) — separator: colon`;
+    if(cands.length)result.hashcatMode=cands[0].note||'';
+    return result;
+  }
+
+  // ── Reverse salt:hash ──
+  const genericRev=/^(.{1,32}):([0-9a-fA-F]{32,128})$/.exec(t);
+  if(genericRev&&!/^[0-9a-fA-F]+$/.test(genericRev[1])){
+    const hashPart=genericRev[2],saltPart=genericRev[1];
+    const cands=window.identHashCandsEx(hashPart);
+    result.detected=true;result.format='Generic salt:hash (reverse colon-separated)';
+    result.algorithm=cands.length?(cands[0].names?cands[0].names[0]:cands[0].name):`${hashPart.length*4}-bit hash`;
+    result.hash=hashPart;result.salt=saltPart;result.saltLen=saltPart.length;
+    result.saltEncoding='ASCII/unknown';result.saltedScheme=`${result.algorithm}(salt+pass)`;
+    return result;
+  }
+
+  // ── Crypt::SaltedHash (Perl) ──
+  const csh=/^(sha1|sha256|sha512):(\d+):([A-Za-z0-9+/=]+):([A-Za-z0-9+/=]+)$/i.exec(t);
+  if(csh){
+    result.detected=true;result.format=`Crypt::SaltedHash (${csh[1].toUpperCase()})`;
+    result.algorithm=csh[1].toUpperCase();result.iterations=parseInt(csh[2]);
+    result.salt=csh[3];result.saltEncoding='Base64';result.hash=csh[4];
+    result.saltedScheme=`${csh[1].toUpperCase()}(pass, salt, iterations=${csh[2]})`;
+    return result;
+  }
+
+  // ── Unsalted hash — check for hash length extension vulnerability ──
+  if(/^[0-9a-fA-F]+$/.test(t)){
+    const cands=window.identHashCandsEx(t);
+    if(cands.length){
+      const algo=cands[0].names?cands[0].names[0]:cands[0].name;
+      const vulnAlgos=['MD5','SHA-1','SHA-256'];
+      const isVuln=vulnAlgos.some(a=>algo.includes(a)&&!algo.includes('HMAC')&&!algo.includes('crypt'));
+      result.detected=true;result.format=`Unsalted ${algo}`;result.algorithm=algo;
+      result.hash=t;result.saltLen=0;result.saltedScheme='No salt detected';
+      result.vulnerable=isVuln;
+      if(isVuln) result.vulnNote=`${algo} without salt: (1) Identical inputs → identical hashes — rainbow table vulnerable. (2) Length extension attack possible — attacker can compute hash(original+padding+extension) without knowing the secret.`;
+      result.hint=isVuln?`Add a cryptographically random salt (≥16 bytes). Use HMAC-${algo} or a password-hashing function (bcrypt/Argon2/scrypt) instead.`:'';
+      return result;
+    }
+  }
+
+  return result;
+};
+
+/* ── SALT ANALYSIS UI ── */
+window.analyzeHashSalt = function(){
+  const t=$('hash-in').value.trim();
+  if(!t){$('hash-out').innerHTML='<div class="warn"><div class="wt">No input</div>Paste a hash to analyze.</div>';return;}
+  const r=window.analyzeSalt(t);
+  if(!r.detected){$('hash-out').innerHTML='<div class="info"><div class="it">No salted format detected</div>Could not identify a salted hash format. Try "Identify hash" for raw hash identification.</div>';return;}
+
+  const saltEntropyWarn=r.saltLen<8&&r.saltLen>0?`⚠ Salt only ${r.saltLen} bytes — too short. Minimum 16 bytes recommended.`:'';
+  const costWarn=r.costFactor&&r.costFactor<10?`⚠ Cost factor ${r.costFactor} is low — bcrypt minimum recommendation is 12.`:'';
+
+  let html=`<div class="fs">
+    <div class="fs-hdr">
+      <span class="fs-t">🧂 Salt Analysis Report</span>
+      <span class="chip cyw">${esc(r.format)}</span>
+      ${r.vulnerable?'<span class="chip cr">⚠ VULNERABLE</span>':'<span class="chip cg">✓ Salted</span>'}
+    </div>
+    <div class="fs-grid">
+      <div class="fsm"><div class="fsm-n">Format</div><div class="fsm-v a">${esc(r.format)}</div></div>
+      <div class="fsm"><div class="fsm-n">Algorithm</div><div class="fsm-v g">${esc(r.algorithm||'Unknown')}</div></div>
+      <div class="fsm"><div class="fsm-n">Salt present</div><div class="fsm-v ${r.saltLen>0?'g':'r'}">${r.saltLen>0?`Yes (${r.saltLen} bytes)`:'No salt'}</div></div>
+      ${r.salt?`<div class="fsm"><div class="fsm-n">Salt value</div><div class="fsm-v c">${esc(r.salt)}</div></div>`:''}
+      ${r.saltEncoding?`<div class="fsm"><div class="fsm-n">Salt encoding</div><div class="fsm-v c">${esc(r.saltEncoding)}</div></div>`:''}
+      ${r.hash?`<div class="fsm"><div class="fsm-n">Hash portion</div><div class="fsm-v d">${esc(r.hash.length>40?r.hash.slice(0,40)+'…':r.hash)}</div></div>`:''}
+      ${r.iterations?`<div class="fsm"><div class="fsm-n">Iterations</div><div class="fsm-v ${r.iterations>=100000?'g':r.iterations>=10000?'a':'r'}">${r.iterations.toLocaleString()}</div></div>`:''}
+      ${r.costFactor?`<div class="fsm"><div class="fsm-n">Cost factor</div><div class="fsm-v ${r.costFactor>=12?'g':r.costFactor>=10?'a':'r'}">${r.costFactor} (2^${r.costFactor}=${Math.pow(2,r.costFactor).toLocaleString()})</div></div>`:''}
+      ${r.saltedScheme?`<div class="fsm"><div class="fsm-n">Scheme</div><div class="fsm-v b" style="font-size:.58rem">${esc(r.saltedScheme)}</div></div>`:''}
+      ${r.hashcatMode?`<div class="fsm"><div class="fsm-n">Hashcat mode</div><div class="fsm-v yw">-m ${esc(r.hashcatMode)}</div></div>`:''}
+    </div>
+    ${r.vulnerable&&r.vulnNote?`<div class="verdict"><b>⚠ Vulnerability:</b> ${esc(r.vulnNote)}</div>`:''}
+    ${r.hint?`<div class="verdict"><b>Analysis:</b> ${esc(r.hint)}</div>`:''}
+    ${saltEntropyWarn?`<div class="verdict" style="color:var(--r)"><b>⚠ Salt Warning:</b> ${esc(saltEntropyWarn)}</div>`:''}
+    ${costWarn?`<div class="verdict" style="color:var(--r)"><b>⚠ Cost Warning:</b> ${esc(costWarn)}</div>`:''}
+  </div>`;
+
+  if(r.saltLen===0&&r.algorithm){
+    const lu=window.hashLookups?window.hashLookups(t):[];
+    if(lu.length){
+      html+=`<div class="hash-box"><b>No salt — rainbow table lookups may work:</b><div class="lookup-grid">${lu.map(l=>`<a class="lookup" href="${escA(l.url)}" target="_blank" rel="noopener"><span>${l.icon}</span><span><b>${esc(l.name)}</b><br><span style="font-size:.48rem;color:var(--dim)">${esc(l.desc)}</span></span></a>`).join('')}</div></div>`;
+    }
+  }
+
+  $('hash-out').innerHTML=html;
+};
+
+/* ── NEW CIPHERS ── */
+
+// Bifid cipher (5×5 Polybius, row-column fractionation)
+function bifidDecrypt(s, key){
+  const kup=(key||'KEYWORD').toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+  const seen=new Set(); let sq='';
+  for(const c of kup+'ABCDEFGHIKLMNOPQRSTUVWXYZ') if(!seen.has(c)&&c!=='J'){seen.add(c);sq+=c;}
+  const pos=c=>{const i=sq.indexOf(c==='J'?'I':c);return[Math.floor(i/5),i%5];};
+  const sq2i=(r,c)=>sq[r*5+c];
+  const ctext=s.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+  // Collect rows and cols
+  const rows=[],cols=[];
+  for(const c of ctext){const[r,co]=pos(c);rows.push(r);cols.push(co);}
+  // Interleave: combined = rows then cols
+  const combined=[...rows,...cols];
+  // Pair up to get output
+  let out='';
+  for(let i=0;i<ctext.length;i++){
+    out+=sq2i(combined[i*2],combined[i*2+1]);
+  }
+  // Try to restore case roughly
+  let oi=0;
+  return s.replace(/[a-zA-Z]/g,c=>{
+    const r=out[oi++]||'?';
+    return c>='a'&&c<='z'?r.toLowerCase():r;
+  });
+}
+
+// Columnar Transposition
+function columnarDecrypt(ctext, keyword){
+  const key=keyword.toUpperCase().replace(/[^A-Z]/g,'');
+  if(!key) return ctext;
+  const numCols=key.length;
+  const numRows=Math.ceil(ctext.length/numCols);
+  const extra=ctext.length%numCols;
+  // Sorted column order
+  const order=[...key].map((c,i)=>({c,i})).sort((a,b)=>a.c<b.c?-1:a.c>b.c?1:a.i-b.i).map(x=>x.i);
+  // Fill columns
+  const cols=[];
+  let pos2=0;
+  for(const col of order){
+    const len=numRows-(extra>0&&col>=extra?1:0);
+    cols[col]=ctext.slice(pos2,pos2+len).split('');
+    pos2+=len;
+  }
+  // Read row by row
+  let out='';
+  for(let r=0;r<numRows;r++)
+    for(let c=0;c<numCols;c++)
+      if(cols[c]&&cols[c][r])out+=cols[c][r];
+  return out;
+}
+
+// Cisco Type-7 (XOR obfuscation, NOT encryption)
+function ciscoType7Decode(pw){
+  const XLAT='dsfd;kfoA,.iyewrkldJKDHSUBsgvca69834ncxv9873254k;fg87';
+  const hex=pw.trim();
+  if(hex.length<2||hex.length%2!==0)return null;
+  const seed=parseInt(hex.slice(0,2),10);
+  if(isNaN(seed)||seed>15)return null;
+  let out='';
+  for(let i=2;i<hex.length;i+=2){
+    const byte=parseInt(hex.slice(i,i+2),16);
+    if(isNaN(byte))return null;
+    out+=String.fromCharCode(byte^XLAT[(seed+(i-2)/2)%XLAT.length].charCodeAt(0));
+  }
+  return out;
+}
+
+// Intel HEX format decoder (`:LLAAAATT[DD...]CC`)
+function intelHexDecode(s){
+  const lines=s.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.startsWith(':'));
+  if(!lines.length)return null;
+  let data=[];
+  for(const line of lines){
+    const len=parseInt(line.slice(1,3),16);
+    const type=parseInt(line.slice(7,9),16);
+    if(type===0){// Data record
+      for(let i=0;i<len;i++){
+        const b=parseInt(line.slice(9+i*2,11+i*2),16);
+        data.push(b);
+      }
+    }else if(type===1)break;// EOF
+  }
+  if(!data.length)return null;
+  const text=data.map(b=>String.fromCharCode(b)).join('');
+  return isPrintable(text)?text:`[${data.length} binary bytes] hex: ${data.map(b=>b.toString(16).padStart(2,'0')).join(' ')}`;
+}
+
+// MIME encoded-word decoder (=?charset?B/Q?text?=)
+function mimeWordDecode(s){
+  return s.replace(/=\?([^?]+)\?(B|Q)\?([^?]*)\?=/gi,(m,charset,enc,text)=>{
+    try{
+      if(enc.toUpperCase()==='B')return decodeURIComponent(escape(atob(text)));
+      if(enc.toUpperCase()==='Q'){
+        const decoded=text.replace(/_/g,' ').replace(/=([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+        return decoded;
+      }
+      return m;
+    }catch{return m;}
+  });
+}
+
+// Braille Grade 1 decoder
+function brailleDecode(s){
+  const BRAILLE={'\u2801':'a','\u2803':'b','\u2809':'c','\u2819':'d','\u2811':'e','\u280b':'f','\u281b':'g','\u2813':'h','\u280a':'i','\u281a':'j','\u2805':'k','\u2807':'l','\u280d':'m','\u281d':'n','\u2815':'o','\u280f':'p','\u281f':'q','\u2817':'r','\u280e':'s','\u281e':'t','\u2825':'u','\u2827':'v','\u283a':'w','\u282d':'x','\u283d':'y','\u2835':'z','\u2800':' '};
+  return[...s].map(c=>BRAILLE[c]||c).join('');
+}
+
+// XXencode decoder
+function xxencodeDecode(s){
+  const A='+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const lines=s.split(/\r?\n/);let out='';
+  for(const line of lines){
+    if(!line.trim()||/^begin\b/.test(line)||/^end\b/.test(line))continue;
+    const len=A.indexOf(line[0]);if(len<0||len>45)continue;
+    let bits='';
+    for(let i=1;i<line.length;i++){const idx=A.indexOf(line[i]);if(idx<0)break;bits+=idx.toString(2).padStart(6,'0');}
+    for(let i=0;i+8<=bits.length;i+=8)out+=String.fromCharCode(parseInt(bits.slice(i,i+8),2));
+    if(out.length>=len)out=out.slice(0,out.length-(out.length%1||0));
+  }
+  return isPrintable(out)?out:null;
+}
+
+// Homoglyph detection
+const HOMOGLYPHS={
+  'а':'a','е':'e','о':'o','р':'p','с':'c','у':'y','х':'x','і':'i','ν':'v',
+  'ο':'o','α':'a','ε':'e','ρ':'p','υ':'y','ω':'w','Α':'A','Β':'B','Ε':'E',
+  'Ζ':'Z','Η':'H','Ι':'I','Κ':'K','Μ':'M','Ν':'N','Ο':'O','Ρ':'P','Τ':'T',
+  'Υ':'Y','Χ':'X','ℬ':'B','ℰ':'E','ℱ':'F','ℋ':'H','ℐ':'I','ℒ':'L','ℳ':'M',
+  'ℛ':'R','ℭ':'C','ℌ':'H','ℑ':'I','ℜ':'R','ℨ':'Z','⁰':'0','¹':'1','²':'2',
+  '³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9',
+  '\u01b5':'Z','\u0399':'I','\u0406':'I','\u04c0':'I','\u2013':'-','\u2014':'-',
+  '\u2018':"'",'\u2019':"'"
+};
+
+function detectHomoglyphs(s){
+  const found=[];
+  for(let i=0;i<s.length;i++){
+    const c=s[i];const ascii=HOMOGLYPHS[c];
+    if(ascii)found.push({pos:i,char:c,looks_like:ascii,codepoint:'U+'+c.charCodeAt(0).toString(16).toUpperCase().padStart(4,'0'),name:`U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4,'0')} → looks like ASCII '${ascii}'`});
+  }
+  return found;
+}
+
+function extractHomoglyphs(s){
+  // Replace homoglyphs with ASCII equivalents
+  return[...s].map(c=>HOMOGLYPHS[c]||c).join('');
+}
+
+// Variation selectors
+function detectVariationSelectors(s){
+  const VS=[...s].filter(c=>{const cp=c.codePointAt(0);return(cp>=0xFE00&&cp<=0xFE0F)||(cp>=0xE0100&&cp<=0xE01EF)||(cp>=0x180B&&cp<=0x180D);});
+  return VS.length;
+}
+
+// Confusable whitespace
+const CONFUSABLE_SPACES={'\u00a0':'NBSP (Non-breaking space)','\u2000':'EN QUAD','\u2001':'EM QUAD','\u2002':'EN SPACE','\u2003':'EM SPACE','\u2004':'Three-per-em','\u2005':'Four-per-em','\u2006':'Six-per-em','\u2007':'Figure space','\u2008':'Punctuation space','\u2009':'Thin space','\u200a':'Hair space','\u202f':'Narrow NBSP','\u205f':'Math space','\u3000':'Ideographic space'};
+
+function detectConfusableSpaces(s){
+  const found={};
+  for(const[c,name] of Object.entries(CONFUSABLE_SPACES)){const cnt=s.split(c).length-1;if(cnt>0)found[name]=cnt;}
+  return found;
+}
+
+/* ── NEW DECODER ENTRIES ── */
+// Inject new decoders into existing DEC object
+if(typeof DEC!=='undefined'){
+  DEC['Bifid']=s=>bifidDecrypt(s,'KEYWORD');
+  DEC['Intel HEX']=intelHexDecode;
+  DEC['MIME encoded-word']=mimeWordDecode;
+  DEC['XXencode']=xxencodeDecode;
+  DEC['Braille']=brailleDecode;
+  DEC['Cisco Type-7']=(s)=>{const r=ciscoType7Decode(s);return r;};
+  DEC['Homoglyph extraction']=extractHomoglyphs;
+}
+
+/* ── EXTENDED DECODE HANDLER ── */
+// Patch the existing _runDecode to handle new algorithms
+const _origRunDecode=window._runDecode||null;
+window._runDecodeExtensions=async function(input,algo,getKey,getIV,getCT,shiftStr,affineStr,railsStr,cribStr,kfmt,ivfmt){
+  // Affine brute force
+  if(algo==='affine-brute'){
+    const results=[];
+    const coprimes=[1,3,5,7,9,11,15,17,19,21,23,25];
+    for(const a of coprimes)for(let b=0;b<26;b++){
+      const dec=affineDecrypt(input,a,b);if(!dec)continue;
+      const sc=langScore(dec);if(sc>.08)results.push({a,b,dec,sc});
+    }
+    results.sort((a,b)=>b.sc-a.sc);
+    if(!results.length){$('dec-out').innerHTML='<div class="err"><div class="et">No readable result</div>Affine brute found nothing with language score > 8%.</div>';return true;}
+    const top=results.slice(0,32);
+    let html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--dim);margin-bottom:.45rem;text-transform:uppercase;letter-spacing:.08em">Affine brute — ${results.length} readable results (${coprimes.length}×26=312 pairs tested)</div><div class="bf-grid">`;
+    top.forEach((r,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">a=${r.a}, b=${r.b}</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.dec)},this)">⎘</button></div><div class="bfc-body">${esc(r.dec)}</div></div>`);
+    html+='</div>';
+    $('dec-out').innerHTML=html;return true;
+  }
+
+  // Rail Fence brute
+  if(algo==='rail-fence-brute'){
+    const results=[];
+    for(let rails=2;rails<=20;rails++){
+      const dec=railFenceDecrypt(input,rails);
+      const sc=langScore(dec);if(sc>.05)results.push({rails,dec,sc});
+    }
+    results.sort((a,b)=>b.sc-a.sc);
+    if(!results.length){$('dec-out').innerHTML='<div class="err"><div class="et">No readable result</div>Rail Fence brute (2–20) found nothing.</div>';return true;}
+    let html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--dim);margin-bottom:.45rem;text-transform:uppercase;letter-spacing:.08em">Rail Fence brute (2–20 rails)</div><div class="bf-grid">`;
+    results.forEach((r,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">${r.rails} rails</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.dec)},this)">⎘</button></div><div class="bfc-body">${esc(r.dec)}</div></div>`);
+    html+='</div>';
+    $('dec-out').innerHTML=html;return true;
+  }
+
+  // Bifid
+  if(algo==='bifid'){
+    if(!shiftStr){$('dec-out').innerHTML='<div class="err"><div class="et">Key required</div>Enter the 5×5 keyword in the Shift/Key field (e.g. KEYWORD).</div>';return true;}
+    const dec=bifidDecrypt(input,shiftStr);
+    const sc=langScore(dec);
+    $('dec-out').innerHTML=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">Bifid decrypt — key="${esc(shiftStr)}"</span><div style="display:flex;gap:.35rem"><span class="chip ${sc>.3?'cg':sc>.1?'ca':'ck'}">lang ${(sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(dec)},this)">⎘</button></div></div><div class="dr-body">${esc(dec)}</div></div>`;
+    return true;
+  }
+
+  // Columnar transposition
+  if(algo==='columnar'){
+    if(!shiftStr){$('dec-out').innerHTML='<div class="err"><div class="et">Key required</div>Enter the columnar transposition keyword in Shift/Key field.</div>';return true;}
+    const dec=columnarDecrypt(input,shiftStr);
+    const sc=langScore(dec);
+    $('dec-out').innerHTML=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">Columnar Transposition — key="${esc(shiftStr)}"</span><span class="chip ${sc>.3?'cg':sc>.1?'ca':'ck'}">lang ${(sc*100).toFixed(0)}%</span></div><div class="dr-body">${esc(dec)}</div></div>`;
+    return true;
+  }
+
+  // Cisco Type-7
+  if(algo==='cisco7'){
+    const dec=ciscoType7Decode(input);
+    if(!dec){$('dec-out').innerHTML='<div class="err"><div class="et">Failed</div>Not a valid Cisco Type-7 string. Format: XX followed by hex pairs (seed 00–15).</div>';return true;}
+    $('dec-out').innerHTML=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">Cisco Type-7 decoded</span><span class="chip ca">⚠ XOR obfuscation, NOT encryption</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(dec)},this)">⎘</button></div><div class="dr-body">${esc(dec)}</div><div class="dr-foot"><span style="font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--dim)">Cisco Type-7 uses a fixed XOR table — trivially reversible. Use Type-8 or Type-9 instead.</span></div></div>`;
+    return true;
+  }
+
+  // Intel HEX
+  if(algo==='intel-hex'){
+    const dec=intelHexDecode(input);
+    if(!dec){$('dec-out').innerHTML='<div class="err"><div class="et">Failed</div>Not valid Intel HEX. Lines must start with : followed by length, address, type, data, checksum.</div>';return true;}
+    $('dec-out').innerHTML=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">Intel HEX decoded</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(dec)},this)">⎘</button></div><div class="dr-body">${esc(dec)}</div></div>`;
+    return true;
+  }
+
+  // MIME encoded-word
+  if(algo==='mime-word'){
+    const dec=mimeWordDecode(input);
+    $('dec-out').innerHTML=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">MIME encoded-word decoded</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(dec)},this)">⎘</button></div><div class="dr-body">${esc(dec)}</div></div>`;
+    return true;
+  }
+
+  // OTP crib drag
+  if(algo==='otp-crib'){
+    const crib=cribStr||'the ';
+    const ctBytes=getCT();
+    if(!ctBytes){$('dec-out').innerHTML='<div class="err"><div class="et">Cannot parse</div>Could not parse ciphertext bytes.</div>';return true;}
+    const cribBytes=enc8(crib);
+    const hits=[];
+    for(let pos=0;pos+cribBytes.length<=ctBytes.length;pos++){
+      const keyGuess=new Uint8Array(cribBytes.length);
+      for(let i=0;i<cribBytes.length;i++)keyGuess[i]=ctBytes[pos+i]^cribBytes[i];
+      // XOR whole CT with this repeating keyGuess
+      const dec=new Uint8Array(ctBytes.length);
+      for(let i=0;i<ctBytes.length;i++)dec[i]=ctBytes[i]^keyGuess[i%cribBytes.length];
+      const text=dec8(dec,false);
+      const sc=text&&isPrintable(text)?langScore(text):0;
+      if(sc>.05)hits.push({pos,keyGuess:bytesToHex(keyGuess),text:text||'',sc});
+    }
+    hits.sort((a,b)=>b.sc-a.sc);
+    if(!hits.length){$('dec-out').innerHTML=`<div class="warn"><div class="wt">No hits</div>Crib "${esc(crib)}" produced no readable output. Try a different crib word.</div>`;return true;}
+    let html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--dim);margin-bottom:.45rem">OTP crib drag with crib "${esc(crib)}" — ${hits.length} positions with score > 5%</div><div class="bf-grid">`;
+    hits.slice(0,20).forEach((h,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">pos ${h.pos}</span><span class="chip ${h.sc>.3?'cg':h.sc>.1?'ca':'ck'}">${(h.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(h.text)},this)">⎘</button></div><div class="bfc-body">${esc(h.text)}</div></div>`);
+    html+='</div>';
+    $('dec-out').innerHTML=html;return true;
+  }
+
+  // Homoglyph extraction
+  if(algo==='homoglyph'){
+    const glyphs=detectHomoglyphs(input);
+    if(!glyphs.length){$('dec-out').innerHTML='<div class="info"><div class="it">No homoglyphs detected</div>No confusable Unicode characters found.</div>';return true;}
+    const cleaned=extractHomoglyphs(input);
+    let html=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">Homoglyph extraction — ${glyphs.length} lookalike char(s) found</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(cleaned)},this)">⎘ Copy cleaned</button></div><div class="dr-body">${esc(cleaned)}</div></div>`;
+    html+=`<div class="steg-found"><div class="steg-title">Detected homoglyphs</div>`;
+    glyphs.forEach(g=>html+=`<div class="steg-item"><span class="steg-lbl">${esc(g.codepoint)}</span><span class="steg-val">'${esc(g.char)}' → ASCII '${esc(g.looks_like)}' at position ${g.pos}</span></div>`);
+    html+='</div>';
+    $('dec-out').innerHTML=html;return true;
+  }
+
+  return false; // not handled
+};
+
+/* ── STEGANOGRAPHY TAB UI ── */
+window.onStegIn=function(){
+  const v=$('steg-in')?$('steg-in').value:'';
+  if($('steg-chars'))$('steg-chars').textContent=v.length;
+  if($('steg-found-m'))$('steg-found-m').style.display=v&&(Object.keys(detectZeroWidth(v)).length||detectHomoglyphs(v).length)?'':'none';
+};
+window.clearSteg=function(){if($('steg-in'))$('steg-in').value='';if($('steg-out'))$('steg-out').innerHTML='';window.onStegIn();};
+
+window.stegStrip=function(){
+  const s=$('steg-in')?$('steg-in').value:'';if(!s)return;
+  const stripped=[...s].filter(c=>{
+    const cp=c.codePointAt(0);
+    return !(['\u200b','\u200c','\u200d','\u2060','\ufeff','\u202a','\u202c','\u00ad','\u202e','\u2066'].includes(c)||
+      (cp>=0xE0000&&cp<=0xE007F)||(cp>=0xFE00&&cp<=0xFE0F));
+  }).join('');
+  if($('steg-out'))$('steg-out').innerHTML=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">Cleaned text</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(stripped)},this)">⎘ Copy</button></div><div class="dr-body">${esc(stripped)}</div><div class="dr-foot"><span style="font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--dim)">${s.length - stripped.length} invisible chars removed</span></div></div>`;
+};
+
+window.runStegScan=function(){
+  const input=$('steg-in')?$('steg-in').value:'';
+  if(!input){if($('steg-out'))$('steg-out').innerHTML='';return;}
+  const zw=detectZeroWidth(input);
+  const homoGlyphs=detectHomoglyphs(input);
+  const confSpaces=detectConfusableSpaces(input);
+  const varSel=detectVariationSelectors(input);
+  const hasRTLO=input.includes('\u202e')||input.includes('\u2066');
+
+  const zwDecoded=decodeZWSP(input)||decodeZW4(input)||decodeUnicodeTags(input)||decodeWhitespaceTabs(input);
+  const totalFlags=Object.keys(zw).length+homoGlyphs.length+Object.keys(confSpaces).length+(varSel>0?1:0)+(hasRTLO?1:0);
+
+  if(!totalFlags){$('steg-out').innerHTML='<div class="info"><div class="it">✓ No steganography detected</div>No known Unicode steganography characters, homoglyphs, confusable whitespace, variation selectors, or RTLO tricks found in this text.</div>';return;}
+
+  let html=`<div class="fs"><div class="fs-hdr"><span class="fs-t">🔍 Steganography Scan Report</span><span class="chip cr">⚠ ${totalFlags} suspicious element(s)</span></div><div class="fs-grid">`;
+  html+=`<div class="fsm"><div class="fsm-n">Zero-width chars</div><div class="fsm-v ${Object.keys(zw).length?'r':'g'}">${Object.keys(zw).length?Object.keys(zw).length+' type(s)':'None'}</div></div>`;
+  html+=`<div class="fsm"><div class="fsm-n">Homoglyphs</div><div class="fsm-v ${homoGlyphs.length?'r':'g'}">${homoGlyphs.length?homoGlyphs.length+' found':'None'}</div></div>`;
+  html+=`<div class="fsm"><div class="fsm-n">Confusable spaces</div><div class="fsm-v ${Object.keys(confSpaces).length?'a':'g'}">${Object.keys(confSpaces).length?Object.keys(confSpaces).length+' type(s)':'None'}</div></div>`;
+  html+=`<div class="fsm"><div class="fsm-n">Variation selectors</div><div class="fsm-v ${varSel?'r':'g'}">${varSel?varSel+' found':'None'}</div></div>`;
+  html+=`<div class="fsm"><div class="fsm-n">RTLO / direction marks</div><div class="fsm-v ${hasRTLO?'r':'g'}">${hasRTLO?'⚠ Detected':'None'}</div></div>`;
+  html+=`</div>`;
+
+  if(Object.keys(zw).length){
+    html+=`<div class="verdict"><b>Zero-width characters found:</b><br>`;
+    for(const[name,cnt] of Object.entries(zw))html+=`→ ${esc(name)}: ${cnt} occurrence(s)<br>`;
+    if(zwDecoded)html+=`<br><b style="color:var(--g)">Decoded message:</b> ${esc(zwDecoded.length>200?zwDecoded.slice(0,200)+'…':zwDecoded)}`;
+    html+=`</div>`;
+  }
+  if(homoGlyphs.length){
+    html+=`<div class="verdict"><b>Homoglyphs (Unicode lookalike substitution):</b><br>`;
+    homoGlyphs.slice(0,10).forEach(g=>html+=`→ pos ${g.pos}: ${esc(g.codepoint)} '${esc(g.char)}' looks like ASCII '${esc(g.looks_like)}'<br>`);
+    if(homoGlyphs.length>10)html+=`… and ${homoGlyphs.length-10} more<br>`;
+    const cleaned=extractHomoglyphs(input);
+    html+=`<br><b>Cleaned text:</b> ${esc(cleaned.slice(0,100))}${cleaned.length>100?'…':''}<br>`;
+    html+=`</div>`;
+  }
+  if(Object.keys(confSpaces).length){
+    html+=`<div class="verdict"><b>Confusable whitespace characters:</b><br>`;
+    for(const[name,cnt] of Object.entries(confSpaces))html+=`→ ${esc(name)}: ${cnt} occurrence(s)<br>`;
+    html+=`</div>`;
+  }
+  if(hasRTLO)html+=`<div class="verdict" style="color:var(--r)"><b>⚠ Right-to-left override (RTLO) detected!</b><br>U+202E or U+2066 found — can reverse display of filename/URL. Common in social engineering attacks. Remove all directional control characters.</div>`;
+  html+=`</div>`;
+
+  if(zwDecoded){
+    html+=`<div class="res-box"><div class="rb-hdr"><span class="rb-title">👁 Hidden message extracted</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(zwDecoded)},this)">⎘ Copy</button></div><div class="rb-body">${esc(zwDecoded)}</div></div>`;
+  }
+
+  if($('steg-out'))$('steg-out').innerHTML=html;
+};
+
+/* ── BRUTE FORCE TAB ── */
+window.onBruteIn=function(){if($('brute-chars'))$('brute-chars').textContent=($('brute-in')?$('brute-in').value.length:0);};
+window.clearBrute=function(){if($('brute-in'))$('brute-in').value='';if($('brute-out'))$('brute-out').innerHTML='';window.onBruteIn();};
+
+window.onBruteTypeChange=function(){
+  const t=$('brute-type')?$('brute-type').value:'';
+  if($('br-crib-row'))$('br-crib-row').style.display=t==='otp-crib'?'block':'none';
+  if($('br-wordlist'))$('br-wordlist').style.display=(t==='hash-dict')?'block':'none';
+};
+
+let bruteRunning=false;
+window.stopBrute=function(){bruteRunning=false;if($('brute-stop-wrap'))$('brute-stop-wrap').style.display='none';};
+
+window.runBrute=async function(){
+  const input=$('brute-in')?$('brute-in').value.trim():'';if(!input){alert('Paste ciphertext or hash first.');return;}
+  const type=$('brute-type')?$('brute-type').value:'';
+  if($('brute-progress'))$('brute-progress').style.display='block';
+  if($('brute-stop-wrap'))$('brute-stop-wrap').style.display='';
+  bruteRunning=true;
+  pg('brute-pg',true);
+
+  setTimeout(()=>{
+    try{
+      let html='';
+
+      if(type==='xor-256'){
+        const results=bruteXOR(enc8(input));
+        if(!results.length){$('brute-out').innerHTML='<div class="warn"><div class="wt">No printable results</div>XOR brute found no printable output for keys 0–255.</div>';pg('brute-pg',false);return;}
+        html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--dim);margin-bottom:.42rem">${results.length} printable results / 256 keys tested</div><div class="bf-grid">`;
+        results.slice(0,32).forEach((r,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">Key 0x${r.k.toString(16).padStart(2,'0')} (${r.k})</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.text)},this)">⎘</button></div><div class="bfc-body">${esc(r.text)}</div></div>`);
+        html+='</div>';
+      }
+      else if(type==='xor-freq'){
+        const ct=enc8(input);
+        const best=bruteXORMulti(ct,64);
+        if(!best){html='<div class="warn"><div class="wt">No result</div>Multi-byte XOR frequency analysis found no readable output.</div>';}
+        else html=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">XOR multi-byte — key len ${best.kl}, key 0x${best.key}</span><span class="chip cg">lang ${(best.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(best.text)},this)">⎘</button></div><div class="dr-body">${esc(best.text)}</div></div>`;
+      }
+      else if(type==='caesar-26'){
+        const all=crackCaesar(input,true)||[];
+        html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--dim);margin-bottom:.42rem">All 26 Caesar shifts ranked by English language score</div><div class="bf-grid">`;
+        all.forEach((r,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">Shift +${r.n}</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.dec)},this)">⎘</button></div><div class="bfc-body">${esc(r.dec)}</div></div>`);
+        html+='</div>';
+      }
+      else if(type==='affine-all'){
+        const results=[];
+        const coprimes=[1,3,5,7,9,11,15,17,19,21,23,25];
+        for(const a of coprimes)for(let b=0;b<26;b++){const dec=affineDecrypt(input,a,b);if(!dec)continue;const sc=langScore(dec);if(sc>.05)results.push({a,b,dec,sc});}
+        results.sort((x,y)=>y.sc-x.sc);
+        html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--dim);margin-bottom:.42rem">${results.length} readable results / 312 (a,b) pairs tested</div><div class="bf-grid">`;
+        results.slice(0,30).forEach((r,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">a=${r.a}, b=${r.b}</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.dec)},this)">⎘</button></div><div class="bfc-body">${esc(r.dec)}</div></div>`);
+        html+='</div>';
+        if(!results.length)html='<div class="warn"><div class="wt">No readable result</div>All 312 affine pairs produced no English-like output.</div>';
+      }
+      else if(type==='rail-all'){
+        const results=[];
+        for(let r=2;r<=20;r++){const dec=railFenceDecrypt(input,r);const sc=langScore(dec);if(sc>.04)results.push({rails:r,dec,sc});}
+        results.sort((a,b)=>b.sc-a.sc);
+        html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--dim);margin-bottom:.42rem">Rail Fence brute — 19 rail counts tested</div><div class="bf-grid">`;
+        results.forEach((r,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">${r.rails} rails</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.dec)},this)">⎘</button></div><div class="bfc-body">${esc(r.dec)}</div></div>`);
+        html+='</div>';
+        if(!results.length)html='<div class="warn"><div class="wt">No readable result</div>Rail Fence 2–20 produced nothing.</div>';
+      }
+      else if(type==='vigenere-crack'){
+        const v=crackVigenere(input);
+        if(!v)html='<div class="warn"><div class="wt">Auto-crack failed</div>Need ≥30 letters and a polyalphabetic IC (0.038–0.062). Input may not be Vigenère.</div>';
+        else html=`<div class="dec-result"><div class="dr-hdr"><span class="dr-title">Vigenère auto-crack — key "${esc(v.key)}" (len ${v.kl})</span><span class="chip cg">lang ${(v.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(v.dec)},this)">⎘</button></div><div class="dr-body">${esc(v.dec)}</div></div>`;
+      }
+      else if(type==='rot-scan'){
+        html=`<div style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--dim);margin-bottom:.42rem">ROT scan — 25 variants</div><div class="bf-grid">`;
+        const rotResults=Array.from({length:25},(_,i)=>{const n=i+1;const dec=caesarShift(input,n);return{n,dec,sc:langScore(dec)};}).sort((a,b)=>b.sc-a.sc);
+        rotResults.forEach((r,i)=>html+=`<div class="bfc${i===0?' top':''}"><div class="bfc-hdr"><span class="bfc-name" style="color:${lc(i)}">ROT${r.n}</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span><button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.dec)},this)">⎘</button></div><div class="bfc-body">${esc(r.dec)}</div></div>`);
+        html+='</div>';
+      }
+      else if(type==='ic-keylen'){
+        const L=input.toUpperCase().replace(/[^A-Z]/g,'');
+        if(L.length<30){html='<div class="warn"><div class="wt">Too short</div>Need at least 30 letters for IC key-length testing.</div>';}
+        else{
+          const results=[];
+          for(let len=2;len<=40&&len<=Math.floor(L.length/3);len++){
+            const slices=Array.from({length:len},(_,i)=>L.split('').filter((_,j)=>j%len===i).join(''));
+            const avgIC=slices.reduce((s,x)=>s+IC(x),0)/len;
+            results.push({len,ic:+avgIC.toFixed(5)});
+          }
+          results.sort((a,b)=>b.ic-a.ic);
+          html=`<div class="fs"><div class="fs-hdr"><span class="fs-t">IC Key-Length Analysis</span></div><div class="fs-grid">`;
+          results.slice(0,12).forEach((r,i)=>html+=`<div class="fsm"><div class="fsm-n">Key length ${r.len}</div><div class="fsm-v ${r.ic>.06?'g':r.ic>.055?'a':'d'}">${r.ic} ${i===0?'← best':''}${r.ic>.065?' (≈English)':''}</div></div>`);
+          html+=`</div><div class="verdict"><b>Best key length estimate: ${results[0].len}</b> (IC=${results[0].ic}, closest to English IC=0.0667).<br>IC close to 0.0667 = monoalphabetic. IC ≈ 0.0385 = random/polyalphabetic. Your overall IC = ${IC(L).toFixed(5)}.</div></div>`;
+        }
+      }
+      else if(type==='freq-mono'){
+        const L=input.toUpperCase().replace(/[^A-Z]/g,'');
+        if(!L){html='<div class="warn"><div class="wt">No letters</div>Input contains no A-Z characters.</div>';}
+        else{
+          const freq=Array(26).fill(0);
+          for(const c of L)freq[c.charCodeAt(0)-65]++;
+          const total=L.length;
+          const sorted=[...freq.keys()].sort((a,b)=>freq[b]-freq[a]);
+          const engOrder='ETAOINSHRDLCUMWFGYPBVKJXQZ';
+          html=`<div class="fs"><div class="fs-hdr"><span class="fs-t">Frequency Analysis (Monoalphabetic Substitution)</span><span class="chip cc">${total} letters</span></div>
+          <div style="padding:.55rem .9rem;font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text)">
+            <div style="margin-bottom:.4rem;color:var(--dim)">Ciphertext frequency order (most → least common):</div>
+            <div style="color:var(--g);letter-spacing:.08em;margin-bottom:.6rem">${sorted.map(i=>String.fromCharCode(65+i)).join(' ')}</div>
+            <div style="margin-bottom:.4rem;color:var(--dim)">English frequency order:</div>
+            <div style="color:var(--c);letter-spacing:.08em;margin-bottom:.6rem">${engOrder.split('').join(' ')}</div>
+            <div style="margin-bottom:.4rem;color:var(--dim)">Suggested mapping (top ciphertext letter → most likely English):</div>
+            <div style="color:var(--a);">${sorted.slice(0,13).map((ci,j)=>`${String.fromCharCode(65+ci)}→${engOrder[j]}`).join('  ')}</div>
+            <div style="margin-top:.5rem;color:var(--dim);font-size:.5rem">Note: Frequency analysis is a starting point — manual refinement needed. Use known words (cribs) to anchor the mapping.</div>
+          </div>
+          <div class="fs-grid">${sorted.map((ci,rank)=>`<div class="fsm"><div class="fsm-n">'${String.fromCharCode(65+ci)}' → '${engOrder[rank]||'?'}'</div><div class="fsm-v ${rank<5?'g':rank<10?'c':'d'}">${(freq[ci]/total*100).toFixed(1)}% (${freq[ci]}×)</div></div>`).join('')}</div>
+          </div>`;
+        }
+      }
+      else if(type==='hash-dict'||type==='hash-common'){
+        const hashTarget=input.trim();
+        const algoId=$('brute-hash-algo')?$('brute-hash-algo').value:'md5';
+        let wordlist=[];
+        if(type==='hash-common'){
+          wordlist='password,123456,password123,admin,letmein,welcome,monkey,qwerty,abc123,1234567,111111,iloveyou,sunshine,princess,dragon,master,12345678,password1,secret,football,baseball,superman,batman,hunter,shadow,michael,qwerty123,pass,root,toor,admin123,test,hello,login,guest,user,changeme,123123,321321,password2,1q2w3e4r,zaq12wsx,qazwsx,trustno1,correct,battery,horse,staple,secure,safe,protected,database,server,network,system'.split(',');
+        } else {
+          const wl=$('brute-words')?$('brute-words').value:'';
+          wordlist=wl.split(/\n/).map(w=>w.trim()).filter(Boolean);
+        }
+        if(!wordlist.length){html='<div class="warn"><div class="wt">Empty wordlist</div>Enter passwords to test.</div>';}
+        else{
+          const hashFn=(pw)=>{
+            const bytes=enc8(pw);const wa=CryptoJS.lib.WordArray.create(bytes);
+            if(algoId==='md5')return CryptoJS.MD5(wa).toString();
+            if(algoId==='sha1')return CryptoJS.SHA1(wa).toString();
+            if(algoId==='sha256')return CryptoJS.SHA256(wa).toString();
+            if(algoId==='sha512')return CryptoJS.SHA512(wa).toString();
+            if(algoId==='double-md5')return CryptoJS.MD5(CryptoJS.MD5(wa)).toString();
+            if(algoId==='ntlm'){// MD4 of UTF-16LE
+              const utf16=new Uint8Array(pw.length*2);for(let i=0;i<pw.length;i++){utf16[i*2]=pw.charCodeAt(i)&0xff;utf16[i*2+1]=(pw.charCodeAt(i)>>8)&0xff;}
+              return CryptoJS.MD4?CryptoJS.MD4(CryptoJS.lib.WordArray.create(utf16)).toString():CryptoJS.MD5(CryptoJS.lib.WordArray.create(utf16)).toString();}
+            if(algoId==='mysql41')return '*'+CryptoJS.SHA1(CryptoJS.lib.WordArray.create(enc8(CryptoJS.SHA1(wa).toString()))).toString().toUpperCase();
+            return CryptoJS.SHA256(wa).toString();
+          };
+          const normalTarget=hashTarget.toLowerCase().replace(/^\*/,'');
+          let found=null;
+          for(const pw of wordlist){
+            const h=hashFn(pw);
+            if(h.toLowerCase()===normalTarget||('*'+h.toUpperCase())===hashTarget.toUpperCase()){found=pw;break;}
+          }
+          if(found)html=`<div class="res-box"><div class="rb-hdr"><span class="rb-title">✓ Hash cracked!</span><span class="chip cg">Match found</span><button class="btn btn-ghost btn-sm" onclick="copyText(${JSON.stringify(found)},this)">⎘ Copy</button></div><div class="rb-body">${esc(found)}</div><div class="rb-foot"><span style="font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--dim)">Tested ${wordlist.length} candidates with ${algoId.toUpperCase()}</span></div></div>`;
+          else html=`<div class="warn"><div class="wt">No match found</div>None of the ${wordlist.length} tested candidates matched the hash (${algoId.toUpperCase()}). Try a larger wordlist or online rainbow tables.</div>
+          <div class="hash-box"><b>Try online rainbow tables for larger coverage:</b><div class="lu-grid">${hashLookups(hashTarget).map(l=>`<a class="lu" href="${escA(l.url)}" target="_blank" rel="noopener">${l.icon} <b>${esc(l.name)}</b></a>`).join('')}</div></div>`;
+        }
+      }
+      else{html=`<div class="info"><div class="it">Select an attack type</div>Choose an attack from the dropdown above.</div>`;}
+
+      $('brute-out').innerHTML=html;
+    }catch(e){$('brute-out').innerHTML=`<div class="err"><div class="et">Attack failed</div><pre>${esc(e.message)}</pre></div>`;}
+    pg('brute-pg',false);
+    if($('brute-stop-wrap'))$('brute-stop-wrap').style.display='none';
+    if($('brute-progress'))$('brute-progress').style.display='none';
+    bruteRunning=false;
+  })();
+};
+
+/* ── PATCH EXISTING _runDecode TO CALL EXTENSIONS ── */
+const _orig_runDecode_inner = window._runDecode;
+window._runDecode = async function(input){
+  const algo=$('dec-algo').value;
+  const newAlgos=['affine-brute','rail-fence-brute','bifid','columnar','cisco7','intel-hex','mime-word','otp-crib','homoglyph'];
+  if(newAlgos.includes(algo)){
+    const keyStr=$('dec-key').value.trim(),ivStr=$('dec-iv').value.trim();
+    const shiftStr=$('dec-shift').value.trim(),affineStr=$('dec-affine').value.trim(),railsStr=$('dec-rails').value.trim();
+    const cribStr=$('dec-crib')?$('dec-crib').value.trim():'';
+    const kfmt=$('dec-kfmt').value,ivfmt=$('dec-ivfmt').value,ifmt=$('dec-ifmt').value;
+    const getCT=()=>{
+      if(ifmt==='hex')return hexToBytes(input);
+      if(ifmt==='b64')return b64ToBytes(input);
+      const s=input.replace(/\s/g,'');
+      if(/^[A-Za-z0-9+/]+=*$/.test(s)&&s.length%4===0){const b=b64ToBytes(input);if(b)return b;}
+      if(/^[0-9a-fA-F\s:]+$/.test(input)){const b=hexToBytes(input);if(b)return b;}
+      return enc8(input);
+    };
+    const getKey=()=>keyStr?parseKey(keyStr,kfmt):null;
+    const getIV=()=>ivStr?parseKey(ivStr,ivfmt):null;
+    const handled=await window._runDecodeExtensions(input,algo,getKey,getIV,getCT,shiftStr,affineStr,railsStr,cribStr,kfmt,ivfmt);
+    if(handled)return;
+  }
+  return _orig_runDecode_inner(input);
+};
+
+/* ── PATCH ALGO CHANGE FOR NEW OPTIONS ── */
+const _origAlgoChange=window.onAlgoChange;
+window.onAlgoChange=function(){
+  _origAlgoChange&&_origAlgoChange();
+  const a=$('dec-algo').value;
+  // Show crib field for otp-crib
+  if($('r-crib'))$('r-crib').style.display=a==='otp-crib'?'flex':'none';
+  // Show shift for bifid and columnar
+  if(a==='bifid'||a==='columnar')if($('r-shift'))$('r-shift').style.display='flex';
+};
+
+/* ── PATCH tab switcher to know new tabs ── */
+const _origSwitchTab=window.switchTab;
+window.switchTab=function(n,el){_origSwitchTab(n,el);};
+window.sw=window.switchTab;
+
+/* ── ENHANCED HEADER BADGES ── */
+(function(){
+  const cb=document.querySelector('.badges');
+  if(!cb)return;
+  const newBadges=[
+    ['60+ HASH PATTERNS','#ffaa00','rgba(255,170,0,.28)','rgba(255,170,0,.07)'],
+    ['SALT ANALYSIS','#f0df10','rgba(240,223,16,.28)','rgba(240,223,16,.07)'],
+    ['BIFID · ADFGVX · COLUMNAR','#ff66aa','rgba(255,102,170,.28)','rgba(255,102,170,.07)'],
+    ['HOMOGLYPH DETECT','#10d0f0','rgba(16,208,240,.28)','rgba(16,208,240,.07)'],
+  ];
+  newBadges.forEach(([t,c,bc,bg])=>{
+    const s=document.createElement('span');s.className='badge';
+    s.style.cssText=`color:${c};border-color:${bc};background:${bg}`;s.textContent=t;
+    cb.appendChild(s);
+  });
+})();
+
+/* ── UPGRADE TITLE ── */
+document.title='CipherSense ULTRA v5.0 — Universal Forensic Cryptanalysis';
+const brand=document.querySelector('.brand');
+if(brand&&!brand.textContent.includes('ULTRA'))brand.innerHTML='CIPHER<span style="-webkit-text-fill-color:var(--text)">SENSE ULTRA</span>';
+
+/* ── PATCH identHash to use extended DB ── */
+const _origIdentHash=window.identHash;
+window.identHash=function(){
+  const t=$('hash-in')?$('hash-in').value.trim():'';
+  if(!t){$('hash-out').innerHTML='<div class="warn"><div class="wt">No input</div>Enter hash to identify.</div>';return;}
+  // Try extended DB first
+  const cands=window.identHashCandsEx(t);
+  // Also run salt analysis
+  const saltResult=window.analyzeSalt(t);
+  if(saltResult.detected&&saltResult.salt){
+    window.analyzeHashSalt();return;
+  }
+  if(!cands.length){$('hash-out').innerHTML=`<div class="info"><div class="it">No match</div>Could not identify "${esc(t.slice(0,50))}…" as a known hash format.<br>Try Salt Analysis if this may be a salted hash.</div>`;return;}
+  const c=cands[0];const names=c.names||[c.name];
+  let html=`<div class="fs"><div class="fs-hdr"><span class="fs-t">#️⃣ Hash identified</span><span class="chip ca">${(c.conf*100).toFixed(0)}% confidence</span></div>
+  <div class="fs-grid">
+    <div class="fsm"><div class="fsm-n">Algorithm(s)</div><div class="fsm-v a">${esc(names.join(' · '))}</div></div>
+    <div class="fsm"><div class="fsm-n">Category</div><div class="fsm-v c">${esc(c.cat)}</div></div>
+    ${c.bits?`<div class="fsm"><div class="fsm-n">Bits</div><div class="fsm-v g">${c.bits}-bit</div></div>`:''}
+    ${c.len?`<div class="fsm"><div class="fsm-n">Hex length</div><div class="fsm-v b">${c.len} hex chars</div></div>`:''}
+    <div class="fsm"><div class="fsm-n">Reversible</div><div class="fsm-v r">❌ One-way function</div></div>
+    ${c.note?`<div class="fsm" style="grid-column:1/-1"><div class="fsm-n">Notes & hashcat</div><div class="fsm-v yw" style="font-size:.56rem">${esc(c.note)}</div></div>`:''}
+  </div></div>
+  <div class="hash-box" style="margin-top:.55rem"><b>Rainbow table lookups (no salt = lookups may work):</b>
+  <div class="lu-grid">${hashLookups(t).map(l=>`<a class="lu" href="${escA(l.url)}" target="_blank" rel="noopener">${l.icon} <span><b>${esc(l.name)}</b><br><span style="font-size:.44rem;color:var(--dim)">${esc(l.desc)}</span></span></a>`).join('')}</div></div>`;
+  $('hash-out').innerHTML=html;
+};
+
+/* ── ADD crib field to HTML if missing ── */
+(function(){
+  const rShift=$('r-shift');
+  if(rShift&&!$('r-crib')){
+    const cribRow=document.createElement('div');
+    cribRow.className='kb-row';cribRow.id='r-crib';cribRow.style.display='none';
+    cribRow.innerHTML=`<span class="kb-lbl">Crib (known plaintext)</span><input type="text" class="kb-in" id="dec-crib" placeholder='e.g. "the " or "flag{"'>`;
+    rShift.parentNode.insertBefore(cribRow,rShift.nextSibling);
+  }
+})();
+
+/* ── ALSO ADD .steg-found CSS if missing ── */
+(function(){
+  const style=document.createElement('style');
+  style.textContent=`
+.steg-found{background:rgba(16,208,240,.05);border:1px solid rgba(16,208,240,.28);border-radius:4px;padding:.6rem .9rem;margin-top:.48rem}
+.steg-t{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--c);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:.38rem}
+.steg-item{font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--text);padding:.18rem 0;border-bottom:1px solid var(--line);display:flex;gap:.42rem}
+.steg-item:last-child{border-bottom:none}.steg-lbl{color:var(--c);min-width:130px;flex-shrink:0;font-size:.48rem}.steg-val{word-break:break-all;flex:1}
+.l-sal{border-color:rgba(240,223,16,.4);background:rgba(240,223,16,.025)}
+.fs-t.yw{color:var(--yw)}
+.lu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:.34rem;margin-top:.38rem}
+.lu{display:flex;align-items:center;gap:.38rem;padding:.36rem .52rem;background:var(--s2);border:1px solid var(--line);border-radius:3px;text-decoration:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.5rem;transition:all .12s}
+.lu:hover{background:var(--s3);border-color:var(--a);color:var(--a)}
+.hash-box{margin-top:.48rem;padding:.5rem .62rem;background:rgba(255,170,0,.04);border-radius:3px;border:1px solid rgba(255,170,0,.2);font-size:.52rem;line-height:1.65}.hash-box b{color:var(--a)}
+.bf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:.38rem;margin-top:.42rem}
+.bfc{background:var(--s1);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.bfc.top{border-color:rgba(0,255,179,.45);box-shadow:0 0 14px rgba(0,255,179,.12)}
+.bfc-hdr{display:flex;align-items:center;gap:.32rem;padding:.26rem .52rem;border-bottom:1px solid var(--line);background:var(--s2)}
+.bfc-name{font-family:'JetBrains Mono',monospace;font-size:.5rem;font-weight:600;flex:1}
+.bfc-body{font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:.32rem .52rem;word-break:break-all;max-height:62px;overflow:hidden;line-height:1.5;position:relative}
+.bfc-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:16px;background:linear-gradient(transparent,var(--s1))}
+.res-box{background:var(--s1);border:1px solid rgba(0,255,179,.3);border-radius:4px;overflow:hidden;margin-top:.8rem}
+.rb-hdr{display:flex;align-items:center;justify-content:space-between;padding:.45rem .9rem;background:rgba(0,255,179,.04);border-bottom:1px solid rgba(0,255,179,.1);flex-wrap:wrap;gap:.32rem}
+.rb-t{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--g);text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.rb-body{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#7affcc;line-height:1.85;padding:.88rem .9rem;word-break:break-word;white-space:pre-wrap;max-height:360px;overflow-y:auto}
+.rb-foot{display:flex;align-items:center;justify-content:space-between;padding:.35rem .9rem;border-top:1px solid var(--line);background:var(--s2);flex-wrap:wrap;gap:.32rem}
+  `;
+  document.head.appendChild(style);
+})();
+
+console.log('CipherSense ULTRA v5.0 — extensions loaded');
+
 </script>
 </body>
 </html>
