@@ -177,6 +177,63 @@ textarea{resize:none;min-height:90px}textarea::placeholder,input::placeholder{co
 .smp-item:hover{background:var(--s2)}.smp-item .sd{color:var(--dim);font-size:.46rem;display:block;margin-top:1px}
 .smp-cat{font-family:'JetBrains Mono',monospace;font-size:.44rem;color:var(--ghost);padding:5px 8px 2px;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
 @media(max-width:640px){.shell{padding:0 .85rem 3rem}.logo{font-size:1.8rem}.tab{padding:.58rem .7rem;font-size:.54rem}.rk{min-width:82px}.kb-in{min-width:140px}.fs-grid{grid-template-columns:1fr 1fr}}
+
+/* ═══ MATRIX RAIN CANVAS ═══ */
+#matrix-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.18;pointer-events:none}
+body::before,body::after{z-index:1}
+.app{z-index:2;position:relative}
+
+/* ═══ BRIGHTNESS UPGRADES ═══ */
+:root{
+  --g:#00ffaa;--g2:#00dd90;--g3:#00ff44;
+  --c:#00eeff;--b:#4499ff;
+  --glow:0 0 30px rgba(0,255,170,.25),0 0 80px rgba(0,255,170,.1);
+  --glow2:0 0 20px rgba(0,238,255,.2);
+}
+/* Brighter header */
+.brand{filter:drop-shadow(0 0 24px rgba(0,255,170,.5))}
+/* Brighter tab active */
+.tab.on{color:#00ffaa;text-shadow:0 0 12px rgba(0,255,170,.7);border-bottom-color:var(--g)}
+/* Brighter button glow */
+.btn-go:hover{box-shadow:0 0 28px rgba(0,255,170,.5),0 0 60px rgba(0,255,170,.2)}
+/* Brighter chips */
+.cg{background:rgba(0,255,170,.1);border-color:rgba(0,255,170,.45)}
+/* Layer cards — brighter borders */
+.lay:hover{filter:brightness(1.08)}
+/* Brighter FSM values */
+.fsm-v.g,.g{color:#00ffcc;text-shadow:0 0 8px rgba(0,255,170,.4)}
+/* Brighter hash output */
+.hag-body{color:#ffcc44}
+/* Progress bar — brighter */
+.pgbar.run .pgfill{box-shadow:0 0 8px var(--g)}
+/* Confidence bar glow */
+.conf-fill{box-shadow:0 0 6px currentColor}
+
+/* ═══ SALT PANEL ═══ */
+.salt-input-panel{background:rgba(0,255,170,.04);border:1px solid rgba(0,255,170,.2);border-radius:4px;padding:.75rem 1rem;margin-bottom:.85rem;position:relative;overflow:hidden}
+.salt-input-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--g),var(--c),var(--g),transparent)}
+.salt-panel-title{font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--g);text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem}
+.salt-panel-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,255,170,.3),transparent)}
+.salt-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.42rem}
+.salt-row:last-child{margin-bottom:0}
+.salt-lbl{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--dim);min-width:95px;flex-shrink:0}
+.salt-in{flex:1;min-width:160px;font-family:'JetBrains Mono',monospace;font-size:.7rem;background:rgba(0,0,0,.3);border:1px solid rgba(0,255,170,.2);border-radius:3px;color:var(--text);padding:6px 10px;outline:none;transition:all .15s;caret-color:var(--g)}
+.salt-in:focus{border-color:var(--g);box-shadow:0 0 10px rgba(0,255,170,.15)}
+.salt-sel{font-family:'JetBrains Mono',monospace;font-size:.6rem;background:rgba(0,0,0,.3);border:1px solid rgba(0,255,170,.2);border-radius:3px;color:var(--text);padding:6px 10px;outline:none;cursor:pointer;min-width:140px;transition:border-color .15s}
+.salt-sel:focus{border-color:var(--g)}
+.salt-hint{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--dim);line-height:1.6;padding-top:.38rem;border-top:1px dashed rgba(0,255,170,.12)}
+.salt-hint b{color:var(--c)}
+
+/* ═══ HASH RESULT CARDS BRIGHTER ═══ */
+.hag{transition:all .15s;border:1px solid var(--line)}
+.hag:hover{border-color:rgba(255,170,0,.4);box-shadow:0 0 14px rgba(255,170,0,.12)}
+.hag-body{color:#ffdd55;font-size:.6rem;letter-spacing:.04em}
+.hag-hdr{background:var(--s2)}
+
+/* ═══ LIVE HASH TICKER ═══ */
+#hash-ticker{font-family:'JetBrains Mono',monospace;font-size:.46rem;color:rgba(0,255,170,.4);text-align:center;letter-spacing:.06em;padding:.3rem 0;overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--line);margin-bottom:1.2rem;position:relative}
+#hash-ticker::before{content:'';position:absolute;left:0;top:0;bottom:0;width:80px;background:linear-gradient(90deg,var(--bg),transparent);z-index:1}
+#hash-ticker::after{content:'';position:absolute;right:0;top:0;bottom:0;width:80px;background:linear-gradient(270deg,var(--bg),transparent);z-index:1}
 </style>
 </head>
 <body>
@@ -491,6 +548,36 @@ Salted formats automatically detected:
         <button class="btn btn-go" onclick="hashAll()">⚡ Hash all algorithms</button>
       </div>
     </div>
+  </div>
+  <!-- SALT CONFIGURATION PANEL -->
+  <div class="salt-input-panel">
+    <div class="salt-panel-title">🧂 Salt configuration — applied when hashing</div>
+    <div class="salt-row">
+      <span class="salt-lbl">Salt value</span>
+      <input type="text" class="salt-in" id="hash-salt" placeholder="Enter salt (leave blank for unsalted hashes)" oninput="onSaltChange()">
+      <button class="btn btn-sec btn-sm" onclick="genRandomSalt()">⟳ Random</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearSalt()">✕ Clear</button>
+    </div>
+    <div class="salt-row">
+      <span class="salt-lbl">Salt position</span>
+      <select class="salt-sel" id="salt-pos">
+        <option value="append">Append — hash(password + salt)</option>
+        <option value="prepend">Prepend — hash(salt + password)</option>
+        <option value="both">Both — hash(salt + password + salt)</option>
+        <option value="hmac">HMAC — HMAC(password, key=salt)</option>
+      </select>
+      <select class="salt-sel" id="salt-fmt">
+        <option value="utf8">Salt as UTF-8 string</option>
+        <option value="hex">Salt as Hex bytes</option>
+        <option value="b64">Salt as Base64 bytes</option>
+      </select>
+    </div>
+    <div class="salt-row">
+      <span class="salt-lbl">Iterations</span>
+      <input type="number" class="salt-in" id="hash-iters" value="1" min="1" max="1000000" style="min-width:80px;flex:0;width:100px" placeholder="1">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--dim)">× (applies MD5/SHA rounds e.g. 1000 for PBKDF2-like)</span>
+    </div>
+    <div class="salt-hint" id="salt-hint-text"><b>No salt set</b> — hashes will be computed without salt. Set a salt above to see salted results alongside.</div>
   </div>
   <div id="hash-out"></div>
 </div>
@@ -1097,6 +1184,353 @@ html+=`<div class="chart-wrap"><div class="chart-title">Byte frequency histogram
 if(Object.keys(zwFound).length){html+=`<div class="steg-found"><div class="steg-title">👁 Unicode Steganography Characters Detected</div>`;for(const[name,cnt] of Object.entries(zwFound))html+=`<div class="steg-item"><span class="steg-lbl">${esc(name)}</span><span class="steg-val">${cnt} occurrence(s)</span></div>`;const r=decodeZWSP(input)||decodeZW4(input)||decodeUnicodeTags(input)||decodeWhitespaceTabs(input);if(r)html+=`<div class="steg-item"><span class="steg-lbl">Decoded message</span><span class="steg-val" style="color:var(--g)">${esc(r)}</span></div>`;html+='</div>';}
 $('stat-out').innerHTML=html;}
 window.runStats=runStats;
+
+
+/* ═══════════════════════════════════════════════
+   MATRIX RAIN ENGINE
+═══════════════════════════════════════════════ */
+(function(){
+  const canvas = document.getElementById('matrix-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Hash chars + binary + matrix katakana
+  const CHARS = '0123456789ABCDEF' +
+    'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン' +
+    '01' + 'SHA256BCRYPTMD5AES';
+
+  let W, H, cols, drops;
+  const FONT_SIZE = 13;
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    cols = Math.floor(W / FONT_SIZE);
+    drops = new Array(cols).fill(1).map(() => Math.random() * -100);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Color palette: green → cyan → white hot tip
+  function getColor(y, dropY){
+    const dist = dropY - y;
+    if(dist === 0) return '#ffffff';            // tip = white
+    if(dist === 1) return '#aaffee';            // near tip = bright
+    if(dist < 4)   return '#00ffaa';            // bright green
+    if(dist < 10)  return '#00dd88';            // mid green
+    if(dist < 20)  return '#009955';            // fading
+    return '#003322';                           // dark trail
+  }
+
+  function draw(){
+    // Semi-transparent black to create fade trail
+    ctx.fillStyle = 'rgba(3,4,8,0.07)';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.font = `${FONT_SIZE}px 'JetBrains Mono', monospace`;
+
+    for(let i = 0; i < cols; i++){
+      const drop = Math.floor(drops[i]);
+      // Draw trail
+      for(let j = Math.max(0, drop - 25); j <= drop; j++){
+        if(j < 0) continue;
+        const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+        ctx.fillStyle = getColor(j, drop);
+        ctx.fillText(char, i * FONT_SIZE, j * FONT_SIZE);
+      }
+      // Advance drop
+      drops[i] += Math.random() * 0.6 + 0.3;
+      // Reset when past bottom, with random delay
+      if(drops[i] * FONT_SIZE > H + FONT_SIZE * 20 && Math.random() > 0.975){
+        drops[i] = -Math.floor(Math.random() * 60);
+      }
+    }
+  }
+
+  setInterval(draw, 45);
+})();
+
+/* ═══════════════════════════════════════════════
+   HASH TICKER — live rolling hashes
+═══════════════════════════════════════════════ */
+(function(){
+  const tickerEl = document.getElementById('ticker-text');
+  if(!tickerEl) return;
+
+  const seeds = [
+    'entropy','SHA256','AES-256','PBKDF2','Argon2','bcrypt','BLAKE2b',
+    'forensics','ciphertext','cryptanalysis','hash','salt','pepper','nonce',
+    'CipherSense','ULTRA','v5.0','DFIR','CTF','pentest'
+  ];
+
+  let idx = 0;
+  function tick(){
+    const seed = seeds[idx++ % seeds.length];
+    const wa = CryptoJS.lib.WordArray.create(new TextEncoder().encode(seed + Date.now()));
+    const h = CryptoJS.SHA256(wa).toString();
+    const label = seeds[(idx+3) % seeds.length].toUpperCase();
+    tickerEl.textContent = `SHA256(${seed}) = ${h}  ···  MD5(${label}) = ${CryptoJS.MD5(wa).toString()}  ···  `;
+  }
+  tick();
+  setInterval(tick, 2800);
+})();
+
+/* ═══════════════════════════════════════════════
+   SALT INPUT LOGIC
+═══════════════════════════════════════════════ */
+window.onSaltChange = function(){
+  const salt = $('hash-salt') ? $('hash-salt').value : '';
+  const hint = $('salt-hint-text');
+  if(!hint) return;
+  if(!salt.trim()){
+    hint.innerHTML = '<b>No salt set</b> — hashes computed without salt. Set a salt above to see salted results alongside.';
+  } else {
+    const pos = $('salt-pos') ? $('salt-pos').value : 'append';
+    const fmt = $('salt-fmt') ? $('salt-fmt').value : 'utf8';
+    const iters = parseInt($('hash-iters') ? $('hash-iters').value : '1') || 1;
+    const posLabel = {append:'password + salt',prepend:'salt + password',both:'salt + password + salt',hmac:'HMAC(key=salt)'}[pos];
+    hint.innerHTML = `<b>Salt active:</b> "${salt.length > 30 ? salt.slice(0,30)+'…' : salt}" (${fmt}) · position: <b style="color:var(--c)">${posLabel}</b>${iters > 1 ? ` · <b style="color:var(--a)">${iters.toLocaleString()} iterations</b>` : ''}`;
+  }
+};
+
+window.genRandomSalt = function(){
+  const saltInput = $('hash-salt');
+  if(!saltInput) return;
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  saltInput.value = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+  window.onSaltChange();
+};
+
+window.clearSalt = function(){
+  const saltInput = $('hash-salt');
+  if(saltInput) saltInput.value = '';
+  window.onSaltChange();
+};
+
+// Helper: build salted input bytes
+function buildSaltedInput(passwordBytes, saltStr, saltFmt, saltPos){
+  if(!saltStr) return passwordBytes;
+  let saltBytes;
+  if(saltFmt === 'hex'){
+    saltBytes = hexToBytes(saltStr) || enc8(saltStr);
+  } else if(saltFmt === 'b64'){
+    saltBytes = b64ToBytes(saltStr) || enc8(saltStr);
+  } else {
+    saltBytes = enc8(saltStr);
+  }
+  if(saltPos === 'prepend'){
+    const combined = new Uint8Array(saltBytes.length + passwordBytes.length);
+    combined.set(saltBytes); combined.set(passwordBytes, saltBytes.length);
+    return combined;
+  } else if(saltPos === 'both'){
+    const combined = new Uint8Array(saltBytes.length + passwordBytes.length + saltBytes.length);
+    combined.set(saltBytes); combined.set(passwordBytes, saltBytes.length); combined.set(saltBytes, saltBytes.length + passwordBytes.length);
+    return combined;
+  } else { // append (default)
+    const combined = new Uint8Array(passwordBytes.length + saltBytes.length);
+    combined.set(passwordBytes); combined.set(saltBytes, passwordBytes.length);
+    return combined;
+  }
+}
+
+// Apply N iterations: hash(hash(hash(...(input))))
+function applyIterations(hashFn, initialWA, iterations){
+  let result = hashFn(initialWA).toString();
+  for(let i = 1; i < iterations; i++){
+    result = hashFn(CryptoJS.lib.WordArray.create(enc8(result))).toString();
+  }
+  return result;
+}
+
+/* ═══════════════════════════════════════════════
+   UPGRADED hashAll — with salt support
+═══════════════════════════════════════════════ */
+window.hashAll = async function(){
+  const t = $('hash-in') ? $('hash-in').value.trim() : '';
+  if(!t){ $('hash-out').innerHTML = '<div class="warn"><div class="wt">No input</div>Enter plaintext to hash.</div>'; return; }
+
+  const saltStr   = ($('hash-salt')  ? $('hash-salt').value  : '').trim();
+  const saltPos   = $('salt-pos')    ? $('salt-pos').value   : 'append';
+  const saltFmt   = $('salt-fmt')    ? $('salt-fmt').value   : 'utf8';
+  const iterations= Math.max(1, Math.min(1000000, parseInt($('hash-iters') ? $('hash-iters').value : '1') || 1));
+  const isHMAC    = saltPos === 'hmac';
+  const hasSalt   = !!saltStr;
+
+  const tb = enc8(t);
+  const saltedBytes = hasSalt ? buildSaltedInput(tb, saltStr, saltFmt, saltPos) : tb;
+  const wa_plain = CryptoJS.lib.WordArray.create(tb);
+  const wa_salted = CryptoJS.lib.WordArray.create(saltedBytes);
+
+  const ALGORITHMS = [
+    {name:'MD5',           bits:128, fn:wa => CryptoJS.MD5(wa).toString()},
+    {name:'SHA-1',         bits:160, fn:wa => CryptoJS.SHA1(wa).toString()},
+    {name:'SHA-224',       bits:224, fn:wa => CryptoJS.SHA224(wa).toString()},
+    {name:'SHA-256',       bits:256, fn:wa => CryptoJS.SHA256(wa).toString()},
+    {name:'SHA-384',       bits:384, fn:wa => CryptoJS.SHA384(wa).toString()},
+    {name:'SHA-512',       bits:512, fn:wa => CryptoJS.SHA512(wa).toString()},
+    {name:'SHA3-224',      bits:224, fn:wa => CryptoJS.SHA3(wa,{outputLength:224}).toString()},
+    {name:'SHA3-256',      bits:256, fn:wa => CryptoJS.SHA3(wa,{outputLength:256}).toString()},
+    {name:'SHA3-384',      bits:384, fn:wa => CryptoJS.SHA3(wa,{outputLength:384}).toString()},
+    {name:'SHA3-512',      bits:512, fn:wa => CryptoJS.SHA3(wa,{outputLength:512}).toString()},
+    {name:'RIPEMD-160',    bits:160, fn:wa => CryptoJS.RIPEMD160(wa).toString()},
+    {name:'HMAC-SHA256',   bits:256, fn:wa => CryptoJS.HmacSHA256(t, saltStr||t).toString(), hmacOnly:true},
+    {name:'HMAC-SHA512',   bits:512, fn:wa => CryptoJS.HmacSHA512(t, saltStr||t).toString(), hmacOnly:true},
+    {name:'HMAC-MD5',      bits:128, fn:wa => CryptoJS.HmacMD5(t, saltStr||t).toString(),    hmacOnly:true},
+    {name:'HMAC-SHA1',     bits:160, fn:wa => CryptoJS.HmacSHA1(t, saltStr||t).toString(),   hmacOnly:true},
+  ];
+
+  const results = [];
+  for(const algo of ALGORITHMS){
+    try{
+      let plain_hash, salted_hash;
+
+      if(algo.hmacOnly){
+        // HMAC always uses key=salt (or key=input if no salt)
+        plain_hash  = algo.fn(wa_plain);
+        salted_hash = hasSalt ? algo.fn(wa_salted) : null;
+      } else if(isHMAC && hasSalt){
+        // HMAC mode for regular algos
+        plain_hash  = algo.fn(wa_plain);
+        salted_hash = (() => {
+          const hmacMap = {
+            'MD5':   (d,k) => CryptoJS.HmacMD5(d,k).toString(),
+            'SHA-1': (d,k) => CryptoJS.HmacSHA1(d,k).toString(),
+            'SHA-224':(d,k)=> CryptoJS.HmacSHA224(d,k).toString(),
+            'SHA-256':(d,k)=> CryptoJS.HmacSHA256(d,k).toString(),
+            'SHA-384':(d,k)=> CryptoJS.HmacSHA384(d,k).toString(),
+            'SHA-512':(d,k)=> CryptoJS.HmacSHA512(d,k).toString(),
+          };
+          const hmFn = hmacMap[algo.name];
+          return hmFn ? hmFn(t, saltStr) : null;
+        })();
+      } else {
+        plain_hash  = iterations > 1
+          ? applyIterations(algo.fn, wa_plain, iterations)
+          : algo.fn(wa_plain);
+        salted_hash = hasSalt
+          ? (iterations > 1
+              ? applyIterations(algo.fn, wa_salted, iterations)
+              : algo.fn(wa_salted))
+          : null;
+      }
+
+      results.push({name: algo.name, bits: algo.bits, plain: plain_hash, salted: salted_hash});
+    } catch(e){
+      results.push({name: algo.name, bits: algo.bits, plain: 'Error: '+e.message, salted: null});
+    }
+  }
+
+  // Build output
+  const saltInfo = hasSalt
+    ? `salt="${saltStr.length > 20 ? saltStr.slice(0,20)+'…' : saltStr}" (${saltPos}${iterations > 1 ? `, ${iterations.toLocaleString()} iters` : ''})`
+    : 'no salt';
+
+  let html = `<div style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--dim);margin-bottom:.7rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+    <span>${results.length} algorithms</span>
+    <span style="color:var(--c)">input: <b style="color:var(--text)">${esc(t.length > 40 ? t.slice(0,40)+'…' : t)}</b></span>
+    <span class="chip ${hasSalt?'cyw':'ck'}">${hasSalt ? '🧂 '+esc(saltInfo) : 'no salt'}</span>
+    ${iterations>1 ? `<span class="chip ca">×${iterations.toLocaleString()} iterations</span>` : ''}
+  </div>`;
+
+  if(hasSalt){
+    // Two-column layout: unsalted | salted
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;padding:.3rem .55rem;background:var(--s2);border-radius:3px;border:1px solid var(--line)">Plain (unsalted)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--yw);text-transform:uppercase;letter-spacing:.1em;padding:.3rem .55rem;background:rgba(240,223,16,.06);border-radius:3px;border:1px solid rgba(240,223,16,.3)">🧂 Salted — ${esc(saltPos)} · ${saltFmt}${iterations>1?' · '+iterations.toLocaleString()+'×':''}</div>
+    </div>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:.42rem">`;
+    results.forEach((r,i) => {
+      const col = lc(i);
+      html += `<div class="hag">
+        <div class="hag-hdr">
+          <span class="hag-name" style="color:${col}">${esc(r.name)}</span>
+          <span class="chip ck">${r.bits}bit</span>
+          <button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.plain)},this)">⎘</button>
+        </div>
+        <div class="hag-body" style="color:var(--dim)">${esc(r.plain)}</div>
+      </div>
+      <div class="hag" style="border-color:rgba(240,223,16,.35);background:rgba(240,223,16,.03)">
+        <div class="hag-hdr" style="background:rgba(240,223,16,.06)">
+          <span class="hag-name" style="color:var(--yw)">🧂 ${esc(r.name)}</span>
+          <span class="chip cyw">${r.bits}bit</span>
+          <button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.salted||'')},this)">⎘</button>
+        </div>
+        <div class="hag-body" style="color:var(--yw)">${esc(r.salted||'—')}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    // Single column — no salt
+    html += `<div class="hash-alg-grid">`;
+    results.forEach((r,i) => {
+      html += `<div class="hag">
+        <div class="hag-hdr">
+          <span class="hag-name" style="color:${lc(i)}">${esc(r.name)}</span>
+          <span class="chip ca">${r.bits}bit</span>
+          <button class="btn btn-ghost btn-xs" onclick="copyText(${JSON.stringify(r.plain)},this)">⎘</button>
+        </div>
+        <div class="hag-body">${esc(r.plain)}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  $('hash-out').innerHTML = html;
+};
+
+/* ═══ Patch onHashIn to update salt hint ═══ */
+const _orig_onHashIn = window.onHashIn;
+window.onHashIn = function(){
+  _orig_onHashIn && _orig_onHashIn();
+  window.onSaltChange();
+};
+
+/* ═══════════════════════════════════════════════
+   VISUAL BRIGHTNESS PATCHES
+═══════════════════════════════════════════════ */
+(function(){
+  // Brighter layer card borders on hover
+  document.addEventListener('mouseover', e => {
+    const lay = e.target.closest('.lay');
+    if(lay) lay.style.filter = 'brightness(1.1)';
+  });
+  document.addEventListener('mouseout', e => {
+    const lay = e.target.closest('.lay');
+    if(lay) lay.style.filter = '';
+  });
+
+  // Pulse animation on active progress bars
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes glow-pulse{0%,100%{box-shadow:0 0 8px rgba(0,255,170,.3)}50%{box-shadow:0 0 20px rgba(0,255,170,.7),0 0 40px rgba(0,255,170,.3)}}
+    .btn-go{animation:none;transition:all .15s}
+    .btn-go:hover{animation:glow-pulse .8s ease-in-out infinite}
+    .brand{animation:glow-pulse 3s ease-in-out infinite}
+    /* Matrix-themed scrollbar */
+    ::-webkit-scrollbar-thumb{background:rgba(0,255,170,.3);border-radius:2px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(0,255,170,.6)}
+    /* Brighter input focus */
+    textarea:focus,input:focus{box-shadow:0 0 12px rgba(0,255,170,.12)!important}
+    /* Header bottom glow */
+    .hdr::after{height:3px;filter:blur(1px)}
+    /* Tab active glow */
+    .tab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--g);box-shadow:0 0 10px var(--g),0 0 20px rgba(0,255,170,.4);border-radius:1px}
+    .tab{position:relative}
+    /* Chip hover */
+    .chip:hover{filter:brightness(1.3)}
+    /* Brighter confidence bars */
+    .conf-fill{filter:drop-shadow(0 0 3px currentColor)}
+    /* Result box glow */
+    .res-box,.dec-res,.result-box{box-shadow:0 0 20px rgba(0,255,170,.05)}
+    /* Hash ticker scroll */
+    #hash-ticker{animation:ticker-scroll 0.5s linear}
+    /* Page load fade-in */
+    .app{animation:appFadeIn .6s ease}
+    @keyframes appFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  `;
+  document.head.appendChild(style);
+})();
 
 // Init
 buildEncMeths();buildEncOpts();buildIters();onAlgoChange();
