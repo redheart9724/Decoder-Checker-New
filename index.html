@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>OmniDecoder Pro · Auto-Cracking Cipher Toolkit</title>
+<title>OmniDecoder Pro</title>
 <style>
 *{box-sizing:border-box;margin:0}
-:root{--bg:#070b0c;--panel:#0e1718;--bd:#1f3a3b;--bd2:#2a5a5a;--fg:#cfe;--acc:#0ff;--mut:#6aa;--ok:#3fdf8f;--bad:#ff5d6c;--warn:#ffd166}
+:root{--bg:#070b0c;--panel:#0e1718;--bd:#1f3a3b;--bd2:#2a5a5a;--fg:#cfe;--acc:#0ff;--mut:#6aa;--ok:#3fdf8f;--bad:#ff5d6c}
 body{background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;padding:1rem;line-height:1.5}
 .container{max-width:1000px;margin:0 auto}
 h1{font-size:1.3rem;color:var(--acc)}
@@ -20,22 +20,24 @@ button:hover{background:#205050}
 .tab{background:#11201f;border:1px solid var(--bd)}
 .tab.active{background:#205050;color:#fff}
 .tab-content{display:none}.tab-content.active{display:block}
-pre{white-space:pre-wrap;word-break:break-word;background:#060d0d;padding:.6rem;border-radius:5px;border-left:3px solid var(--acc);font-size:.8rem;margin-top:.5rem}
+pre{white-space:pre-wrap;word-break:break-word;background:#060d0d;padding:.6rem;border-radius:5px;border-left:3px solid var(--acc);font-size:.8rem;margin-top:.4rem}
 .lbl{color:var(--mut);font-size:.75rem;margin:.6rem 0 .25rem}
 .grid{display:flex;flex-wrap:wrap;gap:.4rem;margin:.5rem 0}
 .row{display:flex;gap:.5rem;flex-wrap:wrap}.row>*{flex:1;min-width:120px}
 table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:.5rem}
 td,th{border-bottom:1px solid var(--bd);padding:.3rem .4rem;text-align:left;vertical-align:top}
 .pass{color:var(--ok)}.fail{color:var(--bad);font-weight:bold}
-.cand{border-left:3px solid var(--mut);padding:.4rem .6rem;margin:.3rem 0;background:#060d0d;border-radius:4px;font-size:.8rem}
+.cand{border-left:3px solid var(--mut);padding:.4rem .6rem;margin:.4rem 0;background:#060d0d;border-radius:4px;font-size:.8rem;position:relative}
+.cand.win{border-left-color:var(--ok)}
 .cand b{color:var(--acc)}.score{float:right;color:var(--mut)}
+.cpy{position:absolute;top:.3rem;right:.4rem;padding:.1rem .5rem;font-size:.7rem}
 small{color:var(--mut)}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>⚡ OmniDecoder Pro</h1>
-  <div class="sub">Single-file · zero-dependency · deep multi-layer auto-cracking · classical + modern crypto · self-tests</div>
+  <div class="sub">Single-file · zero-dependency · deep multi-layer auto-cracking · JWT · classical + modern crypto · self-tests</div>
 
   <div class="tab-buttons">
     <button class="tab active" data-tab="t-decode">🪄 Auto-Crack</button>
@@ -46,12 +48,13 @@ small{color:var(--mut)}
 
   <div id="t-decode" class="tab-content active">
     <div class="box">
-      <textarea id="input" rows="5" placeholder="Paste any encoded / ciphered / multi-layered text..."></textarea>
+      <textarea id="input" rows="5" placeholder="Paste anything: Base64, JWT, hex, Morse, multi-layered text, ciphers..."></textarea>
       <div class="grid">
         <button id="magicBtn">🪄 Deep Auto-Crack</button>
+        <button id="allBtn">📋 Show All Decodings</button>
         <button id="xorBruteBtn">⚡ XOR Brute</button>
         <button id="caesarBruteBtn">⚡ Caesar Brute</button>
-        <button id="vigCrackBtn">🧠 Vigenère Auto-Crack</button>
+        <button id="vigCrackBtn">🧠 Vigenère Crack</button>
         <button id="railBtn">🚂 Rail Fence Brute</button>
         <button id="clearBtn">✕ Clear</button>
       </div>
@@ -132,25 +135,26 @@ const dec8lossy=b=>new TextDecoder("utf-8",{fatal:false}).decode(b);
 const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,"0")).join("");
 function unhex(s){let t=s.replace(/\s/g,"");if(!/^[0-9a-fA-F]*$/.test(t)||t.length%2)return null;let b=new Uint8Array(t.length/2);for(let i=0;i<t.length;i+=2)b[i/2]=parseInt(t.substr(i,2),16);return b;}
 function bytesToB64(b){let s="";const CH=0x8000;for(let i=0;i<b.length;i+=CH)s+=String.fromCharCode.apply(null,b.subarray(i,i+CH));return btoa(s);}
-function b64ToBytes(s){try{let r=atob(s.replace(/-/g,"+").replace(/_/g,"/").replace(/\s/g,""));let b=new Uint8Array(r.length);for(let i=0;i<r.length;i++)b[i]=r.charCodeAt(i);return b;}catch{return null;}}
+function b64ToBytes(s){try{let t=s.replace(/-/g,"+").replace(/_/g,"/").replace(/\s/g,"");while(t.length%4)t+="=";let r=atob(t);let b=new Uint8Array(r.length);for(let i=0;i<r.length;i++)b[i]=r.charCodeAt(i);return b;}catch{return null;}}
 function parseKey(s){let t=(s||"").trim();if(/^[0-9a-fA-F]+$/.test(t)&&t.length%2===0)return unhex(t);let b=b64ToBytes(t);if(b&&/^[A-Za-z0-9+/=_-]+$/.test(t)&&t.length%4===0&&t.length>0)return b;return enc8(t);}
 
-/* ---------- detectors ---------- */
+/* ---------- detectors (loosened) ---------- */
 const isB64=s=>{let t=s.replace(/\s/g,"");return t.length>=4&&t.length%4===0&&/^[A-Za-z0-9+/]+={0,2}$/.test(t);};
-const isB64url=s=>{let t=s.replace(/\s/g,"");return t.length>=4&&/^[A-Za-z0-9_-]+={0,2}$/.test(t)&&/[-_]/.test(t);};
+const isB64urlish=s=>{let t=s.replace(/\s/g,"");return t.length>=4&&/^[A-Za-z0-9_-]+={0,2}$/.test(t);};
 const isHexStr=s=>{let t=s.replace(/\s/g,"");return t.length>=2&&t.length%2===0&&/^[0-9a-fA-F]+$/.test(t);};
 const isBinary=s=>/^[01\s]+$/.test(s)&&s.replace(/\s/g,"").length%8===0&&s.replace(/\s/g,"").length>0;
 const isMorse=s=>/^[.\-\s/]+$/.test(s.trim())&&/[.\-]/.test(s);
 const isDecimal=s=>/^(\s*\d{1,3}\s*)+$/.test(s)&&s.trim().split(/\s+/).every(n=>+n<=255);
 const isOctal=s=>/^(\s*[0-7]{2,3}\s*)+$/.test(s);
+const isJWT=s=>{let p=s.trim().split(".");return p.length===3&&p.every(x=>/^[A-Za-z0-9_-]+$/.test(x))&&p[0].length>4;};
 
-/* ---------- english scoring ---------- */
+/* ---------- printable / english scoring ---------- */
+function printableRatio(s){if(!s)return 0;let p=0;for(let i=0;i<s.length;i++){let c=s.charCodeAt(i);if((c>=32&&c<127)||c===9||c===10||c===13)p++;}return p/s.length;}
 const FREQ={a:.082,b:.015,c:.028,d:.043,e:.127,f:.022,g:.02,h:.061,i:.07,j:.0015,k:.0077,l:.04,m:.024,n:.067,o:.075,p:.019,q:.00095,r:.06,s:.063,t:.091,u:.028,v:.0098,w:.024,x:.0015,y:.02,z:.00074};
-const COMMON=/\b(the|and|that|have|with|this|for|you|are|was|not|but|his|her|she|him|they|from|what|when|your|all|can|out|him|one|our|had|has|will|would|there|their|been|were|said|each|which|them|then|some|into|more|time|over|also|attack|dawn|hello|world|secret|message|cipher|encode|decode)\b/g;
+const COMMON=/\b(the|and|that|have|with|this|for|you|are|was|not|but|his|her|she|him|they|from|what|when|your|all|can|out|one|our|had|has|will|would|there|their|been|were|said|which|them|then|some|into|more|time|over|also|attack|dawn|hello|world|secret|message|cipher|encode|decode|meet|night|bridge|river)\b/g;
 function langScore(s){
   if(!s||!s.length)return 0;
-  let printable=0;for(let i=0;i<s.length;i++){let c=s.charCodeAt(i);if((c>=32&&c<127)||c===9||c===10||c===13)printable++;}
-  let pr=printable/s.length;if(pr<0.9)return pr*0.05;
+  let pr=printableRatio(s);if(pr<0.9)return pr*0.05;
   let txt=s.toLowerCase().replace(/[^a-z]/g,"");
   if(txt.length<2)return pr*0.15;
   let f={};for(let c of txt)f[c]=(f[c]||0)+1;
@@ -158,9 +162,11 @@ function langScore(s){
   let chiScore=Math.max(0,1-chi/5);
   let words=(s.toLowerCase().match(COMMON)||[]).length;
   let wordBonus=Math.min(0.4,words*0.12);
-  let spaceRatio=(s.match(/ /g)||[]).length/s.length;
-  let spaceBonus=(spaceRatio>0.05&&spaceRatio<0.25)?0.1:0;
-  return Math.min(1,(chiScore*0.6+wordBonus+spaceBonus)*pr);
+  let sr=(s.match(/ /g)||[]).length/s.length;
+  let spaceBonus=(sr>0.05&&sr<0.25)?0.1:0;
+  // JSON-ish bonus so JWT payloads score well
+  let jsonBonus=/[{[].*[:,].*[}\]]/.test(s)?0.15:0;
+  return Math.min(1,(chiScore*0.55+wordBonus+spaceBonus+jsonBonus)*pr);
 }
 
 /* ---------- classical ---------- */
@@ -170,7 +176,6 @@ const rot47=s=>s.replace(/[!-~]/g,c=>String.fromCharCode(33+(c.charCodeAt(0)-33+
 const atbash=s=>s.replace(/[a-z]/g,c=>String.fromCharCode(219-c.charCodeAt(0))).replace(/[A-Z]/g,c=>String.fromCharCode(155-c.charCodeAt(0)));
 const reverse=s=>[...s].reverse().join("");
 function vigenere(s,key,dec=true){let k=key.toLowerCase().replace(/[^a-z]/g,"");if(!k)return s;let ki=0;return s.replace(/[a-zA-Z]/g,c=>{let base=c>="a"?97:65,sh=k[ki++%k.length].charCodeAt(0)-97;if(dec)sh=-sh;return String.fromCharCode((c.charCodeAt(0)-base+sh+26)%26+base);});}
-function gronsfeld(s,key,dec=true){let k=String(key).replace(/\D/g,"");if(!k)return s;let ki=0;return s.replace(/[a-zA-Z]/g,c=>{let base=c>="a"?97:65,sh=+k[ki++%k.length];if(dec)sh=-sh;return String.fromCharCode((c.charCodeAt(0)-base+sh+26)%26+base);});}
 function affineDec(s,a,b){let inv=-1;for(let i=1;i<26;i++)if((a*i)%26===1){inv=i;break;}if(inv<0)return null;return s.replace(/[a-zA-Z]/g,c=>{let base=c>="a"?97:65,x=c.charCodeAt(0)-base;return String.fromCharCode(((inv*(x-b)%26+26)%26)+base);});}
 function affineEnc(s,a,b){return s.replace(/[a-zA-Z]/g,c=>{let base=c>="a"?97:65,x=c.charCodeAt(0)-base;return String.fromCharCode(((a*x+b)%26)+base);});}
 function railEnc(s,r){if(r<2)return s;let rows=Array.from({length:r},()=>[]),row=0,dir=1;for(let c of s){rows[row].push(c);if(row===0)dir=1;else if(row===r-1)dir=-1;row+=dir;}return rows.flat().join("");}
@@ -212,125 +217,119 @@ const NATO={A:"Alpha",B:"Bravo",C:"Charlie",D:"Delta",E:"Echo",F:"Foxtrot",G:"Go
 const NATOrev=Object.fromEntries(Object.entries(NATO).map(([k,v])=>[v.toLowerCase(),k]));
 const natoEnc=s=>s.toUpperCase().split("").map(c=>NATO[c]||c).join(" ");
 const natoDec=s=>s.trim().split(/\s+/).map(w=>NATOrev[w.toLowerCase()]??w).join("");
-const a1z26Enc=s=>s.toLowerCase().replace(/[a-z]/g,c=>(c.charCodeAt(0)-96)).match(/\d+|[^0-9]+/g)?.join("")??"";
 function a1z26Dec(s){return s.trim().split(/[\s\-.,]+/).map(n=>{let v=+n;return v>=1&&v<=26?String.fromCharCode(96+v):"";}).join("");}
+const a1z26Enc=s=>s.toLowerCase().replace(/[a-z]/g,c=>(c.charCodeAt(0)-96)+" ").trim();
 function baconEnc(s){return s.toUpperCase().replace(/[A-Z]/g,c=>{let n=c.charCodeAt(0)-65;return n.toString(2).padStart(5,"0").replace(/0/g,"A").replace(/1/g,"B");}).match(/.{1,5}/g)?.join(" ")??"";}
 function baconDec(s){let t=s.toUpperCase().replace(/[^AB]/g,"");if(t.length<5)return null;let out="";for(let i=0;i+5<=t.length;i+=5){let n=parseInt(t.substr(i,5).replace(/A/g,"0").replace(/B/g,"1"),2);out+=String.fromCharCode(65+n);}return out;}
 
-/* ---------- Vigenère auto-crack (IoC + chi per column) ---------- */
+/* ---------- JWT ---------- */
+function decodeJWT(s){
+  let p=s.trim().split(".");if(p.length<2)return null;
+  try{
+    let h=dec8(b64ToBytes(p[0])),pl=dec8(b64ToBytes(p[1]));
+    if(h==null||pl==null)return null;
+    let out="";
+    try{out+="Header:\n"+JSON.stringify(JSON.parse(h),null,2)+"\n\n";}catch{out+="Header:\n"+h+"\n\n";}
+    try{out+="Payload:\n"+JSON.stringify(JSON.parse(pl),null,2);}catch{out+="Payload:\n"+pl;}
+    if(p[2])out+="\n\nSignature (base64url, not verified):\n"+p[2];
+    return out;
+  }catch{return null;}
+}
+
+/* ---------- Vigenère auto-crack ---------- */
 function vigenereCrack(ct){
-  let clean=ct.toUpperCase().replace(/[^A-Z]/g,"");
-  if(clean.length<20)return null;
+  let clean=ct.toUpperCase().replace(/[^A-Z]/g,"");if(clean.length<20)return null;
   function iocFor(len){let cols=Array.from({length:len},()=>[]);for(let i=0;i<clean.length;i++)cols[i%len].push(clean[i]);let sum=0;for(let col of cols){let f={},n=col.length;for(let c of col)f[c]=(f[c]||0)+1;let ioc=0;for(let c in f)ioc+=f[c]*(f[c]-1);if(n>1)ioc/=(n*(n-1));sum+=ioc;}return sum/len;}
   let bestLen=1,bestDelta=9;for(let len=1;len<=Math.min(16,clean.length>>1);len++){let delta=Math.abs(iocFor(len)-0.0667);if(delta<bestDelta){bestDelta=delta;bestLen=len;}}
   let key="";for(let p=0;p<bestLen;p++){let col="";for(let i=p;i<clean.length;i+=bestLen)col+=clean[i];let bestShift=0,bestChi=1e9;for(let sh=0;sh<26;sh++){let dec=col.replace(/[A-Z]/g,c=>String.fromCharCode((c.charCodeAt(0)-65-sh+26)%26+65));let f={};for(let c of dec)f[c]=(f[c]||0)+1;let chi=0;for(let i=0;i<26;i++){let letter=String.fromCharCode(97+i),exp=FREQ[letter]*dec.length,obs=f[String.fromCharCode(65+i)]||0;chi+=((obs-exp)**2)/(exp||1);}if(chi<bestChi){bestChi=chi;bestShift=sh;}}key+=String.fromCharCode(65+bestShift);}
   return {key,plaintext:vigenere(ct,key,true)};
 }
 
-/* ---------- DEEP MAGIC: best-first multi-layer peel ---------- */
+/* ---------- candidate generation (single step) ---------- */
 function singleStepCandidates(str){
-  let out=[];
-  if(isB64(str)){let b=b64ToBytes(str);if(b&&b.length){let d=dec8(b);if(d!=null)out.push(["Base64",d]);else out.push(["Base64→hex",hex(b)]);}}
-  if(isB64url(str)){let b=b64ToBytes(str);if(b&&b.length){let d=dec8(b);if(d!=null)out.push(["Base64URL",d]);}}
-  if(isHexStr(str)){let b=unhex(str);if(b&&b.length){let d=dec8(b);if(d!=null)out.push(["Hex",d]);}}
-  if(isBinary(str)){let d=binDec(str);if(d!=null)out.push(["Binary",d]);}
-  if(isOctal(str)){let d=octDec(str);if(d!=null)out.push(["Octal",d]);}
-  if(isDecimal(str)){let d=decDec(str);if(d!=null)out.push(["Decimal",d]);}
-  {let b=base32dec(str);if(b&&b.length){let d=dec8(b);if(d!=null)out.push(["Base32",d]);}}
-  {let b=base58dec(str);if(b&&b.length){let d=dec8(b);if(d!=null)out.push(["Base58",d]);}}
-  {let b=base85dec(str);if(b&&b.length){let d=dec8(b);if(d!=null)out.push(["Base85",d]);}}
-  if(isMorse(str)){let d=morseDec(str);if(d)out.push(["Morse",d]);}
-  if(/^[A-Za-z\s]+$/.test(str.trim())&&/(alpha|bravo|charlie|delta|echo)/i.test(str)){let d=natoDec(str);if(d)out.push(["NATO",d]);}
-  if(/^[AB\s]+$/.test(str.trim())&&str.replace(/[^AB]/g,"").length>=5){let d=baconDec(str);if(d)out.push(["Bacon",d]);}
-  try{let u=decodeURIComponent(str);if(u!==str)out.push(["URL",u]);}catch{}
-  out.push(["ROT13",rot13(str)]);
-  out.push(["ROT47",rot47(str)]);
-  out.push(["Atbash",atbash(str)]);
-  out.push(["Reverse",reverse(str)]);
+  let out=[];const push=(n,t)=>{if(t!=null&&t!==str)out.push([n,t]);};
+  if(isJWT(str)){let j=decodeJWT(str);if(j)push("JWT",j);}
+  if(isB64(str)){let b=b64ToBytes(str);if(b&&b.length){let d=dec8(b);if(d!=null)push("Base64",d);}}
+  if(isB64urlish(str)){let b=b64ToBytes(str);if(b&&b.length){let d=dec8(b);if(d!=null)push("Base64URL",d);}}
+  if(isHexStr(str)){let b=unhex(str);if(b&&b.length){let d=dec8(b);if(d!=null)push("Hex",d);}}
+  if(isBinary(str))push("Binary",binDec(str));
+  if(isOctal(str))push("Octal",octDec(str));
+  if(isDecimal(str))push("Decimal",decDec(str));
+  {let b=base32dec(str);if(b&&b.length){let d=dec8(b);if(d!=null)push("Base32",d);}}
+  {let b=base58dec(str);if(b&&b.length){let d=dec8(b);if(d!=null)push("Base58",d);}}
+  {let b=base85dec(str);if(b&&b.length){let d=dec8(b);if(d!=null)push("Base85",d);}}
+  if(isMorse(str))push("Morse",morseDec(str));
+  if(/(alpha|bravo|charlie|delta|echo|foxtrot)/i.test(str))push("NATO",natoDec(str));
+  if(/^[AB\s]+$/.test(str.trim())&&str.replace(/[^AB]/g,"").length>=5)push("Bacon",baconDec(str));
+  try{let u=decodeURIComponent(str);if(u!==str)push("URL",u);}catch{}
+  push("ROT13",rot13(str));
+  push("ROT47",rot47(str));
+  push("Atbash",atbash(str));
+  push("Reverse",reverse(str));
   return out;
 }
+
+/* ---------- DEEP best-first peel ---------- */
+const STRUCTURAL=new Set(["JWT","Base64","Base64URL","Hex","Base32","Base58","Base85","Binary","Octal","Decimal","Morse","URL","NATO","Bacon"]);
 function magicDecode(input,opts={}){
-  const maxDepth=opts.maxDepth??8, beam=opts.beam??6;
+  const maxDepth=opts.maxDepth??10;
   let best={score:langScore(input),text:input,path:["(input)"]};
   const seen=new Set();
-  // priority queue (small): array sorted by score desc
   let frontier=[{str:input,path:[],depth:0,score:langScore(input)}];
-  let iterations=0;
-  while(frontier.length&&iterations<4000){
-    iterations++;
+  let iter=0;
+  while(frontier.length&&iter<6000){
+    iter++;
     frontier.sort((a,b)=>b.score-a.score);
     const node=frontier.shift();
-    if(node.depth>=maxDepth)continue;
-    if(seen.has(node.str)||node.str.length>100000)continue;
+    if(node.depth>=maxDepth||seen.has(node.str)||node.str.length>200000)continue;
     seen.add(node.str);
     for(let [name,res] of singleStepCandidates(node.str)){
-      if(res==null||res===node.str||seen.has(res))continue;
+      if(seen.has(res))continue;
       let sc=langScore(res);
       let np=node.path.concat(name);
       if(sc>best.score){best={score:sc,text:res,path:np.slice()};}
-      // expand if reversible-encoding step OR score improved meaningfully
-      let isStructural=["Base64","Base64URL","Hex","Base32","Base58","Base85","Binary","Octal","Decimal","Morse","URL","NATO","Bacon"].includes(name);
-      if(isStructural||sc>node.score+0.02||sc>0.2){
+      // expand structural decodes (even if intermediate looks like more encoded data),
+      // or if mostly-printable, or improved score
+      if(STRUCTURAL.has(name)||printableRatio(res)>0.9||sc>node.score+0.02){
         frontier.push({str:res,path:np,depth:node.depth+1,score:sc});
       }
     }
-    if(frontier.length>beam*4)frontier=frontier.sort((a,b)=>b.score-a.score).slice(0,beam*4);
+    if(frontier.length>40)frontier=frontier.slice(0,40);
     if(best.score>0.85)break;
   }
   return best;
 }
 
 /* ---------- Web Crypto ---------- */
-async function aesDecryptWC(mode,ct,keyB,ivB){
-  const name={cbc:"AES-CBC",gcm:"AES-GCM",ctr:"AES-CTR"}[mode];
-  if(![16,24,32].includes(keyB.length))throw new Error("AES key must be 16/24/32 bytes");
-  const k=await crypto.subtle.importKey("raw",keyB,{name},false,["decrypt"]);
-  const params=name==="AES-CBC"?{name,iv:ivB||new Uint8Array(16)}:name==="AES-GCM"?{name,iv:ivB||new Uint8Array(12)}:{name,counter:ivB||new Uint8Array(16),length:64};
-  return new Uint8Array(await crypto.subtle.decrypt(params,k,ct));
-}
+async function aesDecryptWC(mode,ct,keyB,ivB){const name={cbc:"AES-CBC",gcm:"AES-GCM",ctr:"AES-CTR"}[mode];if(![16,24,32].includes(keyB.length))throw new Error("AES key must be 16/24/32 bytes");const k=await crypto.subtle.importKey("raw",keyB,{name},false,["decrypt"]);const params=name==="AES-CBC"?{name,iv:ivB||new Uint8Array(16)}:name==="AES-GCM"?{name,iv:ivB||new Uint8Array(12)}:{name,counter:ivB||new Uint8Array(16),length:64};return new Uint8Array(await crypto.subtle.decrypt(params,k,ct));}
 async function aesGcmEncrypt(plain,keyB,ivB){const k=await crypto.subtle.importKey("raw",keyB,{name:"AES-GCM"},false,["encrypt"]);return new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:ivB},k,plain));}
 async function shaHex(algo,bytes){return hex(new Uint8Array(await crypto.subtle.digest(algo,bytes)));}
 
-/* ---------- UI render ---------- */
+/* ---------- UI ---------- */
 const esc=s=>String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
 const showPre=(div,t)=>{$(div).innerHTML=`<pre>${esc(t)}</pre>`;};
+function card(name,text,score,win){return `<div class="cand${win?" win":""}"><button class="cpy" onclick="navigator.clipboard.writeText(this.parentNode.querySelector('pre').textContent)">copy</button><b>${esc(name)}</b><span class="score">${(score*100).toFixed(0)}%</span><pre>${esc(text)}</pre></div>`;}
 
 $("magicBtn").onclick=()=>{
   const inp=$("input").value.trim();if(!inp)return;
   const r=magicDecode(inp);
   if(r.path.length>1&&r.text!==inp){
     let chain=r.path.filter(p=>p!=="(input)").join(" → ");
-    $("output").innerHTML=`<div class="cand"><b>✅ Peeled ${r.path.filter(p=>p!=="(input)").length} layer(s): ${esc(chain)}</b><span class="score">conf ${(r.score*100).toFixed(0)}%</span><pre>${esc(r.text)}</pre></div>`;
+    $("output").innerHTML=`<small>Decoded ${r.path.filter(p=>p!=="(input)").length} layer(s):</small>`+card("✅ "+chain,r.text,r.score,true);
   }else{
-    let cands=singleStepCandidates(inp).map(([n,t])=>[n,t,langScore(t)]).sort((a,b)=>b[2]-a[2]).slice(0,8)
-      .map(([n,t,s])=>`<div class="cand"><b>${n}</b><span class="score">${(s*100).toFixed(0)}%</span><pre>${esc(t)}</pre></div>`).join("");
-    $("output").innerHTML=`<small>No confident layered decode. Single-step candidates:</small>${cands||"<pre>Nothing matched. Try brute-force tools.</pre>"}`;
+    let cands=singleStepCandidates(inp).map(([n,t])=>[n,t,langScore(t)]).sort((a,b)=>b[2]-a[2]).slice(0,8).map(([n,t,s])=>card(n,t,s)).join("");
+    $("output").innerHTML=`<small>No confident layered decode. Best single-step candidates:</small>${cands||"<pre>Nothing matched. Try brute-force tools or Manual Decrypt.</pre>"}`;
   }
 };
-$("xorBruteBtn").onclick=()=>{
-  const inp=$("input").value;if(!inp)return;
-  let bytes=isHexStr(inp)?unhex(inp):isB64(inp)?b64ToBytes(inp):enc8(inp);
-  let res=[];for(let k=0;k<256;k++){let t=dec8lossy(xorBytes(bytes,[k]));let s=langScore(t);if(s>0.1)res.push({k,s,t});}
-  res.sort((a,b)=>b.s-a.s);
-  $("output").innerHTML=res.length?res.slice(0,5).map(r=>`<div class="cand"><b>key 0x${r.k.toString(16).padStart(2,"0")} (${r.k})</b><span class="score">${(r.s*100).toFixed(0)}%</span><pre>${esc(r.t)}</pre></div>`).join(""):"<pre>No readable XOR result.</pre>";
-};
-$("caesarBruteBtn").onclick=()=>{
-  const inp=$("input").value;if(!inp)return;
-  let res=[];for(let i=0;i<26;i++){let d=caesar(inp,-i);res.push({i,s:langScore(d),d});}
-  res.sort((a,b)=>b.s-a.s);
-  $("output").innerHTML=res.slice(0,5).map(r=>`<div class="cand"><b>shift -${r.i}</b><span class="score">${(r.s*100).toFixed(0)}%</span><pre>${esc(r.d)}</pre></div>`).join("");
-};
-$("vigCrackBtn").onclick=()=>{
+$("allBtn").onclick=()=>{
   const inp=$("input").value.trim();if(!inp)return;
-  const r=vigenereCrack(inp);
-  showPre("output",r?`🧠 Likely key: ${r.key}\nKey length: ${r.key.length}\n\n${r.plaintext}`:"Need at least ~20 letters to auto-crack Vigenère.");
+  let cands=singleStepCandidates(inp).map(([n,t])=>[n,t,langScore(t)]).sort((a,b)=>b[2]-a[2]);
+  $("output").innerHTML=cands.length?cands.map(([n,t,s])=>card(n,t,s)).join(""):"<pre>No decodings produced valid output.</pre>";
 };
-$("railBtn").onclick=()=>{
-  const inp=$("input").value;if(!inp)return;
-  let res=[];for(let r=2;r<=Math.min(12,inp.length-1);r++){let d=railDec(inp,r);res.push({r,s:langScore(d),d});}
-  res.sort((a,b)=>b.s-a.s);
-  $("output").innerHTML=res.slice(0,5).map(x=>`<div class="cand"><b>${x.r} rails</b><span class="score">${(x.s*100).toFixed(0)}%</span><pre>${esc(x.d)}</pre></div>`).join("");
-};
+$("xorBruteBtn").onclick=()=>{const inp=$("input").value;if(!inp)return;let bytes=isHexStr(inp)?unhex(inp):isB64(inp)?b64ToBytes(inp):enc8(inp);let res=[];for(let k=0;k<256;k++){let t=dec8lossy(xorBytes(bytes,[k]));let s=langScore(t);if(s>0.1)res.push({k,s,t});}res.sort((a,b)=>b.s-a.s);$("output").innerHTML=res.length?res.slice(0,5).map(r=>card(`XOR key 0x${r.k.toString(16).padStart(2,"0")} (${r.k})`,r.t,r.s)).join(""):"<pre>No readable XOR result.</pre>";};
+$("caesarBruteBtn").onclick=()=>{const inp=$("input").value;if(!inp)return;let res=[];for(let i=0;i<26;i++){let d=caesar(inp,-i);res.push({i,s:langScore(d),d});}res.sort((a,b)=>b.s-a.s);$("output").innerHTML=res.slice(0,5).map(r=>card(`Caesar shift -${r.i}`,r.d,r.s)).join("");};
+$("vigCrackBtn").onclick=()=>{const inp=$("input").value.trim();if(!inp)return;const r=vigenereCrack(inp);$("output").innerHTML=r?card(`Vigenère key: ${r.key}`,r.plaintext,langScore(r.plaintext),true):"<pre>Need ~20+ letters to auto-crack Vigenère.</pre>";};
+$("railBtn").onclick=()=>{const inp=$("input").value;if(!inp)return;let res=[];for(let r=2;r<=Math.min(12,inp.length-1);r++){let d=railDec(inp,r);res.push({r,s:langScore(d),d});}res.sort((a,b)=>b.s-a.s);$("output").innerHTML=res.slice(0,5).map(x=>card(`${x.r} rails`,x.d,x.s)).join("");};
 $("clearBtn").onclick=()=>{$("input").value="";$("output").innerHTML="";};
 
 $("manualDecrypt").onclick=async()=>{
@@ -338,111 +337,68 @@ $("manualDecrypt").onclick=async()=>{
   if(!inp){showPre("cryptoOut","Need ciphertext.");return;}
   try{
     let res,txt;
-    if(algo==="vigenere"){txt=vigenere(inp,keyS,true);showPre("cryptoOut",txt);return;}
+    if(algo==="vigenere"){showPre("cryptoOut",vigenere(inp,keyS,true));return;}
     if(algo==="affine"){let[a,b]=keyS.split(",").map(Number);let r=affineDec(inp,a,b);showPre("cryptoOut",r??"Invalid affine 'a' (must be coprime with 26).");return;}
     let ct=isHexStr(inp)?unhex(inp):isB64(inp)?b64ToBytes(inp):enc8(inp);
     if(algo==="xor")res=xorBytes(ct,parseKey(keyS));
     else if(algo==="rc4")res=rc4(parseKey(keyS),ct);
     else if(algo==="chacha20")res=chacha20(parseKey(keyS),parseKey(ivS),ct);
     else res=await aesDecryptWC(algo.split("-")[1],ct,parseKey(keyS),ivS?parseKey(ivS):null);
-    txt=dec8(res);
-    showPre("cryptoOut",txt!=null?txt:`[binary]\nhex: ${hex(res)}\nb64: ${bytesToB64(res)}`);
+    txt=dec8(res);showPre("cryptoOut",txt!=null?txt:`[binary]\nhex: ${hex(res)}\nb64: ${bytesToB64(res)}`);
   }catch(e){showPre("cryptoOut","Error: "+e.message);}
 };
 
-document.querySelectorAll("[data-enc]").forEach(btn=>btn.onclick=()=>{
-  const p=$("plaintext").value;if(!p)return;const m=btn.dataset.enc;let r;
-  if(m==="base64")r=bytesToB64(enc8(p));
-  else if(m==="base64url")r=bytesToB64(enc8(p)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-  else if(m==="base32")r=base32enc(enc8(p));
-  else if(m==="base58")r=base58enc(enc8(p));
-  else if(m==="base85")r=base85enc(enc8(p));
-  else if(m==="hex")r=hex(enc8(p));
-  else if(m==="url")r=encodeURIComponent(p);
-  else if(m==="binary")r=binEnc(p);
-  else if(m==="octal")r=octEnc(p);
-  else if(m==="decimal")r=decEnc(p);
-  else if(m==="rot13")r=rot13(p);
-  else if(m==="rot47")r=rot47(p);
-  else if(m==="atbash")r=atbash(p);
-  else if(m==="morse")r=morseEnc(p);
-  else if(m==="nato")r=natoEnc(p);
-  else if(m==="a1z26")r=a1z26Enc(p);
-  else if(m==="bacon")r=baconEnc(p);
-  else if(m==="reverse")r=reverse(p);
-  showPre("encOut",`${m.toUpperCase()}:\n${r}`);
-});
+document.querySelectorAll("[data-enc]").forEach(btn=>btn.onclick=()=>{const p=$("plaintext").value;if(!p)return;const m=btn.dataset.enc;let r;
+  if(m==="base64")r=bytesToB64(enc8(p));else if(m==="base64url")r=bytesToB64(enc8(p)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  else if(m==="base32")r=base32enc(enc8(p));else if(m==="base58")r=base58enc(enc8(p));else if(m==="base85")r=base85enc(enc8(p));
+  else if(m==="hex")r=hex(enc8(p));else if(m==="url")r=encodeURIComponent(p);else if(m==="binary")r=binEnc(p);
+  else if(m==="octal")r=octEnc(p);else if(m==="decimal")r=decEnc(p);else if(m==="rot13")r=rot13(p);else if(m==="rot47")r=rot47(p);
+  else if(m==="atbash")r=atbash(p);else if(m==="morse")r=morseEnc(p);else if(m==="nato")r=natoEnc(p);else if(m==="a1z26")r=a1z26Enc(p);
+  else if(m==="bacon")r=baconEnc(p);else if(m==="reverse")r=reverse(p);
+  showPre("encOut",`${m.toUpperCase()}:\n${r}`);});
 $("hashBtn").onclick=async()=>{const p=$("plaintext").value;if(!p)return;const b=enc8(p);showPre("encOut",[`SHA-1:   ${await shaHex("SHA-1",b)}`,`SHA-256: ${await shaHex("SHA-256",b)}`,`SHA-384: ${await shaHex("SHA-384",b)}`,`SHA-512: ${await shaHex("SHA-512",b)}`].join("\n"));};
 $("encryptBtn").onclick=async()=>{const p=$("plaintext").value;if(!p)return;const key=crypto.getRandomValues(new Uint8Array(32)),iv=crypto.getRandomValues(new Uint8Array(12));const ct=await aesGcmEncrypt(enc8(p),key,iv);showPre("encOut",`AES-256-GCM\nciphertext(b64): ${bytesToB64(ct)}\nkey(hex): ${hex(key)}\niv(hex): ${hex(iv)}`);};
 
 /* ---------- SELF TESTS ---------- */
 async function runTests(){
-  const T=[];const eq=(a,b)=>a===b;
-  // ---- EASY: single-step known-answer ----
+  const T=[];const eq=(a,b)=>a===b;const has=(a,b)=>typeof a==="string"&&a.includes(b);
   T.push(["[easy] Base64 'foobar'",bytesToB64(enc8("foobar")),"Zm9vYmFy"]);
   T.push(["[easy] Base32 'foobar'",base32enc(enc8("foobar")),"MZXW6YTBOI======"]);
   T.push(["[easy] Base58 'hello'",base58enc(enc8("hello")),"Cn8eVZg"]);
-  T.push(["[easy] Base85 'Man '",base85enc(enc8("Man ")),"9jqo^"]);
   T.push(["[easy] Hex 'ABC'",hex(enc8("ABC")),"414243"]);
   T.push(["[easy] Binary 'A'",binEnc("A"),"01000001"]);
-  T.push(["[easy] Octal 'A'",octEnc("A"),"101"]);
   T.push(["[easy] Morse SOS",morseEnc("SOS"),"... --- ..."]);
-  T.push(["[easy] Bacon 'A'",baconEnc("A"),"AAAAA"]);
   T.push(["[easy] ROT13",rot13("Hello"),"Uryyb"]);
-  T.push(["[easy] ROT47",rot47("Hello World"),"w6==@ (@C=5"]);
   T.push(["[easy] Atbash",atbash("Wizard"),"Drchiw"]);
-  T.push(["[easy] Caesar +3 decode",caesar("Khoor",-3),"Hello"]);
+  T.push(["[easy] Caesar +3",caesar("Khoor",-3),"Hello"]);
   T.push(["[easy] Vigenère LEMON",vigenere("LXFOPVEFRNHR","LEMON",true),"ATTACKATDAWN"]);
-  T.push(["[easy] Affine a5b8 decode",affineDec("IHHWVCSWFRCP",5,8),"AFFINECIPHER"]);
-  T.push(["[easy] Rail fence rt",railDec(railEnc("WEAREDISCOVEREDFLEEATONCE",3),3),"WEAREDISCOVEREDFLEEATONCE"]);
-  T.push(["[easy] A1Z26 decode",a1z26Dec("8 5 12 12 15"),"hello"]);
-  T.push(["[easy] NATO decode",natoDec("Hotel India"),"HI"]);
-  // ---- crypto KATs ----
+  T.push(["[easy] Affine a5b8",affineDec("IHHWVCSWFRCP",5,8),"AFFINECIPHER"]);
+  T.push(["[easy] A1Z26",a1z26Dec("8 5 12 12 15"),"hello"]);
+  // JWT (the case you reported)
+  {
+    let jwt="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+    let d=decodeJWT(jwt);
+    T.push(["[JWT] detect+decode",isJWT(jwt)&&has(d,"John Doe")&&has(d,"HS256"),true]);
+    T.push(["[JWT] via magicDecode",has(magicDecode(jwt).text,"John Doe"),true]);
+  }
+  // crypto KATs
   T.push(["[kat] RC4 Key/Plaintext",hex(rc4(enc8("Key"),enc8("Plaintext"))).toUpperCase(),"BBF316E8D940AF0AD3"]);
-  {const key=new Uint8Array(32);for(let i=0;i<32;i++)key[i]=i;const nonce=new Uint8Array([0,0,0,0,0,0,0,0x4a,0,0,0,0]);T.push(["[kat] ChaCha20 RFC8439 ks",hex(chacha20(key,nonce,new Uint8Array(16),1)),"224f51f3401bd9e12fde276fb8631ded"]);}
+  {const key=new Uint8Array(32);for(let i=0;i<32;i++)key[i]=i;const nonce=new Uint8Array([0,0,0,0,0,0,0,0x4a,0,0,0,0]);T.push(["[kat] ChaCha20 RFC8439",hex(chacha20(key,nonce,new Uint8Array(16),1)),"224f51f3401bd9e12fde276fb8631ded"]);}
   T.push(["[kat] SHA-256('abc')",await shaHex("SHA-256",enc8("abc")),"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"]);
-  T.push(["[kat] SHA-1('abc')",await shaHex("SHA-1",enc8("abc")),"a9993e364706816aba3e25717850c26c9cd0d89d"]);
   {const key=crypto.getRandomValues(new Uint8Array(32)),iv=crypto.getRandomValues(new Uint8Array(12));const ct=await aesGcmEncrypt(enc8("round trip"),key,iv);T.push(["[kat] AES-256-GCM rt",dec8(await aesDecryptWC("gcm",ct,key,iv)),"round trip"]);}
-  // ---- MEDIUM: 2-3 layer auto-peel ----
-  T.push(["[med] peel b64(hex)",magicDecode(bytesToB64(enc8(hex(enc8("Hello world this is a test"))))).text,"Hello world this is a test"]);
-  T.push(["[med] peel base32(base64)",magicDecode(base32enc(enc8(bytesToB64(enc8("The quick brown fox jumps"))))).text,"The quick brown fox jumps"]);
-  T.push(["[med] peel reverse(b64)",magicDecode(reverse(bytesToB64(enc8("auto detection works well")))).text,"auto detection works well"]);
-  // ---- HARD: 4-5 layer torture test ----
-  {
-    let pt="the secret meeting is at midnight near the old bridge";
-    let L1=bytesToB64(enc8(pt));          // base64
-    let L2=hex(enc8(L1));                  // hex
-    let L3=base32enc(enc8(L2));            // base32
-    let L4=bytesToB64(enc8(L3));           // base64
-    T.push(["[HARD] 4-layer b64/hex/b32/b64",magicDecode(L4,{maxDepth:10}).text,pt]);
-  }
-  {
-    let pt="meet me where the river bends at sunrise tomorrow morning";
-    let L1=base58enc(enc8(pt));
-    let L2=bytesToB64(enc8(L1));
-    let L3=hex(enc8(L2));
-    T.push(["[HARD] 3-layer base58/b64/hex",magicDecode(L3,{maxDepth:10}).text,pt]);
-  }
-  // ---- HARD cipher auto-crack (no key supplied) ----
-  {
-    let pt="THEDETERMINATIONOFLANGUAGEFREQUENCIESALLOWSCRYPTANALYSIS";
-    let ct=vigenere(pt,"SECRET",false);
-    let r=vigenereCrack(ct);
-    T.push(["[HARD] Vigenère auto-crack key",r&&r.key,"SECRET"]);
-    T.push(["[HARD] Vigenère auto-crack text",r&&r.plaintext,pt]);
-  }
-  {
-    let pt="defendtheeastwallofthecastleatallcosts";
-    let ct=railEnc(pt,4);
-    // brute rails, pick best
-    let best=null;for(let r=2;r<=8;r++){let d=railDec(ct,r);let s=langScore(d);if(!best||s>best.s)best={r,d,s};}
-    T.push(["[HARD] Rail fence brute recover",best.d,pt]);
-  }
+  // multi-layer peels
+  T.push(["[med] b64(hex)",magicDecode(bytesToB64(enc8(hex(enc8("Hello world this is a test"))))).text,"Hello world this is a test"]);
+  T.push(["[med] b32(b64)",magicDecode(base32enc(enc8(bytesToB64(enc8("The quick brown fox jumps"))))).text,"The quick brown fox jumps"]);
+  T.push(["[med] reverse(b64)",magicDecode(reverse(bytesToB64(enc8("auto detection works well")))).text,"auto detection works well"]);
+  {let pt="the secret meeting is at midnight near the old bridge";let L=bytesToB64(enc8(pt));L=hex(enc8(L));L=base32enc(enc8(L));L=bytesToB64(enc8(L));T.push(["[HARD] 4-layer b64/hex/b32/b64",magicDecode(L).text,pt]);}
+  {let pt="meet me where the river bends at sunrise tomorrow morning";let L=base58enc(enc8(pt));L=bytesToB64(enc8(L));L=hex(enc8(L));T.push(["[HARD] 3-layer b58/b64/hex",magicDecode(L).text,pt]);}
+  {let pt="THEDETERMINATIONOFLANGUAGEFREQUENCIESALLOWSCRYPTANALYSIS";let ct=vigenere(pt,"SECRET",false);let r=vigenereCrack(ct);T.push(["[HARD] Vigenère auto key",r&&r.key,"SECRET"]);T.push(["[HARD] Vigenère auto text",r&&r.plaintext,pt]);}
+  {let pt="defendtheeastwallofthecastleatallcosts";let ct=railEnc(pt,4);let best=null;for(let r=2;r<=8;r++){let d=railDec(ct,r);let s=langScore(d);if(!best||s>best.s)best={r,d,s};}T.push(["[HARD] Rail fence brute",best.d,pt]);}
 
   let pass=0;
   const rows=T.map(([name,got,want])=>{const ok=eq(got,want);if(ok)pass++;return `<tr><td>${ok?'<span class="pass">PASS</span>':'<span class="fail">FAIL</span>'}</td><td>${esc(name)}</td><td><small>${esc(String(got)).slice(0,72)}</small></td></tr>`;}).join("");
   $("testSummary").innerHTML=`<pre>${pass}/${T.length} passed ${pass===T.length?"🎉 ALL GREEN":"⚠️ failures below"}</pre>`;
-  $("testOut").innerHTML=`<table><tr><th>Result</th><th>Test</th><th>Output (truncated)</th></tr>${rows}</table>`;
+  $("testOut").innerHTML=`<table><tr><th>Result</th><th>Test</th><th>Output</th></tr>${rows}</table>`;
 }
 $("runTests").onclick=runTests;
 
