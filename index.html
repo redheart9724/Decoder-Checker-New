@@ -520,8 +520,27 @@ function hexToBytes(s){const c=String(s).replace(/[\s:,\-]/g,'');if(!/^[0-9a-fA-
 const unhex=hexToBytes;
 function b64ToBytes(s){try{let t=String(s).trim().replace(/\s/g,'').replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const r=atob(t);const b=new Uint8Array(r.length);for(let i=0;i<r.length;i++)b[i]=r.charCodeAt(i);return b;}catch{return null;}}
 function bytesToB64(b){let s='';const CH=0x8000;for(let i=0;i<b.length;i+=CH)s+=String.fromCharCode.apply(null,b.subarray(i,i+CH));try{return btoa(s);}catch{return null;}}
-function isPrintableStr(s){if(typeof s!=='string'||!s.length)return false;let p=0;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c===9||c===10||c===13||(c>=32&&c<=126)||(c>=160&&c<=0xFFFD))p++;}return p/s.length>=0.85;}
-function printRatio(s){if(!s||!s.length)return 0;let p=0;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c===9||c===10||c===13||(c>=32&&c<=126)||(c>=160&&c<=0xFFFD))p++;}return p/s.length;}
+function isPrintableStr(s){
+ if(typeof s!=='string'||!s.length)return false;
+ if(s.indexOf('\uFFFD')>=0)return false;  // ADD THIS LINE
+ let p=0;
+ for(let i=0;i<s.length;i++){
+  const c=s.charCodeAt(i);
+  if(c===9||c===10||c===13||(c>=32&&c<=126)||(c>=160&&c<=0xFFFC))p++;  // changed 0xFFFD to 0xFFFC
+ }
+ return p/s.length>=0.85;
+}
+function printRatio(s){
+ if(!s||!s.length)return 0;
+ if(s.indexOf('\uFFFD')>=0)return 0;
+ let p=0;
+ for(let i=0;i<s.length;i++){
+  const c=s.charCodeAt(i);
+  if(c===9||c===10||c===13||(c>=32&&c<=126)||(c>=160&&c<=0xFFFC))p++;
+ }
+ return p/s.length;
+}
+
 function asciiAlphaRatio(s){if(!s||!s.length)return 0;let a=0;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if((c>=65&&c<=90)||(c>=97&&c<=122)||c===32||c===46||c===44||c===33||c===63||c===10)a++;}return a/s.length;}
 function parseKey(str,fmt='auto'){const t=String(str).trim();if(fmt==='utf8')return enc8(t);if(fmt==='hex')return hexToBytes(t);if(fmt==='b64')return b64ToBytes(t);const st=t.replace(/[\s:,\-]/g,'');if(/^[0-9a-fA-F]+$/.test(st)&&st.length%2===0&&st.length>=4){const b=hexToBytes(t);if(b)return b;}if(/^[A-Za-z0-9+/=_-]+$/.test(t.replace(/\s/g,''))&&t.length>6){const b=b64ToBytes(t);if(b&&b.length>=4)return b;}return enc8(t);}
 
