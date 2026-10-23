@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CipherSense ULTRA v10 — Pipeline Cryptanalysis Suite</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline' https://cdnjs.cloudflare.com;style-src 'unsafe-inline';img-src data:;connect-src 'none';form-action 'none';base-uri 'none'">
+<title>CipherSense ULTRA v10.1 — Pipeline Cryptanalysis Suite</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -231,7 +232,7 @@ html[data-theme="light"] .pipe-final-b{color:#0a5034}
 <div class="shell">
 <header class="hdr">
   <div class="hdr-l">
-    <div class="logo">CIPHER<span>SENSE</span> <span style="font-size:.5em;color:var(--g2);font-weight:400">ULTRA v10</span></div>
+    <div class="logo">CIPHER<span>SENSE</span> <span style="font-size:.5em;color:var(--g2);font-weight:400">ULTRA v10.1</span></div>
     <div class="logo-sub">Pipeline Cryptanalysis · Greedy Peeler · Frequency · Vigenère · Shareable</div>
     <div class="badges">
       <span class="badge" style="color:var(--g);border-color:rgba(0,255,170,.3);background:rgba(0,255,170,.06)">REAL-TIME</span>
@@ -389,7 +390,7 @@ Detects (validated):
       </select>
     </div>
     <div class="kb-row" id="r-ifmt"><span class="kb-lbl">Input fmt</span><select class="kb-sel" id="dec-ifmt" style="flex:1"><option value="auto">Auto</option><option value="b64">Base64</option><option value="hex">Hex</option><option value="raw">Raw</option></select></div>
-    <div class="kb-row" id="r-key"><span class="kb-lbl">Key</span><input type="text" class="kb-in" id="dec-key" placeholder="UTF-8, hex, or Base64"><select class="kb-sel" id="dec-kfmt"><option value="auto">Auto</option><option value="utf8">UTF-8</option><option value="hex">Hex</option><option value="b64">Base64</option></select></div>
+    <div class="kb-row" id="r-key"><span class="kb-lbl">Key</span><input type="text" class="kb-in" id="dec-key" placeholder="auto: hex → base64 (needs +/=/-) → UTF-8"><select class="kb-sel" id="dec-kfmt"><option value="auto">Auto</option><option value="utf8">UTF-8</option><option value="hex">Hex</option><option value="b64">Base64</option></select></div>
     <div class="kb-row" id="r-iv"><span class="kb-lbl">IV / Nonce</span><input type="text" class="kb-in" id="dec-iv" placeholder="blank = try prepended"><select class="kb-sel" id="dec-ivfmt"><option value="auto">Auto</option><option value="hex">Hex</option><option value="b64">Base64</option></select></div>
     <div class="kb-row" id="r-shift" style="display:none"><span class="kb-lbl">Shift / Key</span><input type="text" class="kb-in" id="dec-shift" placeholder="Shift # or keyword"></div>
     <div class="kb-row" id="r-affine" style="display:none"><span class="kb-lbl">a, b</span><input type="text" class="kb-in" id="dec-affine" placeholder="e.g. 5,8"></div>
@@ -511,11 +512,11 @@ Detects (validated):
 
 Detects:
   • Hardcoded secrets, API keys, JWTs, private keys, high-entropy strings (same engine as Secret Scanner)
-  • Weak/broken crypto: MD5/SHA1/DES/RC4/ECB, Math.random() for tokens/keys, static or zero IVs, 'none'-alg JWTs, hardcoded JWT secrets, weak PBKDF2/bcrypt params
-  • Exploitable sinks: eval/new Function, obfuscated eval(atob(...)) loaders, innerHTML/document.write, shell command concatenation, prototype pollution, insecure deserialization
-  • Config/transport issues: disabled TLS verification, permissive CORS, unsafe CSP
-  • Session/auth weaknesses: tokens in localStorage, cookies missing Secure/HttpOnly/SameSite, predictable session IDs, postMessage('*')
-  • A cryptographic primitive inventory (what algorithms the code actually uses, and how weak/strong each is)"></textarea>
+  • Weak/broken crypto: MD5/SHA1/DES/RC4/ECB, Math.random() for tokens/keys, static or zero IVs, 'none'-alg JWTs, unverified-alg JWTs, hardcoded JWT secrets, weak PBKDF2/bcrypt params
+  • Exploitable sinks: eval/new Function (incl. obfuscated window['eval'] & packers), SQL by concatenation, shell command injection, path traversal, SSRF, ReDoS (dynamic RegExp), innerHTML/document.write, prototype pollution, unsafe deserialization (node-serialize/yaml)
+  • Config/transport issues: disabled TLS verification, permissive CORS (header & middleware forms), unsafe CSP, legacy SSL protocols, CSRF disabled
+  • Session/auth weaknesses: tokens in localStorage, document.cookie, cookies missing Secure/HttpOnly/SameSite, predictable session IDs, postMessage send/receive without origin checks
+  • A cryptographic primitive inventory + weighted security score (what algorithms the code actually uses, and how weak/strong each is). Comment-only matches are ignored automatically."></textarea>
     <div class="bfoot">
       <div class="bmeta"><span><b id="jsan-chars">0</b> chars</span><span id="jsan-count" style="display:none">found <b id="jsan-n">0</b></span><span class="live-ind" id="jsan-live"><span class="live-dot"></span>LIVE</span></div>
       <div class="acts">
@@ -557,11 +558,11 @@ function b64ToBytes(s){try{let t=String(s).trim().replace(/\s/g,'').replace(/-/g
 function bytesToB64(b){let s='';const CH=0x8000;for(let i=0;i<b.length;i+=CH)s+=String.fromCharCode.apply(null,b.subarray(i,i+CH));try{return btoa(s);}catch{return null;}}
 function isPrintableStr(s){
  if(typeof s!=='string'||!s.length)return false;
- if(s.indexOf('\uFFFD')>=0)return false;  // ADD THIS LINE
+ if(s.indexOf('\uFFFD')>=0)return false;
  let p=0;
  for(let i=0;i<s.length;i++){
   const c=s.charCodeAt(i);
-  if(c===9||c===10||c===13||(c>=32&&c<=126)||(c>=160&&c<=0xFFFC))p++;  // changed 0xFFFD to 0xFFFC
+  if(c===9||c===10||c===13||(c>=32&&c<=126)||(c>=160&&c<=0xFFFC))p++;
  }
  return p/s.length>=0.85;
 }
@@ -577,7 +578,7 @@ function printRatio(s){
 }
 
 function asciiAlphaRatio(s){if(!s||!s.length)return 0;let a=0;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if((c>=65&&c<=90)||(c>=97&&c<=122)||c===32||c===46||c===44||c===33||c===63||c===10)a++;}return a/s.length;}
-function parseKey(str,fmt='auto'){const t=String(str).trim();if(fmt==='utf8')return enc8(t);if(fmt==='hex')return hexToBytes(t);if(fmt==='b64')return b64ToBytes(t);const st=t.replace(/[\s:,\-]/g,'');if(/^[0-9a-fA-F]+$/.test(st)&&st.length%2===0&&st.length>=4){const b=hexToBytes(t);if(b)return b;}if(/^[A-Za-z0-9+/=_-]+$/.test(t.replace(/\s/g,''))&&t.length>6){const b=b64ToBytes(t);if(b&&b.length>=4)return b;}return enc8(t);}
+function parseKey(str,fmt='auto'){const t=String(str).trim();if(fmt==='utf8')return enc8(t);if(fmt==='hex')return hexToBytes(t);if(fmt==='b64')return b64ToBytes(t);const st=t.replace(/[\s:,\-]/g,'');if(/^[0-9a-fA-F]+$/.test(st)&&st.length%2===0&&st.length>=4){const b=hexToBytes(t);if(b)return b;}/* Base64 only when it has distinctive chars (+/= or URL-safe), else plain words like "password" would decode to garbage bytes */if(/[+/=_-]/.test(t)&&t.length>=8){const b=b64ToBytes(t);if(b&&b.length>=4)return b;}return enc8(t);}
 
 /* ── language scoring ── */
 const FREQ={a:.082,b:.015,c:.028,d:.043,e:.127,f:.022,g:.02,h:.061,i:.07,j:.0015,k:.0077,l:.04,m:.024,n:.067,o:.075,p:.019,q:.00095,r:.06,s:.063,t:.091,u:.028,v:.0098,w:.024,x:.0015,y:.02,z:.00074};
@@ -586,7 +587,7 @@ const TRI=new Set(['the','and','ing','her','hat','his','tha','ere','for','ent','
 const ENG_BIGRAMS={th:.0356,he:.0307,in:.0243,er:.0205,an:.0199,re:.0185,on:.0176,at:.0149,en:.0145,nd:.0135,ti:.0134,es:.0134,or:.0128,te:.0120,of:.0117,ed:.0117,is:.0113,it:.0112,al:.0109,ar:.0107};
 const ENG_TRIGRAMS={the:.0181,and:.0073,ing:.0072,her:.0036,hat:.0033,his:.0030,tha:.0033,ere:.0030,for:.0034,ent:.0042,ion:.0042,ter:.0030,was:.0029,you:.0028,ith:.0026,ver:.0024,all:.0023,wit:.0019,thi:.0026,tio:.0031};
 const WORDS=/\b(the|and|that|have|with|this|for|you|are|was|not|but|his|her|she|they|from|what|when|your|all|can|out|one|our|had|has|will|would|there|their|been|were|said|which|them|then|some|into|more|time|over|also|hello|world|secret|message|password|fox|quick|brown|jumps|lazy|dog|admin|data|flag|attack|dawn|key|cipher|test|forensics)\b/gi;
-function langScore(s){if(!s||!s.length)return 0;const p=printRatio(s);if(p<.85)return p*.05;const low=s.toLowerCase(),t=low.replace(/[^a-z]/g,'');if(t.length<3)return p*.15+(asciiAlphaRatio(s)>.7?.2:0);const f={};for(const c of t)f[c]=(f[c]||0)+1;let chi=0;for(const c in FREQ){const o=(f[c]||0)/t.length;chi+=((o-FREQ[c])**2)/FREQ[c];}const cs=Math.max(0,1-chi/5);let bi=0;for(let i=0;i<t.length-1;i++)if(BI.has(t.substr(i,2)))bi++;const bs=t.length>1?bi/(t.length-1):0;let tri=0;for(let i=0;i<t.length-2;i++)if(TRI.has(t.substr(i,3)))tri++;const ts=t.length>2?tri/(t.length-2):0;const w=(low.match(WORDS)||[]).length,ws=Math.min(.5,w*.14);const sr=(s.match(/ /g)||[]).length/s.length,ss=(sr>.04&&sr<.28)?.1:0;const json=/[{[][^]*[:,][^]*[}\]]/.test(s)?.2:0;return Math.min(1,(cs*.35+bs*.15+ts*.15+ws+ss+json)*p);}
+function langScore(s){if(!s||!s.length)return 0;const p=printRatio(s);if(p<.85)return p*.05;const low=s.toLowerCase(),t=low.replace(/[^a-z]/g,'');if(t.length<3)return p*.15+(asciiAlphaRatio(s)>.7?.2:0);const f={};for(const c of t)f[c]=(f[c]||0)+1;let chi=0;for(const c in FREQ){const o=(f[c]||0)/t.length;chi+=((o-FREQ[c])**2)/FREQ[c];}const cs=Math.max(0,1-chi/5);let bi=0;for(let i=0;i<t.length-1;i++)if(BI.has(t.substr(i,2)))bi++;const bs=t.length>1?bi/(t.length-1):0;let tri=0;for(let i=0;i<t.length-2;i++)if(TRI.has(t.substr(i,3)))tri++;const ts=t.length>2?tri/(t.length-2):0;const w=(low.match(WORDS)||[]).length,ws=Math.min(.5,w*.14);const sr=(s.match(/ /g)||[]).length/s.length,ss=(sr>.04&&sr<.28)?.1:0;const json=((s.includes('{')||s.includes('['))&&s.includes('}')&&/[:,]/.test(s))?.2:0;return Math.min(1,(cs*.35+bs*.15+ts*.15+ws+ss+json)*p);}
 function shannon(s){if(!s.length)return 0;const f={};for(const c of s)f[c]=(f[c]||0)+1;let h=0;for(const k in f){const p=f[k]/s.length;h-=p*Math.log2(p);}return +h.toFixed(3);}
 function shannonBytes(b){if(!b.length)return 0;const f=new Array(256).fill(0);for(const v of b)f[v]++;let h=0;for(let i=0;i<256;i++)if(f[i]){const p=f[i]/b.length;h-=p*Math.log2(p);}return +h.toFixed(4);}
 function IC(s){const L=String(s).toUpperCase().replace(/[^A-Z]/g,'');if(L.length<2)return 0;const f={};for(const c of L)f[c]=(f[c]||0)+1;let sum=0;for(const k in f)sum+=f[k]*(f[k]-1);return +(sum/(L.length*(L.length-1))).toFixed(5);}
@@ -661,12 +662,12 @@ function crackSub(cipher,iters=2500){const ct=String(cipher).toUpperCase().repla
 /* ── XOR / RC4 / ChaCha / AES / DES ── */
 function xorBytes(d,k){const o=new Uint8Array(d.length);for(let i=0;i<d.length;i++)o[i]=d[i]^k[i%k.length];return o;}
 function bruteXOR(ct){const r=[];for(let k=0;k<=255;k++){const out=xorBytes(ct,[k]);const t=dec8(out,false);if(t&&isPrintableStr(t)){const sc=langScore(t);if(sc>.05||printRatio(t)>.95)r.push({k,text:t,sc,ratio:printRatio(t)});}}return r.sort((a,b)=>b.sc-a.sc||b.ratio-a.ratio);}
-function bruteXORMulti(ct,maxKL=16){let best=null;for(let kl=1;kl<=maxKL;kl++){const key=new Uint8Array(kl);for(let ki=0;ki<kl;ki++){const col=[];for(let i=ki;i<ct.length;i+=kl)col.push(ct[i]);let bB=0,bSc=-1e9;for(let b=0;b<256;b++){let s='';for(const x of col)s+=String.fromCharCode(x^b);const sc=langScore(s);if(sc>bSc){bSc=sc;bB=b;}}key[ki]=bB;}const t=dec8(xorBytes(ct,key),false);if(t){const sc=langScore(t);if(!best||sc>best.sc)best={kl,key:bytesToHex(key),text:t,sc};}}return best;}
+function bruteXORMulti(ct,maxKL=16,sampleLen=Infinity){const scan=(isFinite(sampleLen)&&ct.length>sampleLen)?ct.slice(0,sampleLen):ct;let best=null;for(let kl=1;kl<=maxKL;kl++){const key=new Uint8Array(kl);for(let ki=0;ki<kl;ki++){const col=[];for(let i=ki;i<scan.length;i+=kl)col.push(scan[i]);let bB=0,bSc=-1e9;for(let b=0;b<256;b++){let s='';for(const x of col)s+=String.fromCharCode(x^b);const sc=langScore(s);if(sc>bSc){bSc=sc;bB=b;}}key[ki]=bB;}const t=dec8(xorBytes(ct,key),false);if(t){const sc=langScore(t);if(!best||sc>best.sc)best={kl,key:bytesToHex(key),text:t,sc};}}return best;}
 function rc4(kb,db){const S=Array.from({length:256},(_,i)=>i);let j=0;for(let i=0;i<256;i++){j=(j+S[i]+kb[i%kb.length])&255;[S[i],S[j]]=[S[j],S[i]];}let i2=0;j=0;const out=new Uint8Array(db.length);for(let n=0;n<db.length;n++){i2=(i2+1)&255;j=(j+S[i2])&255;[S[i2],S[j]]=[S[j],S[i2]];out[n]=db[n]^S[(S[i2]+S[j])&255];}return out;}
 function chacha20(kb,nb,db,ctr=0){if(kb.length!==32)throw new Error('ChaCha20: 32-byte key');if(nb.length!==12)throw new Error('ChaCha20: 12-byte nonce');const rotl=(a,b)=>((a<<b)|(a>>>(32-b)))>>>0;function qr(s,a,b,c,d){s[a]=(s[a]+s[b])>>>0;s[d]=rotl(s[d]^s[a],16);s[c]=(s[c]+s[d])>>>0;s[b]=rotl(s[b]^s[c],12);s[a]=(s[a]+s[b])>>>0;s[d]=rotl(s[d]^s[a],8);s[c]=(s[c]+s[d])>>>0;s[b]=rotl(s[b]^s[c],7);}function block(counter){const st=new Uint32Array(16);st[0]=0x61707865;st[1]=0x3320646e;st[2]=0x79622d32;st[3]=0x6b206574;for(let i=0;i<8;i++)st[4+i]=kb[i*4]|(kb[i*4+1]<<8)|(kb[i*4+2]<<16)|(kb[i*4+3]<<24);st[12]=counter;for(let i=0;i<3;i++)st[13+i]=nb[i*4]|(nb[i*4+1]<<8)|(nb[i*4+2]<<16)|(nb[i*4+3]<<24);const w=st.slice();for(let i=0;i<10;i++){qr(w,0,4,8,12);qr(w,1,5,9,13);qr(w,2,6,10,14);qr(w,3,7,11,15);qr(w,0,5,10,15);qr(w,1,6,11,12);qr(w,2,7,8,13);qr(w,3,4,9,14);}const out=new Uint8Array(64);for(let i=0;i<16;i++){const v=(w[i]+st[i])>>>0;out[i*4]=v&255;out[i*4+1]=(v>>>8)&255;out[i*4+2]=(v>>>16)&255;out[i*4+3]=(v>>>24)&255;}return out;}const out=new Uint8Array(db.length);for(let i=0,c=ctr;i<db.length;i+=64,c++){const ks=block(c),len=Math.min(64,db.length-i);for(let j=0;j<len;j++)out[i+j]=db[i+j]^ks[j];}return out;}
 function waTob(wa){const w=wa.words,s=wa.sigBytes,b=new Uint8Array(s);for(let i=0;i<s;i++)b[i]=(w[i>>>2]>>>(24-(i%4)*8))&0xff;return b;}
-async function aesDecrypt(mode,ct,key,iv){if(![16,24,32].includes(key.length))throw new Error(`AES key: need 16/24/32 bytes, got ${key.length}`);if(mode==='ecb'){const wa=CJS.lib.WordArray;return waTob(CJS.AES.decrypt({ciphertext:wa.create(ct)},wa.create(key),{mode:CJS.mode.ECB,padding:CJS.pad.Pkcs7}));}const wc=mode==='cbc'?'AES-CBC':mode==='ctr'?'AES-CTR':'AES-GCM';const ck=await crypto.subtle.importKey('raw',key,{name:wc},false,['decrypt']);let p;if(mode==='cbc'){if(!iv||iv.length!==16)throw new Error('AES-CBC: 16-byte IV');p={name:'AES-CBC',iv};}else if(mode==='ctr'){let c=iv||new Uint8Array(16);if(c.length!==16){const x=new Uint8Array(16);x.set(c.slice(0,16));c=x;}p={name:'AES-CTR',counter:c,length:64};}else{if(!iv)throw new Error('AES-GCM: nonce');p={name:'AES-GCM',iv};}return new Uint8Array(await crypto.subtle.decrypt(p,ck,ct));}
-async function aesEncrypt(mode,pt,key,iv){if(mode==='ecb'){const wa=CJS.lib.WordArray;return waTob(CJS.AES.encrypt(wa.create(pt),wa.create(key),{mode:CJS.mode.ECB,padding:CJS.pad.Pkcs7}).ciphertext);}const wc=mode==='cbc'?'AES-CBC':mode==='ctr'?'AES-CTR':'AES-GCM';const ck=await crypto.subtle.importKey('raw',key,{name:wc},false,['encrypt']);let p;if(mode==='cbc')p={name:'AES-CBC',iv};else if(mode==='ctr')p={name:'AES-CTR',counter:iv,length:64};else p={name:'AES-GCM',iv};return new Uint8Array(await crypto.subtle.encrypt(p,ck,pt));}
+async function aesDecrypt(mode,ct,key,iv){if(!(window.crypto&&crypto.subtle))throw new Error('WebCrypto unavailable — open this page over HTTPS (or localhost)');if(![16,24,32].includes(key.length))throw new Error(`AES key: need 16/24/32 bytes, got ${key.length}`);if(mode==='ecb'){const wa=CJS.lib.WordArray;return waTob(CJS.AES.decrypt({ciphertext:wa.create(ct)},wa.create(key),{mode:CJS.mode.ECB,padding:CJS.pad.Pkcs7}));}const wc=mode==='cbc'?'AES-CBC':mode==='ctr'?'AES-CTR':'AES-GCM';const ck=await crypto.subtle.importKey('raw',key,{name:wc},false,['decrypt']);let p;if(mode==='cbc'){if(!iv||iv.length!==16)throw new Error('AES-CBC: 16-byte IV');p={name:'AES-CBC',iv};}else if(mode==='ctr'){let c=iv||new Uint8Array(16);if(c.length!==16){const x=new Uint8Array(16);x.set(c.slice(0,16));c=x;}p={name:'AES-CTR',counter:c,length:64};}else{if(!iv)throw new Error('AES-GCM: nonce');p={name:'AES-GCM',iv};}return new Uint8Array(await crypto.subtle.decrypt(p,ck,ct));}
+async function aesEncrypt(mode,pt,key,iv){if(!(window.crypto&&crypto.subtle))throw new Error('WebCrypto unavailable — open this page over HTTPS (or localhost)');if(mode==='ecb'){const wa=CJS.lib.WordArray;return waTob(CJS.AES.encrypt(wa.create(pt),wa.create(key),{mode:CJS.mode.ECB,padding:CJS.pad.Pkcs7}).ciphertext);}const wc=mode==='cbc'?'AES-CBC':mode==='ctr'?'AES-CTR':'AES-GCM';const ck=await crypto.subtle.importKey('raw',key,{name:wc},false,['encrypt']);let p;if(mode==='cbc')p={name:'AES-CBC',iv};else if(mode==='ctr'){/* WebCrypto needs exactly 16 bytes for the CTR counter — pad short nonces like the decrypt path does */let c=iv||new Uint8Array(16);if(c.length!==16){const x=new Uint8Array(16);x.set(c.slice(0,16));c=x;}p={name:'AES-CTR',counter:c,length:64};}else p={name:'AES-GCM',iv};return new Uint8Array(await crypto.subtle.encrypt(p,ck,pt));}
 function desDecrypt(mode,ct,k,iv){const wa=CJS.lib.WordArray;return waTob(CJS.DES.decrypt({ciphertext:wa.create(ct)},wa.create(k),{iv:iv?wa.create(iv):wa.create(new Uint8Array(8)),mode:CJS.mode[mode],padding:CJS.pad.Pkcs7}));}
 function triDesDecrypt(mode,ct,k,iv){const wa=CJS.lib.WordArray;return waTob(CJS.TripleDES.decrypt({ciphertext:wa.create(ct)},wa.create(k),{iv:iv?wa.create(iv):wa.create(new Uint8Array(8)),mode:CJS.mode[mode],padding:CJS.pad.Pkcs7}));}
 
@@ -762,21 +763,36 @@ function recognize(raw){
 /* ════════ secret scanner rules ════════ */
 const SECRET_RULES=[
  {name:'AWS Access Key ID',sev:'high',re:/\b(AKIA|ASIA|AGPA|AIDA|AROA|ANPA|ANVA)[0-9A-Z]{16}\b/g},
+ {name:'AWS Secret Access Key',sev:'high',re:/\b(?:aws_?secret_?(?:access)?_?key|secret_?access_?key)\s*[:=]\s*["']([A-Za-z0-9/+=]{40})["']/gi,group:1},
  {name:'GitHub Token',sev:'high',re:/\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}\b/g},
  {name:'GitHub Fine-grained PAT',sev:'high',re:/\bgithub_pat_[A-Za-z0-9_]{82}\b/g},
+ {name:'GitLab PAT',sev:'high',re:/\bglpat-[A-Za-z0-9_\-]{20,}\b/g},
  {name:'Stripe Secret Key',sev:'high',re:/\b(sk|rk)_(live|test)_[0-9a-zA-Z]{24,}\b/g},
  {name:'Slack Token',sev:'high',re:/\bxox[baprs]-[0-9A-Za-z-]{10,}\b/g},
+ {name:'Slack App-Level Token',sev:'high',re:/\bxapp-\d-[A-Za-z0-9_+=\-]{20,}/g},
  {name:'Google API Key',sev:'high',re:/\bAIza[0-9A-Za-z\-_]{35}\b/g},
  {name:'Google OAuth Client',sev:'med',re:/\b[0-9]+-[0-9A-Za-z_]{32}\.apps\.googleusercontent\.com\b/g},
+ {name:'Anthropic API Key',sev:'high',re:/\bsk-ant-[A-Za-z0-9_\-]{40,}\b/g},
+ {name:'OpenAI Key',sev:'high',re:/\bsk-(?:proj-)?[A-Za-z0-9_\-]{40,}\b/g,validate:m=>!m.startsWith('sk-ant-')},
  {name:'Twilio API Key',sev:'high',re:/\bSK[0-9a-fA-F]{32}\b/g},
  {name:'SendGrid API Key',sev:'high',re:/\bSG\.[A-Za-z0-9_\-]{22}\.[A-Za-z0-9_\-]{43}\b/g},
- {name:'OpenAI Key',sev:'high',re:/\bsk-[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}\b/g},
- {name:'Private Key (PEM)',sev:'high',re:/-----BEGIN (?:RSA |EC |OPENSSH |PGP |DSA )?PRIVATE KEY-----/g},
+ {name:'Mailgun API Key',sev:'high',re:/\bkey-[0-9a-zA-Z]{32}\b/g},
+ {name:'npm Token',sev:'high',re:/\bnpm_[A-Za-z0-9]{36}\b/g},
+ {name:'PyPI Token',sev:'high',re:/\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_\-=]{40,}/g},
+ {name:'Telegram Bot Token',sev:'high',re:/\b[0-9]{8,10}:[A-Za-z0-9_\-]{30,40}\b/g},
+ {name:'Discord Bot Token',sev:'high',re:/\b[MN][A-Za-z0-9]{23}\.[\w-]{6}\.[\w-]{27}\b/g},
+ {name:'Mapbox Token',sev:'med',re:/\bpk\.eyJ1[A-Za-z0-9_\-.]{30,}/g},
+ {name:'Shopify Token',sev:'high',re:/\bshp(?:at|a|ss|ca)_[a-fA-F0-9]{32}\b/g},
+ {name:'Square Token',sev:'high',re:/\bsq0(?:atp|csp)-[0-9A-Za-z_\-]{22,43}\b/g},
+ {name:'Azure Storage Account Key',sev:'high',re:/\bAccountKey=[A-Za-z0-9+/=]{60,}/g},
+ {name:'MongoDB URI with credentials',sev:'high',re:/\bmongodb(?:\+srv)?:\/\/[^\s:@/]+:[^\s:@/]+@[^\s/]+/g},
+ {name:'Private Key (PEM)',sev:'high',re:/-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----/g},
  {name:'JWT',sev:'med',re:/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g,validate:m=>{try{const h=JSON.parse(dec8(b64ToBytes(m.split('.')[0]),false));return h&&(h.alg||h.typ);}catch{return false;}}},
  {name:'JWE',sev:'med',re:/\beyJ[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9_-]*){4}\b/g,validate:m=>{const p=m.split('.');if(p.length!==5)return false;try{const h=JSON.parse(dec8(b64ToBytes(p[0]),false));return h&&h.enc;}catch{return false;}}},
  {name:'URL with credentials',sev:'high',re:/\b[a-z][a-z0-9+.\-]*:\/\/[^\s:@/]+:[^\s:@/]+@[^\s/]+/gi},
+ {name:'Basic Auth Header',sev:'med',re:/\bAuthorization["']?\s*[:=]\s*["']?Basic\s+[A-Za-z0-9+/=]{8,}/gi},
  {name:'Bearer token',sev:'med',re:/\bBearer\s+[A-Za-z0-9_\-.=]{20,}\b/g},
- {name:'Hardcoded password',sev:'med',re:/(?:password|passwd|pwd|secret|api[_-]?key|token)\s*[:=]\s*["']([^"'\s]{6,})["']/gi,group:1},
+ {name:'Hardcoded credential',sev:'med',re:/(?:password|passwd|pwd|secret|api[_-]?key|token|client[_-]?secret|access[_-]?token|private[_-]?key)\s*[:=]\s*["']([^"'\s]{6,})["']/gi,group:1},
  {name:'Bitcoin address',sev:'low',re:/\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b/g},
  {name:'Ethereum address',sev:'low',re:/\b0x[a-fA-F0-9]{40}\b/g},
  {name:'UUID',sev:'low',re:/\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/g},
@@ -784,7 +800,7 @@ const SECRET_RULES=[
 ];
 function scanSecrets(text,opts){
  const found=[],seen=new Set();
- for(const rule of SECRET_RULES){rule.re.lastIndex=0;let m;while((m=rule.re.exec(text))!==null){const val=rule.group?m[rule.group]:m[0];if(!val||seen.has(rule.name+'|'+val))continue;if(rule.validate&&!rule.validate(val))continue;seen.add(rule.name+'|'+val);found.push({type:rule.name,sev:rule.sev,value:val});if(found.length>200)break;}}
+ for(const rule of SECRET_RULES){rule.re.lastIndex=0;let m;while((m=rule.re.exec(text))!==null){if(m[0].length===0){rule.re.lastIndex++;continue;}const val=rule.group?m[rule.group]:m[0];if(!val||seen.has(rule.name+'|'+val))continue;if(rule.validate&&!rule.validate(val))continue;seen.add(rule.name+'|'+val);found.push({type:rule.name,sev:rule.sev,value:val});if(found.length>200)break;}}
  if(opts.decode){const b64s=text.match(/[A-Za-z0-9+/]{16,}={0,2}/g)||[];for(const blob of b64s){if(seen.has('blob|'+blob))continue;if(blob.length%4!==0)continue;const b=b64ToBytes(blob);if(!b||b.length<4)continue;const d=dec8(b,false);if(d&&isPrintableStr(d)&&/[A-Za-z]{3,}/.test(d)){seen.add('blob|'+blob);found.push({type:'Base64 blob',sev:'low',value:blob,decoded:d.length>200?d.slice(0,200)+'…':d});if(found.length>200)break;}}const hexs=text.match(/\b[0-9a-fA-F]{16,}\b/g)||[];for(const blob of hexs){if(blob.length%2!==0)continue;if([32,40,56,64,96,128].includes(blob.length))continue;if(seen.has('blob|'+blob))continue;const b=unhex(blob);if(!b)continue;const d=dec8(b,false);if(d&&isPrintableStr(d)&&/[A-Za-z]{3,}/.test(d)){seen.add('blob|'+blob);found.push({type:'Hex blob',sev:'low',value:blob,decoded:d.length>200?d.slice(0,200)+'…':d});if(found.length>200)break;}}}
  if(opts.entropy){const toks=text.match(/[A-Za-z0-9+/=_\-]{20,}/g)||[];for(const tk of toks){if(seen.has('ent|'+tk)||tk.length>200)continue;const ent=shannon(tk);if(ent>4.0&&tk.length>=24&&!/^[0-9a-fA-F]+$/.test(tk)){const already=found.some(f=>f.value===tk||f.value.includes(tk)||tk.includes(f.value));if(!already){seen.add('ent|'+tk);found.push({type:'High-entropy string (candidate secret)',sev:'low',value:tk});if(found.length>200)break;}}}}
  const order={high:0,med:1,low:2};
@@ -794,8 +810,10 @@ function scanSecrets(text,opts){
 /* ════════════════════════════════════════════════════════════════
    TAB 10: JS ANALYZER — static analysis of JS/TS source for
    weak/misused cryptography and exploitable code patterns.
-   Each rule: {id,cat,sev,title,cwe,re(global),desc,fix,validate?(match)}
+   Each rule: {id,cat,sev,title,cwe,re(global),desc,fix,validate?(match),comments?(include comment-only matches)}
    sev ∈ critical > high > med > low > info
+   Matches that fall entirely inside comments are suppressed (except rules with comments:true),
+   and a weighted security score is reported alongside the findings.
    ════════════════════════════════════════════════════════════════ */
 function buildLineIndex(text){const starts=[0];for(let i=0;i<text.length;i++)if(text.charCodeAt(i)===10)starts.push(i+1);return starts;}
 function lineOfIndex(starts,idx){let lo=0,hi=starts.length-1,ans=0;while(lo<=hi){const mid=(lo+hi)>>1;if(starts[mid]<=idx){ans=mid;lo=mid+1;}else hi=mid-1;}return ans+1;}
@@ -803,6 +821,18 @@ function getLineText(text,starts,lineNo){const s=starts[lineNo-1];if(s===undefin
 
 const JS_VULN_RULES=[
  // ── Code Execution / Injection ──
+ {id:'window-eval-bracket',cat:'Code Execution',sev:'critical',title:'eval/Function reached via bracket notation (window["eval"])',cwe:'CWE-95',
+  re:/\b(?:window|globalThis|self|global)\s*\[\s*["'`](?:eval|Function)["'`]\s*\]/g,
+  desc:'Reaching eval or Function through bracket notation is a classic obfuscation trick to dodge static analysis and CSP keyword checks. It is still full-privilege dynamic code execution.',
+  fix:'Remove the dynamic execution. If this is third-party/bundled code you do not control, treat it as potentially malicious and review what it executes.'},
+ {id:'packer-detected',cat:'Code Execution',sev:'critical',title:'Dean Edwards packer signature (eval(function(p,a,c,k,e...)))',cwe:'CWE-506',
+  re:/eval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k/g,
+  desc:'This is the signature of code packed with the Dean Edwards JavaScript packer: the payload is stored obfuscated and unpacked straight into eval at runtime. Web skimmers and droppers use this constantly; legitimate production code almost never does.',
+  fix:'Unpack offline (e.g. in the Pipeline tab) and review the payload line by line before trusting this code.'},
+ {id:'eval-request',cat:'Code Execution',sev:'critical',title:'eval() directly on request input',cwe:'CWE-94',
+  re:/eval\s*\(\s*(?:req\.(?:body|query|params)|request\.)/g,
+  desc:'Untrusted HTTP input is being executed as code. This is direct remote code execution — the single most severe class of web vulnerability.',
+  fix:'Never execute request data. Parse it as data (JSON.parse) and act on explicit, allowlisted fields.'},
  {id:'eval-use',cat:'Code Execution',sev:'high',title:'Use of eval()',cwe:'CWE-95',
   re:/\beval\s*\(/g,
   desc:'eval() executes a string as JavaScript with full privileges of the surrounding context. If any part of the input can be influenced by a user, attacker-controlled data, network response, or URL, this is remote code execution.',
@@ -835,6 +865,22 @@ const JS_VULN_RULES=[
   re:/dangerouslySetInnerHTML/g,
   desc:"React's escaping is bypassed here — whatever is passed in __html is rendered as raw markup.",
   fix:'Sanitize with DOMPurify before passing to dangerouslySetInnerHTML, or avoid it and render structured data instead.'},
+ {id:'v-html',cat:'Code Execution',sev:'med',title:'Vue v-html directive',cwe:'CWE-79',
+  re:/\bv-html\b/g,
+  desc:'v-html renders the bound value as raw HTML, bypassing Vue\u2019s built-in escaping. If the value ever contains user-controlled data, this is an XSS sink.',
+  fix:'Render structured data with components instead, or sanitize with DOMPurify before binding.'},
+ {id:'bypass-security-trust',cat:'Code Execution',sev:'med',title:'Angular bypassSecurityTrust* call',cwe:'CWE-79',
+  re:/\bbypassSecurityTrust(?:Html|Url|ResourceUrl|Script|Style)\b/g,
+  desc:'Explicitly tells Angular to skip sanitization for this value. Whatever flows into it is trusted blindly — an attacker-controlled value becomes stored/DOM XSS or a script/URL injection.',
+  fix:'Avoid bypassing sanitizer. If unavoidable, sanitize the value yourself first and document why it is safe.'},
+ {id:'jquery-html-sink',cat:'Code Execution',sev:'low',title:'jQuery .html() sink',cwe:'CWE-79',
+  re:/\$\s*\([^()]{0,120}\)\s*\.html\s*\(/g,
+  desc:'jQuery .html() parses the argument as markup and executes embedded scripts. Only a problem when the argument can contain untrusted data, but this is a classic XSS sink worth checking.',
+  fix:'Use .text() for plain text, and sanitize any HTML with DOMPurify before passing it to .html().'},
+ {id:'srcdoc-iframe',cat:'Code Execution',sev:'low',title:'iframe srcdoc attribute built in code',cwe:'CWE-79',
+  re:/\bsrcdoc\s*=/g,
+  desc:'srcdoc renders the given markup in the frame; with allow-scripts it can run script. If the content is derived from untrusted input this is an XSS vector.',
+  fix:'Sanitize the markup, or prefer sandboxed frames loading a validated URL instead of srcdoc.'},
  {id:'child-process-dynamic',cat:'Code Execution',sev:'critical',title:'Shell command built from a variable/template literal',cwe:'CWE-78',
   re:/\b(exec|execSync|spawn|spawnSync)\s*\([^)]*?(\$\{|["'`]\s*\+|\+\s*[A-Za-z_$])[^)]*\)/g,
   desc:'child_process.exec/spawn run a real shell command. Building that command from a variable, concatenation, or template literal lets an attacker who controls any part of the input inject arbitrary shell commands.',
@@ -855,6 +901,26 @@ const JS_VULN_RULES=[
   re:/\blocation(\.href)?\s*=\s*(decodeURIComponent\()?\s*(window\.)?location\.(search|hash)/g,
   desc:'Re-assigning the page location using a value taken from the current URL (search/hash) is a common client-side open-redirect pattern — the value is attacker-controlled because the attacker crafts the link the victim clicks.',
   fix:'Parse and validate the target against an allowlist before navigating; never pass it straight through.'},
+ {id:'sql-concat',cat:'Injection',sev:'critical',title:'SQL query built by string concatenation',cwe:'CWE-89',
+  re:/(?:\bSELECT\b[^;"`\n]{0,200}?\bFROM\b[^;"`\n]{0,200}["'`]\s*\+\s*[\w$.])|(?:\bINSERT\s+INTO\b[^;"`\n]{0,200}["'`]\s*\+\s*[\w$.])|(?:\bUPDATE\s+\w+\s+SET\b[^;"`\n]{0,200}["'`]\s*\+\s*[\w$.])|(?:\bDELETE\s+FROM\b[^;"`\n]{0,200}["'`]\s*\+\s*[\w$.])|(?:\bSELECT\b[^;`]{0,200}?\bFROM\b[^;`]{0,200}\$\{)|(?:\b(?:INSERT\s+INTO|DELETE\s+FROM|UPDATE\s+\w+\s+SET)\b[^;`]{0,200}\$\{)/gi,
+  desc:'A SQL statement is assembled by concatenating strings or interpolating template values. Any part sourced from user input (params, body, query) allows classic SQL injection: authentication bypass, data exfiltration, and DROP/UNION attacks.',
+  fix:'Use parameterized queries / prepared statements with placeholders (? or $1) for every dynamic value. Never build SQL by string concatenation.'},
+ {id:'fs-path-user-input',cat:'Injection',sev:'critical',title:'File system path taken from request input',cwe:'CWE-22',
+  re:/\bfs\.(?:readFile|writeFile|appendFile|createReadStream|createWriteStream|unlink|rm|access|readFileSync|writeFileSync|appendFileSync|unlinkSync|rmSync|accessSync)\w*\s*\([^)]{0,200}req\.(?:query|params|body)|\bpath\.join\s*\([^)]{0,200}req\.(?:query|params|body)/g,
+  desc:'A file path is built from request input. Attackers use ../ sequences or absolute paths to read/write arbitrary files outside the intended directory (path traversal) — config files, credentials, or the filesystem itself.',
+  fix:'Never pass request input to fs/path directly. Resolve the final path, then verify it still startsWith() the intended base directory; reject anything containing ".." or absolute paths.'},
+ {id:'ssrf-user-url',cat:'Injection',sev:'high',title:'Outbound request URL taken from request input (SSRF)',cwe:'CWE-918',
+  re:/\b(?:fetch|axios(?:\.[A-Za-z]+)?|got|needle|request)\s*\(\s*req\.(?:query|params|body)|(?:url|uri|target|dest(?:ination)?)\s*:\s*req\.(?:query|params|body)/g,
+  desc:'The server fetches a URL chosen by the client. Attackers pivot from this to internal services (http://169.254.169.254 cloud metadata, localhost admin ports, internal databases) — Server-Side Request Forgery.',
+  fix:'Validate the URL against an allowlist of hosts/schemes, resolve DNS first and block private/link-local ranges, and never fetch raw user-supplied URLs.'},
+ {id:'window-open-dynamic',cat:'Injection',sev:'low',title:'window.open() with a dynamic URL',cwe:'CWE-601',
+  re:/window\.open\s*\(\s*(?!["'`_])[A-Za-z_$]/g,
+  desc:'Opening a window with a URL held in a variable. If that variable can be influenced by an attacker (URL parameter, message, postMessage payload) this becomes an open redirect or a javascript: URL XSS.',
+  fix:'Validate the URL is http(s) and on an allowlisted origin before opening; never pass through javascript: or data: URLs.'},
+ {id:'new-regexp-dynamic',cat:'Injection',sev:'med',title:'RegExp built from a variable (ReDoS / pattern injection)',cwe:'CWE-1333',
+  re:/new\s+RegExp\s*\(\s*(?!["'`])[A-Za-z_$]/g,
+  desc:'Constructing a RegExp from a runtime value: attacker-chosen patterns can be catastrophically backtracking (ReDoS — one request pins the CPU) or can inject flags/groups that change matching semantics.',
+  fix:'Do not compile user input as a regex. Match with fixed patterns, escape the input (e.g. escapeRegExp) before embedding it, and set a matcher timeout where possible.'},
 
  // ── Weak / Broken Cryptography ──
  {id:'crypto-md5',cat:'Weak Cryptography',sev:'med',title:'MD5 in use',cwe:'CWE-327',
@@ -881,22 +947,39 @@ const JS_VULN_RULES=[
   re:/\bcreateCipher\s*\(/g,
   desc:"crypto.createCipher() (no 'iv' suffix) derives the key and IV from a password using a weak, undocumented KDF with no salt, and is deprecated.",
   fix:'Use crypto.createCipheriv() with a key derived via scrypt/PBKDF2 and a unique random IV.'},
+ {id:'fast-hash-password',cat:'Weak Cryptography',sev:'med',title:'Fast hash applied to a password',cwe:'CWE-916',
+  re:/\bcreateHash\s*\(\s*["'](?:md5|sha1|sha256|sha512)["']\s*\)[^;\n]{0,140}\bpass(?:word|wd)?\b|\bpass(?:word|wd)?\b[^;\n]{0,140}\bcreateHash\s*\(\s*["'](?:md5|sha1|sha256|sha512)["']/gi,
+  desc:'A fast general-purpose hash is being used in the same statement as a password. Fast hashes (even SHA-256) are designed to be quick, so an attacker with the hash database can guess billions of passwords per second on commodity GPUs.',
+  fix:'Store passwords with a slow, salted, memory-hard KDF: Argon2id (preferred), scrypt, or bcrypt with cost ≥ 10.'},
  {id:'crypto-math-random-security',cat:'Weak Cryptography',sev:'high',title:'Math.random() used for a security-sensitive value',cwe:'CWE-338',
   re:/\b(token|secret|password|passwd|session(id)?|nonce|salt|otp|csrf|apikey|api_key|key|iv)\b[^;\n]{0,60}Math\.random\(\)|Math\.random\(\)[^;\n]{0,60}\b(token|secret|password|passwd|session(id)?|nonce|salt|otp|csrf|apikey|api_key|key|iv)\b/gi,
   desc:'Math.random() is not cryptographically secure — it is a predictable PRNG, not seeded from entropy suitable for security use. An attacker who can observe enough outputs can often predict future ones, allowing session hijacking, token forgery, or password-reset bypass.',
   fix:'Use crypto.getRandomValues() (browser) or crypto.randomBytes()/crypto.randomUUID() (Node) for anything security-sensitive.'},
  {id:'crypto-static-iv',cat:'Weak Cryptography',sev:'high',title:'Hardcoded / all-zero IV',cwe:'CWE-329',
-  re:/\biv\s*[:=]\s*(["'`](00[\s:,-]*){8,}["'`]|new Uint8Array\(\s*1[0-9]\s*\)(?!\s*\.fill\([1-9])|Buffer\.alloc\(\s*1[0-9]\s*\)(?!\s*\.fill\([1-9]))/gi,
+  re:/\biv\s*[:=]\s*(["'`](?:00[:\-]?){8,}["'`]|(?:new\s+Uint8Array|Buffer\.alloc)\s*\(\s*(?:8|1[0-6])\s*\)(?!\s*\.\s*fill\s*\(\s*[1-9]))/gi,
   desc:'Reusing or hardcoding an IV defeats the security guarantees of CBC/CTR/GCM modes — with a repeated IV, CBC leaks plaintext equality and GCM can be catastrophically broken (full key/auth recovery).',
-  fix:'Generate a fresh random IV for every encryption operation with crypto.getRandomValues()/crypto.randomBytes(), and store/transmit it alongside the ciphertext (it does not need to be secret).'},
+  fix:'Generate a fresh random IV for every encryption operation with crypto.getRandomValues()/crypto.randomBytes(), and store/transmit it alongside the ciphertext (it does not need to be secret).',
+  validate:m=>{const ctx=m.input.slice(Math.max(0,m.index-120),m.index+120);return!/(?:getRandomValues|randomBytes)/.test(ctx);}},
  {id:'crypto-small-rsa',cat:'Weak Cryptography',sev:'med',title:'Small RSA key size',cwe:'CWE-326',
   re:/modulusLength\s*:\s*(512|768|1024)\b/g,
   desc:'RSA keys below 2048 bits are considered breakable with modern compute (1024-bit RSA is within reach of well-resourced attackers; 512/768-bit are broken).',
   fix:'Use at least 2048-bit RSA (3072/4096 for long-lived keys), or switch to an elliptic-curve algorithm (Ed25519/P-256).'},
+ {id:'tls-old-protocol',cat:'Weak Cryptography',sev:'med',title:'Legacy SSL/TLS protocol pinned',cwe:'CWE-327',
+  re:/["']SSLv[23]["']|["']TLSv1["'](?![\w.])/g,
+  desc:'Explicitly allowing SSLv3/TLSv1.0 (or the SSLv2/v3 "any" negotiation mode) permits downgrade attacks: POODLE, and protocol stripping. These protocols are formally deprecated.',
+  fix:'Restrict to TLSv1.2+ (ideally TLSv1.3): minVersion: "TLSv1.2" in Node, and remove legacy protocol lists.'},
+ {id:'pseudo-random',cat:'Weak Cryptography',sev:'med',title:'crypto.pseudoRandomBytes used',cwe:'CWE-338',
+  re:/\bpseudoRandomBytes\b/g,
+  desc:'pseudoRandomBytes is explicitly NOT cryptographically secure — it is a speed-optimized PRNG. Tokens, keys, or salts derived from it are predictable.',
+  fix:'Use crypto.randomBytes() / crypto.getRandomValues() for anything security-sensitive.'},
  {id:'hardcoded-key-material',cat:'Hardcoded Secrets',sev:'high',title:'Hardcoded cryptographic key/IV material',cwe:'CWE-321',
   re:/\b\w*(?:aes|des|rsa|hmac|enc(?:ryption)?|signing|master)_?key\w*\s*[:=]\s*["'][0-9a-fA-F]{16,}["']|\b\w*(?:aes|des|rsa|hmac|enc(?:ryption)?|signing|master)_?key\w*\s*[:=]\s*["'][A-Za-z0-9+/]{20,}={0,2}["']/gi,
   desc:'A cryptographic key or IV written directly into source is compromised the moment the source/bundle is readable (repo access, decompiled app, exposed .map file, etc.) — anyone with it can decrypt all data protected by it.',
   fix:'Load keys from a secrets manager, HSM, or environment variable injected at deploy time; never commit key material to source control.'},
+ {id:'hardcoded-env-fallback',cat:'Hardcoded Secrets',sev:'high',title:'Hardcoded fallback for an environment secret',cwe:'CWE-798',
+  re:/process\.env\.[A-Za-z0-9_]+\s*\|\|\s*["'][^"'\n]{6,}["']/g,
+  desc:'The code falls back to a literal secret when the environment variable is missing. That literal ships in the bundle/repo, so the "secret" is public — and a misconfigured deployment silently uses it.',
+  fix:'Fail fast if the env var is missing (throw at startup). Never give security-critical configuration a literal fallback.'},
  {id:'jwt-none-alg',cat:'Weak Cryptography',sev:'critical',title:"JWT 'none' algorithm",cwe:'CWE-347',
   re:/\balg(orithm)?\s*[:=]\s*["']none["']/gi,
   desc:"The JWT 'none' algorithm means the token has no signature at all. If a verifier ever accepts it, anyone can forge arbitrary tokens (this was a real, widely-exploited vulnerability class in JWT libraries).",
@@ -905,11 +988,20 @@ const JS_VULN_RULES=[
   re:/\bjwt\.(sign|verify)\s*\([^;]*?,\s*["'][^"'\n]{3,}["']/g,
   desc:'A hardcoded JWT secret in source is compromised the moment the repo/bundle is exposed (also often committed to version control), letting an attacker forge valid tokens for any user.',
   fix:'Load the secret from a secrets manager or environment variable at runtime, rotate it, and never commit it to source.'},
- {id:'pbkdf2-low-iter',cat:'Weak Cryptography',sev:'med',title:'PBKDF2 with a low iteration count',cwe:'CWE-916',
-  re:/pbkdf2\w*\([^)]*?,\s*(?:["']?)(\d{1,9})(?:["']?)\s*,/gi,
-  desc:'A low PBKDF2 iteration count (roughly under 100,000 for SHA-256 as of modern guidance) makes offline password cracking much cheaper for an attacker who steals the hash database.',
+ {id:'jwt-verify-no-alg',cat:'Weak Cryptography',sev:'med',title:'JWT verified without an explicit algorithm allowlist',cwe:'CWE-347',
+  re:/\bjwt\.verify\s*\((?:[^()]|\([^()]*\))*\)/g,
+  desc:'jwt.verify() without an algorithms option accepts whatever algorithm the token header claims — historically this enabled the "alg: none" and RS256→HS256 key-confusion forgery attacks against real applications.',
+  fix:'Pin the expected algorithms explicitly: jwt.verify(token, secret, { algorithms: ["HS256"] }).',
+  validate:m=>!/(?:algorithms|algorithm)\s*:/.test(m[0])},
+ {id:'jwt-ignore-expiration',cat:'Weak Cryptography',sev:'high',title:'JWT expiration check disabled',cwe:'CWE-613',
+  re:/\bignoreExpiration\s*[:=]\s*true/gi,
+  desc:'Ignoring the exp claim means stolen or leaked tokens never expire — a session valid forever, which defeats token rotation and revocation strategies.',
+  fix:'Never ignore expiration in production. If you need long-lived access, use refresh tokens with rotation instead.'},
+ {id:'pbkdf2-low-iter',cat:'Weak Cryptography',sev:'med',title:'PBKDF2 / KDF with a low iteration count',cwe:'CWE-916',
+  re:/(?:\bpbkdf2\w*\s*\(\s*[^,()]+\s*,\s*[^,()]+\s*,\s*(\d{1,9})\s*,)|(?:\biterations\s*:\s*(\d{1,9})\b)/gi,
+  desc:'A low PBKDF2 iteration count (under ~100,000 for SHA-256 by current guidance) makes offline password cracking orders of magnitude cheaper for an attacker who steals the hash database.',
   fix:'Use at least 100,000+ iterations for PBKDF2-SHA256 (tune to ~100ms per hash on your hardware), or prefer memory-hard KDFs like scrypt or Argon2id.',
-  validate:m=>+m[1]<10000},
+  validate:m=>{const n=+(m[1]||m[2]);return n>0&&n<100000;}},
  {id:'bcrypt-low-rounds',cat:'Weak Cryptography',sev:'low',title:'bcrypt with a low cost factor',cwe:'CWE-916',
   re:/\bbcrypt\.(genSalt(Sync)?|hash(Sync)?)\s*\(\s*(?:[^,]*,\s*)?(\d{1,2})\s*[,)]/g,
   desc:'A bcrypt cost factor below ~10 makes hashes cheaper to brute-force than current guidance recommends.',
@@ -921,6 +1013,11 @@ const JS_VULN_RULES=[
   re:/\b(rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*["']?0["']?)/g,
   desc:'Disabling certificate validation makes every HTTPS connection vulnerable to trivial man-in-the-middle interception — this completely defeats TLS.',
   fix:'Never disable certificate validation in production. If a self-signed/internal CA is involved, add that CA to the trust store instead.'},
+ {id:'cors-lib-creds',cat:'Insecure Transport',sev:'high',title:'cors() middleware configured with origin "*" + credentials',cwe:'CWE-942',
+  re:/cors\s*\(\s*\{[^}]{0,300}\}\s*\)/g,
+  desc:'The cors middleware reflects a wildcard origin while also allowing credentials: any website can then read authenticated responses from this API on behalf of its visitors.',
+  fix:'Configure a specific origin allowlist: cors({ origin: ["https://app.example.com"], credentials: true }).',
+  validate:m=>/origin\s*:\s*["']\*["']/.test(m[0])&&/credentials\s*:\s*true/.test(m[0])},
  {id:'cors-wildcard-creds',cat:'Insecure Transport',sev:'high',title:"CORS '*' origin combined with credentials",cwe:'CWE-942',
   re:/Access-Control-Allow-Origin[\s\S]{0,120}?\*[\s\S]{0,200}?Access-Control-Allow-Credentials[\s\S]{0,20}?true|Access-Control-Allow-Credentials[\s\S]{0,200}?true[\s\S]{0,200}?Access-Control-Allow-Origin[\s\S]{0,120}?\*/gi,
   desc:"A wildcard CORS origin together with credentials allowed lets any website read authenticated responses on the user's behalf — browsers normally forbid this combination, so code working around it is a strong signal of a misconfiguration.",
@@ -933,6 +1030,10 @@ const JS_VULN_RULES=[
   re:/content-security-policy[^\n]{0,200}unsafe-(inline|eval)/gi,
   desc:"'unsafe-inline'/'unsafe-eval' in a Content-Security-Policy remove most of the XSS mitigation CSP is meant to provide.",
   fix:'Use nonces or hashes for required inline scripts instead of unsafe-inline, and remove unsafe-eval unless strictly necessary.'},
+ {id:'csrf-disabled',cat:'Insecure Transport',sev:'med',title:'CSRF protection explicitly disabled',cwe:'CWE-352',
+  re:/\bcsrf(?:\w*)?\s*[:=]\s*false|\bdisable(?:Csrf|CSRF)\b|\bcsurf\b\s*\(\s*\{[^}]*disabled/gi,
+  desc:'CSRF middleware switched off means cross-site requests carry the user\u2019s session cookies unchallenged — an attacker page can trigger state-changing actions (transfers, email changes, admin actions) as the victim.',
+  fix:'Re-enable CSRF protection (or use SameSite=Strict/Lax cookies plus a token for state-changing routes).'},
  {id:'http-hardcoded-url',cat:'Insecure Transport',sev:'info',title:'Hardcoded plaintext http:// endpoint',cwe:'CWE-319',
   re:/["'`]http:\/\/(?!localhost|127\.0\.0\.1|0\.0\.0\.0)[^\s"'`]+/g,
   desc:'Traffic to a plaintext HTTP endpoint can be read or modified in transit by anyone on the network path.',
@@ -943,6 +1044,10 @@ const JS_VULN_RULES=[
   re:/\b(localStorage|sessionStorage)\.setItem\s*\(\s*["'`][^"'`]*(token|jwt|secret|password|session)[^"'`]*["'`]/gi,
   desc:'localStorage/sessionStorage are readable by any script on the page, so a single XSS anywhere on the origin can exfiltrate every token stored there (unlike an HttpOnly cookie).',
   fix:'Prefer an HttpOnly, Secure, SameSite cookie for session/auth tokens. If a token must be in JS-accessible storage, keep it short-lived and minimize XSS surface.'},
+ {id:'document-cookie-write',cat:'Auth / Session',sev:'med',title:'Cookie written via document.cookie',cwe:'CWE-614',
+  re:/\bdocument\.cookie\s*=/g,
+  desc:'Cookies set from JavaScript cannot be HttpOnly, so any XSS on the origin can read them; without an explicit "; Secure; SameSite=Strict" suffix they are also sent over HTTP and cross-site.',
+  fix:'Set session/auth cookies from the server with HttpOnly; Secure; SameSite=Strict. If you must set from JS, append "; Secure; SameSite=Strict" and never store secrets.'},
  {id:'cookie-no-flags',cat:'Auth / Session',sev:'med',title:'Cookie set without Secure/HttpOnly/SameSite flags',cwe:'CWE-614',
   re:/\bres\.cookie\s*\(\s*["'`][^"'`]+["'`]\s*,\s*[^,)]+(?:\s*,\s*\{([^}]*)\})?\s*\)/g,
   desc:'A session or auth cookie set without httpOnly, secure, and sameSite flags is readable by JavaScript (so stealable via XSS), sendable over plain HTTP, and/or sendable cross-site (CSRF risk).',
@@ -956,6 +1061,10 @@ const JS_VULN_RULES=[
   re:/\.postMessage\s*\([^)]*,\s*["'`]\*["'`]\s*\)/g,
   desc:"Sending a postMessage to '*' lets any frame/window that can obtain a reference to the target receive the message, including a malicious iframe embedded by another site.",
   fix:'Specify the exact expected origin as the second argument instead of "*".'},
+ {id:'message-listener-no-origin',cat:'Auth / Session',sev:'med',title:'postMessage listener (verify e.origin before trusting data)',cwe:'CWE-346',
+  re:/addEventListener\s*\(\s*["']message["']\s*,/g,
+  desc:'A window message listener receives events from ANY origin. Without checking event.origin and validating event.source, a malicious page (or a malicious iframe embedded anywhere) can feed this handler attacker-crafted data — often escalating to XSS via a downstream DOM sink.',
+  fix:'At the top of the handler, verify event.origin against an allowlist before reading event.data; treat data as untrusted even then.'},
 
  // ── Prototype Pollution / Deserialization ──
  {id:'proto-pollution-literal',cat:'Prototype Pollution',sev:'high',title:"Direct use of '__proto__' as a property key",cwe:'CWE-1321',
@@ -966,6 +1075,14 @@ const JS_VULN_RULES=[
   re:/eval\s*\(\s*JSON\.parse|new\s+Function\s*\(\s*JSON\.parse/g,
   desc:'Parsing then executing attacker-supplied JSON as code is an insecure-deserialization pattern that leads directly to remote code execution.',
   fix:'Treat parsed JSON strictly as data. Never feed it into eval/Function.'},
+ {id:'node-serialize',cat:'Prototype Pollution',sev:'high',title:'node-serialize / unserialize() on untrusted data',cwe:'CWE-502',
+  re:/require\(\s*["']node-serialize["']\s*\)|\bunserialize\s*\(/g,
+  desc:'node-serialize can deserialize JavaScript functions, and its unserialize() on attacker-controlled input is a documented remote-code-execution gadget (CVE-2017-5941).',
+  fix:'Do not deserialize untrusted data with node-serialize. Exchange plain JSON and validate its shape with a schema instead.'},
+ {id:'yaml-unsafe-load',cat:'Prototype Pollution',sev:'med',title:'yaml.load() on untrusted data',cwe:'CWE-502',
+  re:/\byaml\s*\.\s*load\s*\(/g,
+  desc:'With js-yaml v3 (or the yaml package with unsafe options), yaml.load() can instantiate arbitrary JavaScript objects/functions from the YAML — equivalent to code execution when the input is untrusted.',
+  fix:'Use js-yaml v4+ safeLoad semantics (yaml.load() is safe there — verify your version), and validate the parsed structure before use.'},
 
  // ── Information Disclosure ──
  {id:'console-log-secret',cat:'Information Disclosure',sev:'low',title:'Sensitive-looking value passed to console output',cwe:'CWE-532',
@@ -981,6 +1098,20 @@ const JS_VULN_RULES=[
   desc:'Returning a stack trace to the client reveals file paths, dependency versions, and internal logic that help an attacker fingerprint and target the backend.',
   fix:'Log the full error server-side; return a generic error message/id to the client.'},
 
+ // ── Obfuscation / Supply Chain ──
+ {id:'obfuscated-identifiers',cat:'Obfuscation',sev:'info',title:'Obfuscator-style identifiers (_0x…) present',cwe:'CWE-506',
+  re:/\b_0x[a-f0-9]{4,}\b/g,
+  desc:'Hexadecimal _0x-prefixed identifiers are the hallmark of javascript-obfuscator output. Obfuscation in a bundle you did not intentionally ship is how web skimmers and backdoors hide.',
+  fix:'If you did not choose to obfuscate this code, investigate its origin. For your own code, avoid obfuscation — it breaks auditing and SAST tooling.'},
+ {id:'giant-hex-literal',cat:'Obfuscation',sev:'info',title:'Very large hex string literal (possible encoded payload)',cwe:'CWE-506',
+  re:/["'][0-9a-fA-F]{100,}["']/g,
+  desc:'A 100+ character hex literal is rarely configuration — it is usually an encoded payload (shellcode, bytecode, packed data) waiting to be decoded and executed somewhere downstream.',
+  fix:'Decode it offline (Identify tab → Hex) and confirm what it contains before trusting this code.'},
+ {id:'giant-b64-literal',cat:'Obfuscation',sev:'info',title:'Very large Base64 string literal (possible encoded payload)',cwe:'CWE-506',
+  re:/["'][A-Za-z0-9+/]{200,}={0,2}["']/g,
+  desc:'A huge Base64 literal is a common way to smuggle code, config, or binaries past review. Legitimate uses (data URIs, wasm, test fixtures) exist — but this is exactly how droppers hide payloads.',
+  fix:'Decode it offline (Identify tab → Base64) and inspect the contents; trace where it is used.'},
+
  // ── Misc ──
  {id:'target-blank-no-opener',cat:'Misc',sev:'low',title:'target="_blank" without rel="noopener"',cwe:'CWE-1022',
   re:/target\s*=\s*["']_blank["'](?![^>]*rel\s*=\s*["'][^"']*noopener)/gi,
@@ -990,26 +1121,56 @@ const JS_VULN_RULES=[
   re:/sandbox\s*=\s*["'][^"']*allow-scripts[^"']*allow-same-origin[^"']*["']|sandbox\s*=\s*["'][^"']*allow-same-origin[^"']*allow-scripts[^"']*["']/g,
   desc:"Combining allow-scripts with allow-same-origin lets the framed content's script remove its own sandbox restrictions, defeating the point of sandboxing untrusted content.",
   fix:'Never combine these two on a sandbox meant to contain untrusted content. Drop whichever one is not strictly required.'},
- {id:'security-todo-comment',cat:'Misc',sev:'info',title:'Comment flags a known security gap',cwe:'CWE-1059',
+ {id:'puppeteer-no-sandbox',cat:'Misc',sev:'low',title:'Chromium launched with --no-sandbox',cwe:'CWE-250',
+  re:/--no-sandbox/g,
+  desc:'Disabling the Chromium sandbox removes the main containment layer between rendered pages and the OS. A renderer exploit (or a malicious page) then has far more reach.',
+  fix:'Keep the sandbox and fix the underlying environment issue instead (user namespaces, container capabilities).'},
+ {id:'security-todo-comment',cat:'Misc',sev:'info',title:'Comment flags a known security gap',cwe:'CWE-1059',comments:true,
   re:/\/\/[^\n]*\b(TODO|FIXME|HACK|XXX)\b[^\n]*\b(security|auth|sanitiz|escape|vuln|bypass|insecure)[^\n]*/gi,
   desc:"A developer left a note pointing at a known shortcut around security/auth/sanitization. Worth a manual look — these comments are a well-known way real vulnerabilities get found during code review and pentests.",
   fix:'Resolve or re-evaluate the flagged gap before shipping.'}
 ];
 
-const SUPPRESS_IF_SAME_LINE={'eval-use':['obfuscated-loader'],'new-function':['obfuscated-loader']};
+const SUPPRESS_IF_SAME_LINE={'eval-use':['obfuscated-loader','window-eval-bracket'],'new-function':['obfuscated-loader','window-eval-bracket']};
+/* Cheap single-pass comment detector: returns [start,end) index ranges of // and block comments.
+   Strings/templates are tracked so "https://" inside a literal is not mistaken for a comment.
+   Template ${...} interpolations are re-scanned as code. Regex literals are not modeled —
+   this only powers FP suppression, so an occasional mis-track is acceptable. */
+function buildCommentRanges(text){
+ const ranges=[];const n=text.length;let i=0;
+ const stack=[];let inStr=null,esc=false;
+ while(i<n){
+  const c=text[i];
+  if(esc){esc=false;i++;continue;}
+  if(inStr){
+   if(c==='\\'){esc=true;i++;continue;}
+   if(inStr==='`'&&c==='$'&&text[i+1]==='{'){stack.push('`');inStr='}';i+=2;continue;}
+   if(c===inStr){inStr=inStr==='}'?(stack.pop()||null):null;i++;continue;}
+   i++;continue;
+  }
+  if(c==='/'&&text[i+1]==='/'&&text[i-1]!=='\\'){let j=text.indexOf('\n',i);if(j<0)j=n;ranges.push([i,j]);i=j;continue;}
+  if(c==='/'&&text[i+1]==='*'&&text[i-1]!=='\\'){let j=text.indexOf('*/',i+2);j=j<0?n:j+2;ranges.push([i,j]);i=j;continue;}
+  if(c==='"'||c==="'"||c==='`'){inStr=c;i++;continue;}
+  i++;
+ }
+ return ranges;
+}
 function analyzeJS(code){
- if(!code||!code.trim())return[];
+ if(!code||!code.trim())return{findings:[],commentHits:0};
  const starts=buildLineIndex(code);
- const findings=[];
+ const cranges=buildCommentRanges(code);
+ const inComment=idx=>{let lo=0,hi=cranges.length-1;while(lo<=hi){const mid=(lo+hi)>>1;const r=cranges[mid];if(idx<r[0])hi=mid-1;else if(idx>=r[1])lo=mid+1;else return true;}return false;};
+ const findings=[];let commentHits=0;
  for(const rule of JS_VULN_RULES){
   rule.re.lastIndex=0;
   let m,count=0;
   while((m=rule.re.exec(code))!==null){
    count++;if(count>500)break;
-   if(rule.validate&&!rule.validate(m)){if(m[0].length===0)rule.re.lastIndex++;continue;}
+   if(m[0].length===0){rule.re.lastIndex++;continue;}
+   if(!rule.comments&&inComment(m.index)){commentHits++;continue;}
+   if(rule.validate&&!rule.validate(m))continue;
    const idx=m.index,line=lineOfIndex(starts,idx),lineText=getLineText(code,starts,line).trim();
    findings.push({ruleId:rule.id,cat:rule.cat,sev:rule.sev,title:rule.title,cwe:rule.cwe,desc:rule.desc,fix:rule.fix,line,snippet:lineText.length>160?lineText.slice(0,160)+'…':lineText});
-   if(m[0].length===0)rule.re.lastIndex++;
   }
  }
  const linesByRule={};
@@ -1017,18 +1178,23 @@ function analyzeJS(code){
  const out=findings.filter(f=>{const sup=SUPPRESS_IF_SAME_LINE[f.ruleId];if(!sup)return true;return!sup.some(o=>linesByRule[o]&&linesByRule[o].has(f.line));});
  const SEV_ORDER={critical:0,high:1,med:2,low:3,info:4};
  out.sort((a,b)=>(SEV_ORDER[a.sev]-SEV_ORDER[b.sev])||a.line-b.line);
- return out;
+ return{findings:out,commentHits};
 }
+/* Weighted security score: 100 minus penalties per finding class. */
+function secScore(findings){const W={critical:28,high:12,med:5,low:2,info:0};let s=100;for(const f of findings)s-=(W[f.sev]||0);return Math.max(0,s);}
 
 const CRYPTO_INVENTORY=[
  {name:'MD5',re:/\bMD5\b/g,tier:'weak'},
+ {name:'MD4',re:/\bMD4\b/g,tier:'weak'},
  {name:'SHA-1',re:/\bSHA-?1\b/gi,tier:'weak'},
  {name:'DES',re:/\bDES\b/g,tier:'weak'},
  {name:'3DES / TripleDES',re:/\b(3DES|TripleDES)\b/gi,tier:'weak'},
+ {name:'Blowfish',re:/\bBlowfish\b/gi,tier:'weak'},
  {name:'RC4',re:/\bRC4\b/g,tier:'weak'},
  {name:'ECB mode',re:/\bECB\b/g,tier:'weak'},
  {name:'AES-GCM',re:/\bAES-?GCM\b/gi,tier:'strong'},
  {name:'ChaCha20',re:/\bChaCha20\b/gi,tier:'strong'},
+ {name:'ChaCha20-Poly1305',re:/\bChaCha20-Poly1305\b/gi,tier:'strong'},
  {name:'AES-CBC',re:/\bAES-?CBC\b/gi,tier:'legacy'},
  {name:'AES (general)',re:/\bAES-?(128|192|256)\b/gi,tier:'neutral'},
  {name:'RSA',re:/\bRSA\b/g,tier:'neutral'},
@@ -1038,6 +1204,7 @@ const CRYPTO_INVENTORY=[
  {name:'SHA-512',re:/\bSHA-?512\b/gi,tier:'strong'},
  {name:'SHA-3',re:/\bSHA-?3\b/gi,tier:'strong'},
  {name:'HMAC',re:/\bHMAC\b/gi,tier:'strong'},
+ {name:'HKDF',re:/\bHKDF\b/gi,tier:'strong'},
  {name:'bcrypt',re:/\bbcrypt\b/gi,tier:'strong'},
  {name:'scrypt',re:/\bscrypt\b/gi,tier:'strong'},
  {name:'Argon2',re:/\bArgon2(id|i|d)?\b/gi,tier:'strong'},
@@ -1066,9 +1233,9 @@ function bytesToStr(b){const t=dec8(b,false);return t!==null?t:bytesToHex(b);}
 
 const PIPE_OPS=[
  // ── Base-N encode ──
- {id:'to-b64',name:'To Base64',cat:'Base-N',run:s=>{try{return{ok:true,output:btoa(unescape(encodeURIComponent(s)))};}catch(e){return{ok:false,error:e.message};}}},
+ {id:'to-b64',name:'To Base64',cat:'Base-N',run:s=>{const r=bytesToB64(enc8(s));return r!==null?{ok:true,output:r}:{ok:false,error:'Encode failed'};}},
  {id:'from-b64',name:'From Base64',cat:'Base-N',run:s=>{const b=b64ToBytes(s);if(!b)return{ok:false,error:'Invalid Base64'};const t=dec8(b,false);return t!==null?{ok:true,output:t}:{ok:true,output:bytesToHex(b),meta:'binary→hex'};}},
- {id:'to-b64u',name:'To Base64URL',cat:'Base-N',run:s=>{try{return{ok:true,output:btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')};}catch(e){return{ok:false,error:e.message};}}},
+ {id:'to-b64u',name:'To Base64URL',cat:'Base-N',run:s=>{const r=bytesToB64(enc8(s));return r!==null?{ok:true,output:r.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}:{ok:false,error:'Encode failed'};}},
  {id:'from-b64u',name:'From Base64URL',cat:'Base-N',run:s=>{const b=b64ToBytes(s);if(!b)return{ok:false,error:'Invalid Base64URL'};const t=dec8(b,false);return t!==null?{ok:true,output:t}:{ok:true,output:bytesToHex(b),meta:'binary→hex'};}},
  {id:'to-b32',name:'To Base32',cat:'Base-N',run:s=>{let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=B32A[parseInt(bits.substr(i,5),2)];while(o.length%8)o+='=';return{ok:true,output:o};}},
  {id:'from-b32',name:'From Base32',cat:'Base-N',run:s=>{const b=base32dec(s);if(!b)return{ok:false,error:'Invalid Base32'};const t=dec8(b,false);return t!==null?{ok:true,output:t}:{ok:true,output:bytesToHex(b),meta:'binary→hex'};}},
@@ -1293,9 +1460,9 @@ function pipeShare(){
  const data=pipeSerialize();
  try{
   const json=JSON.stringify(data);
-  // Use base64url for compact URL hash
-  const b64=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  const url=location.origin+location.pathname+'#state='+b64;
+  // Use base64url for compact URL hash (location.href works on file:// too, unlike location.origin)
+  const b64=(bytesToB64(enc8(json))||'').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const url=location.href.split('#')[0]+'#state='+b64;
   navigator.clipboard.writeText(url).then(()=>{
    const btn=$('pipe-share-btn');const o=btn.textContent;btn.textContent='✓ Copied!';btn.classList.add('flash');setTimeout(()=>{btn.textContent=o;btn.classList.remove('flash');},1500);
   }).catch(()=>{
@@ -1335,9 +1502,8 @@ function pipeLoadFromHash(){
  const m=location.hash.match(/#state=([A-Za-z0-9_\-]+)/);
  if(!m)return false;
  try{
-  let b64=m[1].replace(/-/g,'+').replace(/_/g,'/');
-  while(b64.length%4)b64+='=';
-  const json=decodeURIComponent(escape(atob(b64)));
+  const json=dec8(b64ToBytes(m[1]));
+  if(json===null)return false;
   const obj=JSON.parse(json);
   return pipeDeserialize(obj);
  }catch(e){console.warn('Hash load failed:',e);return false;}
@@ -1351,7 +1517,7 @@ function onPipeIn(){
 }
 /* ════════ copy / clipboard ════════ */
 const COPYSTORE=new Map();let copySeq=0;
-function regCopy(text){const id='cp'+(copySeq++);COPYSTORE.set(id,String(text));return id;}
+function regCopy(text){const id='cp'+(copySeq++);COPYSTORE.set(id,String(text));if(COPYSTORE.size>600){const it=COPYSTORE.keys();for(let i=0;i<200;i++){const k=it.next().value;if(k===undefined)break;COPYSTORE.delete(k);}}return id;}
 function copyById(id,btn){const t=COPYSTORE.get(id);if(t==null)return;navigator.clipboard.writeText(t).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch{}ta.remove();});if(btn){const o=btn.textContent;btn.textContent='✓';btn.classList.add('flash');setTimeout(()=>{btn.textContent=o;btn.classList.remove('flash');},1100);}}
 function copyBtn(text){return `<button class="btn btn-ghost btn-xs" data-act="copy" data-id="${regCopy(text)}">⎘</button>`;}
 function switchTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='pane-'+name));}
@@ -1590,10 +1756,22 @@ function verifyToken(token){
   return jwt.verify(token, "prod-secret-2024", { algorithm: 'HS256' });
 }
 
+function verifyNoPin(token){
+  return jwt.verify(token, process.env.JWT_SECRET || "fallback-secret-123", { ignoreExpiration: true });
+}
+
 const httpsAgent = new (require('https').Agent)({ rejectUnauthorized: false });
 
 app.get('/go', (req, res) => {
   res.redirect(req.query.next);
+});
+
+app.get('/user/:id', (req, res) => {
+  db.query("SELECT * FROM users WHERE id = " + req.params.id);
+});
+
+app.get('/files/:name', (req, res) => {
+  fs.readFile(path.join(__dirname, 'uploads', req.params.name), (err, data) => res.send(data));
 });
 
 function hashPassword(pw){
@@ -1603,6 +1781,8 @@ function hashPassword(pw){
 const AES_KEY = "d41d8cd98f00b204e9800998ecf8427e";
 const iv = Buffer.alloc(16);
 const cipher = crypto.createCipheriv('aes-256-cbc', AES_KEY, iv);
+
+const allowed = new RegExp(userInputPattern);
 
 // TODO: fix auth bypass before launch
 localStorage.setItem('authToken', token);
@@ -1617,14 +1797,17 @@ function runJSAn(){
  setTimeout(()=>{
   try{
    const wantSecrets=$('jsan-secrets').checked,wantEntropy=$('jsan-entropy').checked,wantCrypto=$('jsan-crypto').checked;
-   const findings=analyzeJS(code);
+   const {findings,commentHits}=analyzeJS(code);
    const secrets=wantSecrets?scanSecrets(code,{decode:true,entropy:wantEntropy}):[];
    const inv=wantCrypto?cryptoInventory(code):[];
    $('jsan-count').style.display='';$('jsan-n').textContent=findings.length+secrets.length;
    if(!findings.length&&!secrets.length&&!inv.length){$('jsan-out').innerHTML='<div class="info">✓ No obvious secrets, weak-crypto usage, or exploitable patterns matched. This is not a guarantee of safety — it only means these particular checks found nothing.</div>';pg('jsan-pg',false);return;}
    const sevOrder={critical:0,high:1,med:2,low:3,info:4};
    const counts={critical:0,high:0,med:0,low:0,info:0};findings.forEach(f=>counts[f.sev]++);
-   let html=`<div class="fs"><div class="fs-h"><span class="fs-t">🧬 JS Analysis</span>`+
+   const score=secScore(findings);
+   const scoreCls=score>=85?'cg':score>=60?'ca':'cr';
+   let html=`<div class="fs"><div class="fs-h"><span class="fs-t">🧬 JS Analysis</span><span class="chip ${scoreCls}">score ${score}/100</span>`+
+    (commentHits?`<span class="chip ck">${commentHits} comment-only match${commentHits===1?'':'es'} ignored</span>`:'')+
     (counts.critical?`<span class="chip cx">${counts.critical} critical</span>`:'')+
     (counts.high?`<span class="chip cr">${counts.high} high</span>`:'')+
     (counts.med?`<span class="chip ca">${counts.med} medium</span>`:'')+
@@ -1769,8 +1952,8 @@ function runStats(){
 const runStatsDebounced=debounce(runStats,200);
 /* ════════ TAB 5: ENCODE / ENCRYPT ════════ */
 const ENCS=[
- {id:'b64',n:'Base64',cat:'Base-N',e:s=>{try{return btoa(unescape(encodeURIComponent(s)));}catch{return null;}}},
- {id:'b64u',n:'Base64URL',cat:'Base-N',e:s=>{try{return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}catch{return null;}}},
+ {id:'b64',n:'Base64',cat:'Base-N',e:s=>bytesToB64(enc8(s))},
+ {id:'b64u',n:'Base64URL',cat:'Base-N',e:s=>{const r=bytesToB64(enc8(s));return r===null?null:r.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}},
  {id:'b32',n:'Base32',cat:'Base-N',e(s){let bits='',o='';for(let i=0;i<s.length;i++)bits+=s.charCodeAt(i).toString(2).padStart(8,'0');while(bits.length%5)bits+='0';for(let i=0;i<bits.length;i+=5)o+=B32A[parseInt(bits.substr(i,5),2)];while(o.length%8)o+='=';return o;}},
  {id:'b58',n:'Base58',cat:'Base-N',e(s){const b=enc8(s);let n=0n;for(const x of b)n=n*256n+BigInt(x);let o='';while(n>0n){o=B58A[Number(n%58n)]+o;n/=58n;}for(const x of b){if(x===0)o='1'+o;else break;}return o;}},
  {id:'b62',n:'Base62',cat:'Base-N',e(s){const b=enc8(s);let n=0n;for(const x of b)n=n*256n+BigInt(x);let o='';while(n>0n){o=B62A[Number(n%62n)]+o;n/=62n;}return o||'0';}},
@@ -1966,7 +2149,7 @@ function runBrute(){
   try{
    let html='';
    if(type==='xor-256'){const r=bruteXOR(enc8(input));html=r.length?`<div class="bf-grid">`+r.slice(0,32).map((x,i)=>`<div class="bfc${i===0?' top':''}"><div class="bfc-h"><span class="bfc-n" style="color:${lc(i)}">0x${x.k.toString(16).padStart(2,'0')} (${x.k})</span><span class="chip ${x.sc>.3?'cg':x.sc>.1?'ca':'ck'}">${(x.sc*100).toFixed(0)}%</span>${copyBtn(x.text)}</div><div class="bfc-b">${esc(x.text)}</div></div>`).join('')+`</div>`:'<div class="warn">No printable results</div>';}
-   else if(type==='xor-freq'){const b=bruteXORMulti(enc8(input),64);html=b?buildResult(b.text,`XOR multi-byte (len ${b.kl}, key 0x${b.key})`):'<div class="warn">No result</div>';}
+   else if(type==='xor-freq'){const b=bruteXORMulti(enc8(input),64,8192);html=b?buildResult(b.text,`XOR multi-byte (len ${b.kl}, key 0x${b.key})`):'<div class="warn">No result</div>';}
    else if(type==='caesar-26'){const all=crackCaesar(input,true)||[];html=`<div class="bf-grid">`+all.map((r,i)=>`<div class="bfc${i===0?' top':''}"><div class="bfc-h"><span class="bfc-n" style="color:${lc(i)}">Shift +${r.n}</span><span class="chip ${r.sc>.3?'cg':r.sc>.1?'ca':'ck'}">${(r.sc*100).toFixed(0)}%</span>${copyBtn(r.dec)}</div><div class="bfc-b">${esc(r.dec)}</div></div>`).join('')+`</div>`;}
    else if(type==='affine-all'){const res=[];const cop=[1,3,5,7,9,11,15,17,19,21,23,25];for(const a of cop)for(let b=0;b<26;b++){const d=affineDec(input,a,b);if(!d)continue;const sc=langScore(d);if(sc>.05)res.push({a,b,d,sc});}res.sort((x,y)=>y.sc-x.sc);html=res.length?`<div class="bf-grid">`+res.slice(0,30).map((r,i)=>`<div class="bfc${i===0?' top':''}"><div class="bfc-h"><span class="bfc-n" style="color:${lc(i)}">a=${r.a},b=${r.b}</span><span class="chip ${r.sc>.3?'cg':'ck'}">${(r.sc*100).toFixed(0)}%</span>${copyBtn(r.d)}</div><div class="bfc-b">${esc(r.d)}</div></div>`).join('')+`</div>`:'<div class="warn">No result</div>';}
    else if(type==='rail-all'){const res=[];for(let r=2;r<=20;r++){const d=railFenceDec(input,r);const sc=langScore(d);if(sc>.04)res.push({r,d,sc});}res.sort((a,b)=>b.sc-a.sc);html=res.length?`<div class="bf-grid">`+res.map((x,i)=>`<div class="bfc${i===0?' top':''}"><div class="bfc-h"><span class="bfc-n" style="color:${lc(i)}">${x.r} rails</span><span class="chip ${x.sc>.3?'cg':'ck'}">${(x.sc*100).toFixed(0)}%</span>${copyBtn(x.d)}</div><div class="bfc-b">${esc(x.d)}</div></div>`).join('')+`</div>`:'<div class="warn">No result</div>';}
@@ -2105,7 +2288,7 @@ renderPipe=function(){_origRenderPipe();attachPipeDrag();};
 /* ════════ theme toggle ════════ */
 function setTheme(t){
  document.documentElement.dataset.theme=t;
- localStorage.setItem('cs-theme',t);
+ try{localStorage.setItem('cs-theme',t);}catch{}
  const btn=$('theme-tog');
  if(btn)btn.textContent=t==='light'?'☀ Light':'🌙 Dark';
  const cv=$('matrix');
@@ -2172,9 +2355,11 @@ $('brute-run').addEventListener('click',runBrute);
 $('theme-tog').addEventListener('click',toggleTheme);
 
 /* ════════ init ════════ */
-// Restore saved theme
-const savedTheme=localStorage.getItem('cs-theme')||'dark';
+// localStorage can throw on restricted origins (sandboxed iframes, some file:// setups) — never let it kill the app
+let _store=null;try{_store=window.localStorage;_store.getItem('cs-theme');}catch{_store=null;}
+const savedTheme=(_store&&_store.getItem('cs-theme'))||'dark';
 setTheme(savedTheme);
+if(!window.CryptoJS){document.body.insertAdjacentHTML('afterbegin','<div class="warn" style="margin:.6rem">⚠ crypto-js failed to load from cdnjs.cloudflare.com (offline or blocked). Hash / Hash-tab features are disabled — every other tool still works.</div>');}
 
 // Build encode UI
 buildEncMeths();
@@ -2195,7 +2380,7 @@ if(location.hash.startsWith('#state=')){
  }
 }
 
-console.log('CipherSense ULTRA v10 — loaded. Pipeline + Frequency analysis + Vigenère key-length + Share links active.');
+console.log('CipherSense ULTRA v10.1 — loaded. Pipeline + Frequency analysis + Vigenère key-length + Share links + hardened JS Analyzer (comment-aware, scored) active.');
 
 </script>
 </body>
